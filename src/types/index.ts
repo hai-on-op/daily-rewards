@@ -22,3 +22,19 @@ export interface UserPositions {
     positions: ProcessedPosition[];
   };
 }
+
+export type LpPosition = ProcessedPosition;
+
+// For a single user
+export type UserAccount = {
+  debt: number;
+  lpPositions: LpPosition[];
+  stakingWeight: number;
+  rewardPerWeightStored: number;
+  earned: number;
+};
+
+// Main data structure
+export type UserList = {
+  [address: string]: UserAccount;
+};
