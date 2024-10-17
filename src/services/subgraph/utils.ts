@@ -1,6 +1,6 @@
 import Axios from "axios";
 import { config } from "../../config";
-
+import { UserAccount, UserList } from "../../types";
 export const subgraphQueryPaginated = async (
   query: string,
   paginatedField: string,
@@ -44,3 +44,4 @@ export const subgraphQuery = async (
 
   return resp.data.data;
 };
+

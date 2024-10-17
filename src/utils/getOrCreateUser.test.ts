@@ -1,6 +1,4 @@
-// getOrCreateUser.test.ts
-
-import { getOrCreateUser } from "./getOrCreateUser";
+import { getOrCreateUser } from "./";
 import { UserList, UserAccount } from "../types";
 
 describe("getOrCreateUser", () => {
@@ -10,65 +8,69 @@ describe("getOrCreateUser", () => {
     userList = {};
   });
 
-  it("should create a new user if one does not exist", () => {
-    const address = "0xUserAddress";
-    const user = getOrCreateUser(address, userList);
+  it("should return an existing user if the address is already in the userList", () => {
+    const existingUser: UserAccount = {
+      address: "0x123",
+      debt: 100,
+      collateral: 200,
+      lpPositions: [],
+      stakingWeight: 50,
+      earned: 10,
+      rewardPerWeightStored: 5,
+      totalBridgedTokens: 1000,
+      usedBridgedTokens: 500,
+    };
+    userList["0x123"] = existingUser;
 
-    expect(userList[address]).toBeDefined();
-    expect(user).toBe(userList[address]);
-    expect(user).toEqual({
+    const result = getOrCreateUser("0x123", userList);
+
+    expect(result).toBe(existingUser);
+    expect(Object.keys(userList).length).toBe(1);
+  });
+
+  it("should create and return a new user if the address is not in the userList", () => {
+    const result = getOrCreateUser("0xABC", userList);
+
+    expect(result).toEqual({
+      address: "0xABC",
       debt: 0,
+      collateral: 0,
       lpPositions: [],
       stakingWeight: 0,
       earned: 0,
       rewardPerWeightStored: 0,
+      totalBridgedTokens: 0,
+      usedBridgedTokens: 0,
     });
+    expect(userList["0xABC"]).toBe(result);
+    expect(Object.keys(userList).length).toBe(1);
   });
 
-  it("should return the existing user if one already exists", () => {
-    const address = "0xUserAddress";
+  it("should not modify existing users when creating a new user", () => {
     const existingUser: UserAccount = {
+      address: "0x123",
       debt: 100,
-      lpPositions: [
-        { tokenId: 1, liquidity: 500, lowerTick: 10, upperTick: 20 },
-      ],
-      stakingWeight: 150,
+      collateral: 200,
+      lpPositions: [],
+      stakingWeight: 50,
       earned: 10,
       rewardPerWeightStored: 5,
+      totalBridgedTokens: 1000,
+      usedBridgedTokens: 500,
     };
-    userList[address] = existingUser;
+    userList["0x123"] = existingUser;
 
-    const user = getOrCreateUser(address, userList);
+    getOrCreateUser("0xABC", userList);
 
-    expect(user).toBe(existingUser);
-    expect(userList[address]).toBe(existingUser);
+    expect(userList["0x123"]).toEqual(existingUser);
+    expect(Object.keys(userList).length).toBe(2);
   });
 
-  it("should not modify existing user when called again", () => {
-    const address = "0xUserAddress";
-    const existingUser: UserAccount = {
-      debt: 100,
-      lpPositions: [
-        { tokenId: 1, liquidity: 500, lowerTick: 10, upperTick: 20 },
-      ],
-      stakingWeight: 150,
-      earned: 10,
-      rewardPerWeightStored: 5,
-    };
-    userList[address] = existingUser;
+  it("should return the same user object for repeated calls with the same address", () => {
+    const user1 = getOrCreateUser("0xDEF", userList);
+    const user2 = getOrCreateUser("0xDEF", userList);
 
-    const user = getOrCreateUser(address, userList);
-
-    expect(user).toBe(existingUser);
-
-    // Modify user
-    user.debt += 50;
-    user.earned += 5;
-
-    const userAgain = getOrCreateUser(address, userList);
-
-    expect(userAgain).toBe(user);
-    expect(userAgain.debt).toBe(150);
-    expect(userAgain.earned).toBe(15);
+    expect(user1).toBe(user2);
+    expect(Object.keys(userList).length).toBe(1);
   });
 });

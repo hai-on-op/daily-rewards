@@ -27,11 +27,15 @@ export type LpPosition = ProcessedPosition;
 
 // For a single user
 export type UserAccount = {
+  address: string;
   debt: number;
+  collateral: number;
   lpPositions: LpPosition[];
   stakingWeight: number;
   rewardPerWeightStored: number;
   earned: number;
+  totalBridgedTokens: number;
+  usedBridgedTokens: number;
 };
 
 // Main data structure

@@ -17,11 +17,15 @@ export const getOrCreateUser = (
     return userList[address];
   } else {
     const newUser: UserAccount = {
+      address,
       debt: 0,
+      collateral: 0,
       lpPositions: [],
       stakingWeight: 0,
       earned: 0,
       rewardPerWeightStored: 0,
+      totalBridgedTokens: 0,
+      usedBridgedTokens: 0,
     };
     userList[address] = newUser;
     return newUser;
