@@ -1,4 +1,4 @@
-import { getOrCreateUser } from "./";
+import { getOrCreateUser } from "./getOrCreateUser";
 import { UserList, UserAccount } from "../types";
 
 describe("getOrCreateUser", () => {
@@ -8,7 +8,7 @@ describe("getOrCreateUser", () => {
     userList = {};
   });
 
-  it("should return an existing user if the address is already in the userList", () => {
+  it("should return the existing user and unchanged userList if the address is already in the userList", () => {
     const existingUser: UserAccount = {
       address: "0x123",
       debt: 100,
@@ -20,16 +20,17 @@ describe("getOrCreateUser", () => {
       totalBridgedTokens: 1000,
       usedBridgedTokens: 500,
     };
-    userList["0x123"] = existingUser;
+    userList = { "0x123": existingUser };
 
-    const result = getOrCreateUser("0x123", userList);
+    const [newUserList, result] = getOrCreateUser("0x123", userList);
 
     expect(result).toBe(existingUser);
-    expect(Object.keys(userList).length).toBe(1);
+    expect(newUserList).toBe(userList);
+    expect(Object.keys(newUserList).length).toBe(1);
   });
 
-  it("should create and return a new user if the address is not in the userList", () => {
-    const result = getOrCreateUser("0xABC", userList);
+  it("should create and return a new user and updated userList if the address is not in the userList", () => {
+    const [newUserList, result] = getOrCreateUser("0xABC", userList);
 
     expect(result).toEqual({
       address: "0xABC",
@@ -42,8 +43,9 @@ describe("getOrCreateUser", () => {
       totalBridgedTokens: 0,
       usedBridgedTokens: 0,
     });
-    expect(userList["0xABC"]).toBe(result);
-    expect(Object.keys(userList).length).toBe(1);
+    expect(newUserList).not.toBe(userList);
+    expect(newUserList["0xABC"]).toBe(result);
+    expect(Object.keys(newUserList).length).toBe(1);
   });
 
   it("should not modify existing users when creating a new user", () => {
@@ -58,19 +60,21 @@ describe("getOrCreateUser", () => {
       totalBridgedTokens: 1000,
       usedBridgedTokens: 500,
     };
-    userList["0x123"] = existingUser;
+    userList = { "0x123": existingUser };
 
-    getOrCreateUser("0xABC", userList);
+    const [newUserList, _] = getOrCreateUser("0xABC", userList);
 
-    expect(userList["0x123"]).toEqual(existingUser);
-    expect(Object.keys(userList).length).toBe(2);
+    expect(newUserList["0x123"]).toEqual(existingUser);
+    expect(Object.keys(newUserList).length).toBe(2);
+    expect(newUserList).not.toBe(userList);
   });
 
   it("should return the same user object for repeated calls with the same address", () => {
-    const user1 = getOrCreateUser("0xDEF", userList);
-    const user2 = getOrCreateUser("0xDEF", userList);
+    const [userList1, user1] = getOrCreateUser("0xDEF", userList);
+    const [userList2, user2] = getOrCreateUser("0xDEF", userList1);
 
     expect(user1).toBe(user2);
-    expect(Object.keys(userList).length).toBe(1);
+    expect(userList2).toBe(userList1);
+    expect(Object.keys(userList2).length).toBe(1);
   });
 });
