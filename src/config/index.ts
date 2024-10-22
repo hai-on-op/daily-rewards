@@ -13,5 +13,7 @@ export const config = () => {
     START_BLOCK: Number(envs.START_BLOCK),
     END_BLOCK: Number(envs.END_BLOCK),
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
+    COLLATERAL_TYPES: ["OP", "WETH", "WSTETH"],
+    EXCLUSION_LIST_FILE: "/"
   };
 };

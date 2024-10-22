@@ -5,7 +5,7 @@ import { subgraphQuery } from "../subgraph/utils";
 /**
  * Interface representing the pool state fetched from the subgraph.
  */
-interface PoolState {
+export interface PoolState {
   sqrtPrice: string; // sqrtPrice is returned as a string from the subgraph
 }
 

@@ -6,7 +6,7 @@ import { getAccumulatedRate } from "./getAccumulatedRate";
 /**
  * Interface representing the structure of a safe's debt data.
  */
-interface SafeDebt {
+export interface SafeDebt {
   debt: string;
   safeHandler: string;
   collateralType: {
@@ -17,7 +17,7 @@ interface SafeDebt {
 /**
  * Interface representing the processed debt information.
  */
-interface ProcessedDebt {
+export interface ProcessedDebt {
   address: string;
   debt: number;
 }
