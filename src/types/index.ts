@@ -42,3 +42,22 @@ export type UserAccount = {
 export type UserList = {
   [address: string]: UserAccount;
 };
+
+// Event Types
+export enum RewardEventType {
+  DELTA_DEBT,
+  POOL_POSITION_UPDATE,
+  POOL_SWAP,
+  UPDATE_ACCUMULATED_RATE,
+}
+
+export type RewardEvent = {
+  type: RewardEventType;
+  address?: string;
+  value: number | LpPosition;
+  complementaryValue?: number;
+  timestamp: number;
+  createdAtBlock: number;
+  logIndex: number;
+  cType?: string;
+};
