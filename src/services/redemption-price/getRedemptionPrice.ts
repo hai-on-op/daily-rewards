@@ -1,5 +1,6 @@
 // getRedemptionPrice.ts
 
+import { config } from "../../config";
 import { subgraphQuery } from "../subgraph/utils";
 
 /**
@@ -119,7 +120,7 @@ export const getRedemptionPriceFromBlock = async (
  */
 export const getRedemptionPriceFromTimestamp = async (
   timestamp: number,
-  subgraphUrl: string
+  subgraphUrl: string = config().GEB_SUBGRAPH_URL
 ): Promise<number> => {
   // Build the query
   const query = buildRedemptionPriceFromTimestampQuery(timestamp);

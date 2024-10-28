@@ -61,3 +61,7 @@ export type RewardEvent = {
   logIndex: number;
   cType?: string;
 };
+
+export type Rates = {
+  [key: string]: number; // or whatever type the values should be
+};
