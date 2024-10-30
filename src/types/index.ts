@@ -62,6 +62,14 @@ export type RewardEvent = {
   cType?: string;
 };
 
+export type LPRewardEvent = {
+  type: RewardEventType;
+  address?: string;
+  value: number | LpPosition;
+  timestamp: number;
+  logIndex: number;
+  cType?: string;
+};
 export type Rates = {
   [key: string]: number; // or whatever type the values should be
 };
