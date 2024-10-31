@@ -1,11 +1,11 @@
-type BlockCache = Record<
+export type BlockCache = Record<
   string,
   {
     [block: number]: any;
   }
 >;
 
-type BlockFetchFunction<T, P extends any[]> = (
+export type BlockFetchFunction<T, P extends any[]> = (
   startBlock: number,
   endBlock: number,
   ...args: P
