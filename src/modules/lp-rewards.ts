@@ -7,6 +7,7 @@ import {
   createWithBlockCache,
   BlockCache,
 } from "../services/cache/withBlockCache";
+import { processRewardEvent } from "../services/rewards/lpRewardEventProcessor";
 
 export const calculateLpRewards = async () => {
   const owners = await getSafeOwnerMapping(config().END_BLOCK);
@@ -32,6 +33,15 @@ export const calculateLpRewards = async () => {
     owners,
     withBlockCache
   );
+
+  await processRewardEvent(users, events);
+
+  //console.log(
+  //  Object.values(users).filter((user) => !Number.isNaN(user.earned) && user.earned > 0)
+  //);
+
+
+  console.log(cache)
 
   // TODO: should store cache to the file
 };

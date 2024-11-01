@@ -1,4 +1,5 @@
 import { config as dotenv } from "dotenv";
+import path from "path";
 
 dotenv();
 
@@ -14,6 +15,6 @@ export const config = () => {
     END_BLOCK: Number(envs.END_BLOCK),
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
     COLLATERAL_TYPES: ["OP", "WETH", "WSTETH"],
-    EXCLUSION_LIST_FILE: "/"
+    EXCLUSION_LIST_FILE: path.join(__dirname, "..", "..", "exclusion-list.csv")
   };
 };

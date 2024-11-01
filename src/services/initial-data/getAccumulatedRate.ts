@@ -1,3 +1,4 @@
+import { config } from "../../config";
 import { subgraphQuery } from "../subgraph/utils";
 
 /**
@@ -61,7 +62,7 @@ export const processAccumulatedRate = (data: CollateralTypeResult): number => {
 export const getAccumulatedRate = async (
   block: number,
   cType: string,
-  subgraphUrl: string
+  subgraphUrl: string = config().GEB_SUBGRAPH_URL
 ): Promise<number> => {
   // Build the query
   const query = buildAccumulatedRateQuery(block, cType);

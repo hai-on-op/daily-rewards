@@ -110,7 +110,7 @@ export const getInitialState = async (
   const positions = await getInitialLpPosition(
     startBlock,
     config().UNISWAP_POOL_ADDRESS,
-    config().GEB_SUBGRAPH_URL
+    config().UNISWAP_SUBGRAPH_URL
   );
   const debts = await getInitialSafesDebt(
     startBlock,
@@ -127,6 +127,8 @@ export const getInitialState = async (
 
   users = addDebtsToUsers(users, debts);
 
+  console.log(config().EXCLUSION_LIST_FILE);
+
   const exclusionList = await getExclusionList(config().EXCLUSION_LIST_FILE);
   users = removeExcludedUsers(users, exclusionList);
 
@@ -137,7 +139,7 @@ export const getInitialState = async (
   );
   const redemptionPrice = await getRedemptionPriceFromBlock(
     startBlock,
-    config().UNISWAP_SUBGRAPH_URL
+    config().GEB_SUBGRAPH_URL
   );
 
   users = setInitialStakingWeights(
