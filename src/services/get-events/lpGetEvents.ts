@@ -3,38 +3,19 @@ import { subgraphQueryPaginated } from "../subgraph/utils";
 import { LPRewardEvent, RewardEventType } from "../../types";
 import { getExclusionList } from "../../utils/getExclusionList";
 import { blockToTimestamp } from "../../utils/chain";
-import { WithBlockCache } from "../cache/withBlockCache";
 
 export const getEvents = async (
   startBlock: number,
   endBlock: number,
-  owners: Map<string, string>,
-  withBlockCache: WithBlockCache
+  owners: Map<string, string>
 ) => {
   console.log(`Fetch events ...`);
 
-  const cachedGetSafeModificationEvents = withBlockCache(
-    "lpGet-getSafeModificationEvents",
-    getSafeModificationEvents
-  );
-
-  const cachedGetPoolPositionUpdate = withBlockCache(
-    "lpGet-getPoolPositionUpdate",
-    getPoolPositionUpdate
-  );
-
-  const cachedGetPoolSwap = withBlockCache("lpGet-getPoolSwap", getPoolSwap);
-
-  const cachedGetUpdateAccumulatedRateEvent = withBlockCache(
-    "lpGet-getUpdateAccumulatedRateEvent",
-    getUpdateAccumulatedRateEvent
-  );
-
   const res = await Promise.all([
-    cachedGetSafeModificationEvents(startBlock, endBlock, owners),
-    cachedGetPoolPositionUpdate(startBlock, endBlock),
-    cachedGetPoolSwap(startBlock, endBlock),
-    cachedGetUpdateAccumulatedRateEvent(startBlock, endBlock),
+    getSafeModificationEvents(startBlock, endBlock, owners),
+    getPoolPositionUpdate(startBlock, endBlock),
+    getPoolSwap(startBlock, endBlock),
+    getUpdateAccumulatedRateEvent(startBlock, endBlock),
   ]);
 
   // Merge all events

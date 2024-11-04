@@ -20,10 +20,15 @@ export const subgraphQueryPaginated = async (
   return ret;
 };
 
+let i = 0
+
 export const subgraphQuery = async (
   query: string,
   url: string
 ): Promise<any> => {
+
+ // console.log('quering: ', i++)
+
   const prom = Axios.post(url, {
     query,
   });

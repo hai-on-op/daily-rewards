@@ -105,7 +105,8 @@ export const getInitialState = async (
   startBlock: number,
   endBlock: number,
   owners: Map<string, string>,
-  stakingConfig: StakingWeightConfig
+  stakingConfig: StakingWeightConfig,
+  cType?: string
 ): Promise<UserList> => {
   const positions = await getInitialLpPosition(
     startBlock,
@@ -116,7 +117,8 @@ export const getInitialState = async (
     startBlock,
     owners,
     config().COLLATERAL_TYPES,
-    config().GEB_SUBGRAPH_URL
+    config().GEB_SUBGRAPH_URL,
+    cType
   );
 
   console.log(`Fetched ${debts.length} debt balances`);
@@ -141,6 +143,8 @@ export const getInitialState = async (
     startBlock,
     config().GEB_SUBGRAPH_URL
   );
+
+
 
   users = setInitialStakingWeights(
     users,
