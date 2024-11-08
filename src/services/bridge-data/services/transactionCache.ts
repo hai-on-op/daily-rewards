@@ -1,6 +1,6 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { Transaction, LogEvent } from '@covalenthq/client-sdk';
+import fs from "fs/promises";
+import path from "path";
+import { Transaction, LogEvent } from "@covalenthq/client-sdk";
 
 interface CachedTransactions {
   transactions: SimplifiedTransaction[];
@@ -29,7 +29,7 @@ export class TransactionCache {
   private cache: Map<string, CachedTransactions> = new Map();
 
   constructor(projectRoot: string) {
-    this.cacheDir = path.join(projectRoot, 'transactions-cache');
+    this.cacheDir = path.join(projectRoot, "transactions-cache");
   }
 
   private getFilePath(address: string): string {
@@ -41,28 +41,43 @@ export class TransactionCache {
       await fs.mkdir(this.cacheDir, { recursive: true });
       console.log(`Cache directory initialized at: ${this.cacheDir}`);
     } catch (error) {
-      console.error('Error creating cache directory:', error);
+      console.error("Error creating cache directory:", error);
       throw error;
     }
   }
 
-  private async loadAddressCache(address: string): Promise<CachedTransactions | null> {
+  private async loadAddressCache(
+    address: string
+  ): Promise<CachedTransactions | null> {
     const filePath = this.getFilePath(address);
     try {
-      const data = await fs.readFile(filePath, 'utf-8');
+      const data = await fs.readFile(filePath, "utf-8");
       return JSON.parse(data);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
         console.error(`Error loading cache for ${address}:`, error);
       }
       return null;
     }
   }
 
-  private async saveAddressCache(address: string, data: CachedTransactions): Promise<void> {
+  private async saveAddressCache(
+    address: string,
+    data: CachedTransactions
+  ): Promise<void> {
     const filePath = this.getFilePath(address);
     try {
-      await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+      const output =
+        `{
+        "lastUpdated": ${data.lastUpdated},
+        "transactions": ` +
+        // Add the transactions array directly as a string
+        "[" +
+        data.transactions.map((tx) => JSON.stringify(tx)).join(",") +
+        "]" +
+        "}";
+
+      await fs.writeFile(filePath, output);
       console.log(`Cache saved for address: ${address}`);
     } catch (error) {
       console.error(`Error saving cache for ${address}:`, error);
@@ -71,8 +86,13 @@ export class TransactionCache {
   }
 
   private simplifyTransaction(tx: Transaction): SimplifiedTransaction | null {
-    if (!tx.tx_hash || !tx.block_height || !tx.from_address || 
-        tx.successful === null || !tx.block_signed_at) {
+    if (
+      !tx.tx_hash ||
+      !tx.block_height ||
+      !tx.from_address ||
+      tx.successful === null ||
+      !tx.block_signed_at
+    ) {
       return null;
     }
 
@@ -98,16 +118,20 @@ export class TransactionCache {
     newTxs: Transaction[]
   ): Transaction[] {
     const existingTxHashes = new Set(
-      existingTxs.map(tx => tx.tx_hash).filter((hash): hash is string => !!hash)
+      existingTxs
+        .map((tx) => tx.tx_hash)
+        .filter((hash): hash is string => !!hash)
     );
-    return newTxs.filter(tx => tx.tx_hash && !existingTxHashes.has(tx.tx_hash));
+    return newTxs.filter(
+      (tx) => tx.tx_hash && !existingTxHashes.has(tx.tx_hash)
+    );
   }
 
   async getTransactions(address: string): Promise<Transaction[]> {
     const cached = await this.loadAddressCache(address);
     if (!cached) return [];
 
-    return cached.transactions.map(tx => {
+    return cached.transactions.map((tx) => {
       const transaction: Partial<Transaction> = {
         tx_hash: tx.tx_hash,
         block_height: tx.block_height,
@@ -130,7 +154,7 @@ export class TransactionCache {
     transactions: Transaction[]
   ): Promise<void> {
     const simplified = transactions
-      .map(tx => this.simplifyTransaction(tx))
+      .map((tx) => this.simplifyTransaction(tx))
       .filter((tx): tx is SimplifiedTransaction => tx !== null);
 
     const cacheData: CachedTransactions = {
@@ -148,8 +172,10 @@ export class TransactionCache {
     const cached = await this.loadAddressCache(address);
     if (!cached || cached.transactions.length === 0) return false;
 
-    const cachedTxHashes = new Set(cached.transactions.map(tx => tx.tx_hash));
-    return newTransactions.some(tx => tx.tx_hash && cachedTxHashes.has(tx.tx_hash));
+    const cachedTxHashes = new Set(cached.transactions.map((tx) => tx.tx_hash));
+    return newTransactions.some(
+      (tx) => tx.tx_hash && cachedTxHashes.has(tx.tx_hash)
+    );
   }
 
   public async mergeTransactions(
@@ -166,10 +192,10 @@ export class TransactionCache {
     try {
       const files = await fs.readdir(this.cacheDir);
       return files
-        .filter(file => file.endsWith('.json'))
-        .map(file => file.replace('.json', ''));
+        .filter((file) => file.endsWith(".json"))
+        .map((file) => file.replace(".json", ""));
     } catch (error) {
-      console.error('Error listing cached addresses:', error);
+      console.error("Error listing cached addresses:", error);
       return [];
     }
   }

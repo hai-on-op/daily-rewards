@@ -68,3 +68,17 @@ export interface LidoWstETHTransferEvent {
   amount: string;
   blockHeight: number | null;
 }
+
+export interface BridgeTransaction {
+  bridgeName: 'Standard Bridge' | 'apxETH Bridge' | 'Lido Bridge' | 'Hop Bridge';
+  token: string;
+  amount: string;
+  blockHeight: number;
+}
+
+export interface UserBridgeData {
+  address: string;
+  bridgeTransactions: BridgeTransaction[];
+}
+
+export type BridgedAmountsDetailed = UserBridgeData[];

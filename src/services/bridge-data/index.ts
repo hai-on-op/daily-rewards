@@ -204,4 +204,6 @@ export const getBridgeData = async (
     fromBlock,
     toBlock
   );
+
+  return bridgedAmountsForAddresses;
 };
