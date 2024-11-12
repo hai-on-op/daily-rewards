@@ -39,3 +39,17 @@ export const getOrCreateUser = (
     return [{ ...userList, [address]: newUser }, newUser];
   }
 };
+
+export const getOrCreateUserMutate = (
+  address: string,
+  userList: UserList
+): UserAccount => {
+  if (userList[address]) {
+    return userList[address];
+  } else {
+    const newUser = createNewUser(address);
+
+    userList[address] = newUser;
+    return newUser;
+  }
+};

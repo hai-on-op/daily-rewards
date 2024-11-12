@@ -2,45 +2,60 @@ import { config } from "../../config";
 import { getAccumulatedRate } from "../initial-data/getAccumulatedRate";
 import {
   LpPosition,
-  LPRewardEvent,
+  RewardEvent,
   RewardEventType,
   UserAccount,
   UserList,
   Rates,
 } from "../../types";
-import { getOrCreateUser } from "../../utils/getOrCreateUser";
+import {
+  getOrCreateUser,
+  getOrCreateUserMutate,
+} from "../../utils/getOrCreateUser";
 import { provider } from "../../utils/chain";
 import { sanityCheckAllUsers } from "../sanity-check/sanityCheck";
-import { getStakingWeightForLPPositions } from "../staking-weights/getStakingWeight";
+import { getStakingWeightForDebt } from "../staking-weights/getStakingWeight";
 import { getPoolState } from "../pool-state/getPoolState";
 import { getRedemptionPriceFromTimestamp } from "../redemption-price/getRedemptionPrice";
-import * as fs from "fs";
-import { get } from "http";
-export const CTYPES = config().LP_COLLATERAL_TYPES;
+import { getBridgedTokensAtBlock } from "../bridge-data/getBridgedTokensAtBlock";
+import { BridgedAmountsDetailed } from "../bridge-data/types";
+
+export const CTYPES = ["WSTETH", "RETH", "APXETH"];
+
 export const processRewardEvent = async (
+  bridgedData: BridgedAmountsDetailed,
   users: UserList,
-  events: LPRewardEvent[]
+  events: RewardEvent[],
+  rewardAmount: number,
+  withBridge: boolean
 ): Promise<UserList> => {
+  let usersList = users;
+
   // Starting and ending of the campaign
   const startBlock = config().START_BLOCK;
   const endBlock = config().END_BLOCK;
   const startTimestamp = (await provider.getBlock(startBlock)).timestamp;
   const endTimestamp = (await provider.getBlock(endBlock)).timestamp;
+
   // Constant amount of reward distributed per second
-  const rewardRate = config().REWARD_AMOUNT / (endTimestamp - startTimestamp);
+  const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
+
   // Ongoing Total supply of weight
   let totalStakingWeight = sumAllWeights(users);
-  console.log(`Total staking weight: ${totalStakingWeight}`);
+
   // Ongoing cumulative reward per weight over time
   let rewardPerWeight = 0;
+
   let updateRewardPerWeight = (evtTime: number) => {
     if (totalStakingWeight > 0) {
       const deltaTime = evtTime - timestamp;
       rewardPerWeight += (deltaTime * rewardRate) / totalStakingWeight;
     }
   };
+
   // Ongoing time
   let timestamp = startTimestamp;
+
   // Ongoing accumulated rate
   const rates: Rates = {};
   for (let i = 0; i < CTYPES.length; i++) {
@@ -48,110 +63,62 @@ export const processRewardEvent = async (
     const cTypeRate = await getAccumulatedRate(startBlock, cType);
     rates[cType] = cTypeRate;
   }
-  // Ongoing uni v3 sqrtPrice
-  let sqrtPrice: string | number = (
-    await getPoolState(
-      startBlock,
-      config().UNISWAP_POOL_ADDRESS,
-      config().UNISWAP_SUBGRAPH_URL
-    )
-  ).sqrtPrice;
-  // Ongoing redemption price
-  let redemptionPrice: number = 1; // Initialize with default value
+
   let redemptionPriceLastUpdate = 0;
   // ===== Main processing loop ======
+
   console.log(
-    `Distributing ${
-      config().REWARD_AMOUNT
-    } at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
+    `Distributing ${rewardAmount} at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
   console.log("Applying all events...");
   // Main processing loop processing events in chronologic order that modify the current reward rate distribution for each user.
+
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
+
     if (i % 1000 === 0 && i > 0) console.log(`  Processed ${i} events`);
-    // Update the redemption price, only async task in this processing loop
-    if (redemptionPriceLastUpdate + 3600 * 24 <= event.timestamp) {
-      redemptionPrice = await getRedemptionPriceFromTimestamp(event.timestamp);
-      redemptionPriceLastUpdate = event.timestamp;
-    }
+
     updateRewardPerWeight(event.timestamp);
+
+    const rewardsDistributed = rewardRate * (event.timestamp - startTimestamp);
+
     // Increment time
     timestamp = event.timestamp;
+
     // The way the rewards are credited is different for each event type
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
-        const [__, user] = getOrCreateUser(event.address ?? "", users);
+        const user = getOrCreateUserMutate(event.address ?? "", users);
         earn(user, rewardPerWeight);
+
+        // setting user totalBridgedTokens
+        user.totalBridgedTokens = getBridgedTokensAtBlock(
+          bridgedData,
+          String(event.address),
+          String(event.cType),
+          event.createdAtBlock
+        );
+
         const accumulatedRate = rates[event.cType as string];
+
         // Convert to real debt after interests and update the debt balance
         const adjustedDeltaDebt = (event.value as number) * accumulatedRate;
         user.debt += adjustedDeltaDebt;
+
+        user.collateral += event.complementaryValue ?? 0;
+
         // Ignore Dusty debt
         if (user.debt < 0 && user.debt > -0.4) {
           user.debt = 0;
         }
-        user.stakingWeight = getStakingWeightForLPPositions(user.lpPositions);
-        break;
-      }
-      case RewardEventType.POOL_POSITION_UPDATE: {
-        const updatedPosition = event.value as LpPosition;
-        const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight);
-        // Detect the special of a simple NFT transfer (not form a mint/burn/modify position)
-        for (let u of Object.keys(users)) {
-          for (let p in users[u].lpPositions) {
-            if (
-              users[u].lpPositions[p].tokenId === updatedPosition.tokenId &&
-              u !== event.address
-            ) {
-              console.log("ERC721 transfer");
-              // We found the source address of an ERC721 transfer
-              earn(users[u], rewardPerWeight);
-              users[u].lpPositions = users[u].lpPositions.filter(
-                (x) => x.tokenId !== updatedPosition.tokenId
-              );
-              user.stakingWeight = getStakingWeightForLPPositions(
-                user.lpPositions
-              );
-            }
-          }
-        }
-        // Create or update the position
-        const index = user.lpPositions.findIndex(
-          (p) => p.tokenId === updatedPosition.tokenId
+
+        user.stakingWeight = getStakingWeightForDebt(
+          user.debt,
+          user.collateral,
+          user.totalBridgedTokens,
+          withBridge
         );
-        if (index === -1) {
-          user.lpPositions.push({
-            tokenId: updatedPosition.tokenId,
-            lowerTick: updatedPosition.lowerTick,
-            upperTick: updatedPosition.upperTick,
-            liquidity: updatedPosition.liquidity,
-          });
-        } else {
-          user.lpPositions[index].liquidity = updatedPosition.liquidity;
-          // Sanity check
-          if (
-            user.lpPositions[index].lowerTick !== updatedPosition.lowerTick ||
-            user.lpPositions[index].upperTick !== updatedPosition.upperTick
-          ) {
-            throw Error("Tick value can't be updated");
-          }
-        }
-        // Update that user staking weight
-        user.stakingWeight = getStakingWeightForLPPositions(user.lpPositions);
-        break;
-      }
-      case RewardEventType.POOL_SWAP: {
-        // Pool swap changes the price which affects everyone's staking weight
-        // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
-        sqrtPrice = event.value as number;
-        // Then update everyone weight
-        Object.values(users).map(
-          (u) =>
-            (u.stakingWeight = getStakingWeightForLPPositions(u.lpPositions))
-        );
+
         break;
       }
       case RewardEventType.UPDATE_ACCUMULATED_RATE: {
@@ -159,20 +126,43 @@ export const processRewardEvent = async (
         const rateMultiplier = event.value as number;
         const cTypeRate = rates[event.cType as string];
         rates[event.cType as string] = cTypeRate + rateMultiplier;
-        // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
-        // Update everyone's debt
-        Object.values(users).map((u) => (u.debt *= rateMultiplier + 1));
+
+        // setting user totalBridgedTokens
         Object.values(users).map(
           (u) =>
-            (u.stakingWeight = getStakingWeightForLPPositions(u.lpPositions))
+            (u.totalBridgedTokens = getBridgedTokensAtBlock(
+              bridgedData,
+              String(event.address),
+              String(event.cType),
+              event.createdAtBlock
+            ))
         );
+
+        // First credit all users
+        Object.values(users).map((u) => earn(u, rewardPerWeight));
+
+        // Update everyone's debt
+        Object.values(users).map((u) => (u.debt *= rateMultiplier + 1));
+
+        Object.values(users).map((u) => {
+          // calculating userEffectiveBridgedTokens
+          const userEffectiveBridgedTokens = u.totalBridgedTokens; //- u.usedBridgedTokens;
+
+          u.stakingWeight = getStakingWeightForDebt(
+            u.debt,
+            u.collateral,
+            userEffectiveBridgedTokens,
+            withBridge
+          );
+        });
         break;
       }
       default:
         throw Error("Unknown event");
     }
-    // sanityCheckAllUsers(users, event);
+
+    sanityCheckAllUsers(users, event);
+
     // Individual user check, uncomment to create a report
     // const u = "0x00000...".toLowerCase()
     // earn(users[u], rewardPerWeight)
@@ -180,22 +170,31 @@ export const processRewardEvent = async (
     //   (acc, p) => acc + getPositionSize(p, sqrtPrice, redemptionPrice),
     //   0
     // )},${users[u].stakingWeight},${totalStakingWeight},${users[u].earned}\n`)
+
     // Recalculate the sum of weights since the events the weights
+
     totalStakingWeight = sumAllWeights(users);
   }
+
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
   Object.values(users).map((u) => earn(u, rewardPerWeight));
+
   return users;
 };
+
 // Credit reward to a user
 const earn = (user: UserAccount, rewardPerWeight: number) => {
   // Credit to the user his due rewards
   user.earned +=
     (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight;
+
   // Store his cumulative credited rewards for next time
   user.rewardPerWeightStored = rewardPerWeight;
 };
+
 // Simply sum all the stakingWeight of all users
 const sumAllWeights = (users: UserList) =>
-  Object.values(users).reduce((acc, user) => acc + user.stakingWeight, 0);
+  Object.values(users).reduce((acc, user) => {
+    return acc + user.stakingWeight;
+  }, 0);

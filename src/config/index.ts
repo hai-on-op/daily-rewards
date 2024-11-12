@@ -25,12 +25,14 @@ const parseCollateralTypes = (typesStr: string): TokenType[] => {
 
 export const config = () => {
   const envs = process.env as any;
-  
+
   // Parse reward configurations
   const rewardConfig: RewardConfig = {
     minter: {
       config: parseRewardConfig(envs.REWARD_MINTER_CONFIG),
-      collateralTypes: parseCollateralTypes(envs.REWARD_MINTER_COLLATERAL_TYPES),
+      collateralTypes: parseCollateralTypes(
+        envs.REWARD_MINTER_COLLATERAL_TYPES
+      ),
     },
     lp: {
       config: parseRewardConfig(envs.REWARD_LP_CONFIG),
@@ -42,7 +44,7 @@ export const config = () => {
     // Subgraph URLs
     GEB_SUBGRAPH_URL: envs.GEB_SUBGRAPH_URL,
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
-    
+
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),
     STANDARD_BRIDGE_ADDRESS: envs.STANDARD_BRIDGE_ADDRESS,
@@ -52,21 +54,22 @@ export const config = () => {
     RETH_CONTRACT_ADDRESS: envs.RETH_CONTRACT_ADDRESS,
     WSTETH_CONTRACT_ADDRESS: envs.WSTETH_CONTRACT_ADDRESS,
     HOP_PROTOCOL_RETH_WRAPPER: envs.HOP_PROTOCOL_RETH_WRAPPER,
-    
+
     // Network Configuration
     RPC_URL: envs.RPC_URL,
     CHAIN_ID: envs.CHAIN_ID || "optimism-mainnet",
-    
+
     // Blocks and Rewards
     START_BLOCK: Number(envs.START_BLOCK),
     END_BLOCK: Number(envs.END_BLOCK),
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
     REWARD_TOKEN: envs.REWARD_TOKEN,
-    
+
     // Lists and Files
     COLLATERAL_TYPES: ["RETH", "WSTETH", "APXETH"] as TokenType[],
+    LP_COLLATERAL_TYPES: ["OP", "WETH", "WSTETH"] as TokenType[],
     EXCLUSION_LIST_FILE: path.join(__dirname, "..", "..", "exclusion-list.csv"),
-    
+
     // API Keys
     COVALENT_API_KEY: envs.COVALENT_API_KEY,
 

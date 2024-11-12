@@ -108,11 +108,11 @@ export const getInitialState = async (
   stakingConfig: StakingWeightConfig,
   cType?: string
 ): Promise<UserList> => {
-  const positions = await getInitialLpPosition(
-    startBlock,
-    config().UNISWAP_POOL_ADDRESS,
-    config().UNISWAP_SUBGRAPH_URL
-  );
+  //const positions = await getInitialLpPosition(
+  //  startBlock,
+  //  config().UNISWAP_POOL_ADDRESS,
+  //  config().UNISWAP_SUBGRAPH_URL
+  //);
   const debts = await getInitialSafesDebt(
     startBlock,
     owners,
@@ -124,7 +124,7 @@ export const getInitialState = async (
   console.log(`Fetched ${debts.length} debt balances`);
 
   let users: UserList = {};
-  users = addLpPositionsToUsers(users, positions);
+  //users = addLpPositionsToUsers(users, positions);
   console.log(`Fetched ${Object.keys(users).length} LP positions`);
 
   users = addDebtsToUsers(users, debts);
