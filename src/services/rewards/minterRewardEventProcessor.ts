@@ -31,6 +31,15 @@ export const processRewardEvent = async (
 ): Promise<UserList> => {
   let usersList = users;
 
+  console.log("++++++++++++++++++++++++++++++++++++");
+
+  console.log(bridgedData);
+  console.log(
+    events.map((e) => e.createdAtBlock),
+    "events"
+  );
+  console.log("++++++++++++++++++++++++++++++++++++");
+
   // Starting and ending of the campaign
   const startBlock = config().START_BLOCK;
   const endBlock = config().END_BLOCK;
@@ -92,6 +101,15 @@ export const processRewardEvent = async (
         earn(user, rewardPerWeight);
 
         // setting user totalBridgedTokens
+
+        //console.log(
+        //  "Getting bridged tokens at block: ",
+        //  event.createdAtBlock,
+        //  "event.createdAtBlock",
+        //  event.address,
+        //  "event address"
+        //);
+
         user.totalBridgedTokens = getBridgedTokensAtBlock(
           bridgedData,
           String(event.address),
@@ -128,11 +146,11 @@ export const processRewardEvent = async (
         rates[event.cType as string] = cTypeRate + rateMultiplier;
 
         // setting user totalBridgedTokens
-        Object.values(users).map(
-          (u) =>
+        Object.values(users).forEach(
+          async (u) =>
             (u.totalBridgedTokens = getBridgedTokensAtBlock(
               bridgedData,
-              String(event.address),
+              String(u.address),
               String(event.cType),
               event.createdAtBlock
             ))

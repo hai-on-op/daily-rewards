@@ -6,7 +6,7 @@ import { UserList } from "../types";
 import { processRewardEvent } from "../services/rewards/lpRewardEventProcessor";
 import path from "path";
 
-export const calculateLpRewards = async () => {
+export const calculateLpRewards = async (rewardAmount: number) => {
   const owners = await getSafeOwnerMapping(config().END_BLOCK);
 
   // Load existing cache
@@ -29,5 +29,5 @@ export const calculateLpRewards = async () => {
     owners
   );
 
-  await processRewardEvent(users, events);
+  return await processRewardEvent(rewardAmount, users, events);
 };

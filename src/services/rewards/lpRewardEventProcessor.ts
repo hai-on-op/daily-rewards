@@ -17,7 +17,9 @@ import { getRedemptionPriceFromTimestamp } from "../redemption-price/getRedempti
 import * as fs from "fs";
 import { get } from "http";
 export const CTYPES = config().LP_COLLATERAL_TYPES;
+
 export const processRewardEvent = async (
+  rewardAmount: number,
   users: UserList,
   events: LPRewardEvent[]
 ): Promise<UserList> => {
@@ -27,7 +29,7 @@ export const processRewardEvent = async (
   const startTimestamp = (await provider.getBlock(startBlock)).timestamp;
   const endTimestamp = (await provider.getBlock(endBlock)).timestamp;
   // Constant amount of reward distributed per second
-  const rewardRate = config().REWARD_AMOUNT / (endTimestamp - startTimestamp);
+  const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
   // Ongoing Total supply of weight
   let totalStakingWeight = sumAllWeights(users);
   console.log(`Total staking weight: ${totalStakingWeight}`);
@@ -62,7 +64,7 @@ export const processRewardEvent = async (
   // ===== Main processing loop ======
   console.log(
     `Distributing ${
-      config().REWARD_AMOUNT
+      rewardAmount
     } at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
   console.log("Applying all events...");

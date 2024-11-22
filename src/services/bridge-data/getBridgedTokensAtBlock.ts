@@ -12,6 +12,14 @@ export function getBridgedTokensAtBlock(
     (user) => user?.address?.toLowerCase() === address.toLowerCase()
   );
 
+  //console.log(
+  //  userData,
+  //  "user data from get bridged tokens at block",
+  //  blockNumber,
+  //  tokenName,
+  //  address
+  //);
+
   if (!userData) {
     return 0;
   }
@@ -24,7 +32,6 @@ export function getBridgedTokensAtBlock(
         tx.blockHeight <= blockNumber
     )
     .reduce((sum, tx) => sum + BigInt(tx.amount), BigInt(0));
-
 
   // Parse the total amount to 18 decimal places and convert to number
   const parsedAmount = ethers.utils.formatUnits(totalAmount.toString(), 18);
