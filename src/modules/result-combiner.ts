@@ -5,12 +5,12 @@ import { calculateMinterRewards } from "./minter-rewards";
 
 type FinalResult = Record<string, Record<string, UserList>>;
 
-type RewardResult = {
+export type RewardResult = {
   address: string;
   earned: number;
 };
 
-type RewardsMap = {
+export type RewardsMap = {
   [token: string]: RewardResult[];
 };
 
@@ -58,7 +58,7 @@ export function combineRewards(
   return combinedRewards;
 }
 
-export const combineResults = async () => {
+export const combineResults = async (): Promise<RewardsMap> => {
   const minterRewards = await calculateMinterRewards(
     config().START_BLOCK,
     config().END_BLOCK
@@ -104,9 +104,6 @@ export const combineResults = async () => {
 
   const minterRewardsAggregated = aggregateTokenRewards(minterRewards);
 
-  console.log(config().rewards.minter.config);
-  console.log(config().rewards.lp.config);
-
   let lpRewards: Record<string, { address: string; earned: number }[]> = {};
 
   for (const [rewardToken, amount] of Object.entries(
@@ -123,14 +120,8 @@ export const combineResults = async () => {
       .sort((a, b) => b.earned - a.earned);
   }
 
-  console.log(lpRewards, "lpRewards");
-  console.log("aggregated result", minterRewardsAggregated);
-
   // Combine LP and Minter rewards
   const combinedRewards = combineRewards(lpRewards, minterRewardsAggregated);
-  console.log("Combined rewards:", combinedRewards);
 
   return combinedRewards;
 };
-
-combineResults();

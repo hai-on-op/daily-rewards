@@ -75,6 +75,11 @@ export const config = () => {
 
     // Reward Configurations
     rewards: rewardConfig,
+
+    // Cloudflare Configuration
+    CLOUDFLARE_ACCOUNT_ID: envs.CLOUDFLARE_ACCOUNT_ID,
+    CLOUDFLARE_NAMESPACE_ID: envs.CLOUDFLARE_NAMESPACE_ID,
+    CLOUDFLARE_API_TOKEN: envs.CLOUDFLARE_API_TOKEN,
   };
 };
 

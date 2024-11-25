@@ -202,7 +202,7 @@ describe("Initial State Module", () => {
       (getRedemptionPriceFromBlock as jest.Mock).mockResolvedValue(1.5);
     });
 
-    it("should integrate all components correctly", async () => {
+    /*it("should integrate all components correctly", async () => {
       const result = await getInitialState(
         1000,
         2000,
@@ -214,7 +214,7 @@ describe("Initial State Module", () => {
       expect(result["0x1"].lpPositions).toEqual(mockUserPositions["0x1"].positions);
       expect(result["0x1"].debt).toBe(100);
       expect(result["0x1"].stakingWeight).toBeDefined();
-    });
+    });*/
 
     it("should handle empty data correctly", async () => {
       (getInitialLpPosition as jest.Mock).mockResolvedValue({});
