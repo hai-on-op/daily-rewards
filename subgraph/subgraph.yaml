@@ -6,9 +6,9 @@ schema:
 dataSources:
   - kind: ethereum
     name: REWARD_DISTRIBUTOR
-    network: optimism
+    network: mainnet
     source:
-      address: "0xB87B6be197f3482A2784F3a4acf8035B43baca3B"
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
       abi: REWARD_DISTRIBUTOR
       startBlock: 0
     mapping:

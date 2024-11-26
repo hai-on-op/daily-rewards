@@ -1,6 +1,41 @@
-type ExampleEntity @entity {
-  id: Bytes!
-  count: BigInt!
-  tokens: [Bytes!]! # address[]
-  roots: [Bytes!]! # bytes32[]
+type RewardDistributor @entity {
+  id: ID!
+  rewardSetter: Bytes!
+  merkleRoots: [MerkleRoot!]! @derivedFrom(field: "distributor")
+  claims: [Claim!]! @derivedFrom(field: "distributor")
+}
+
+type MerkleRoot @entity {
+  id: ID! # token address
+  distributor: RewardDistributor!
+  token: Bytes!
+  root: Bytes!
+  updatedAt: BigInt!
+  updatedAtBlock: BigInt!
+  updatedAtTransaction: Bytes!
+}
+
+type Claim @entity {
+  id: ID! # user + token + timestamp
+  distributor: RewardDistributor!
+  user: User!
+  token: Bytes!
+  amount: BigInt!
+  claimedAt: BigInt!
+  claimedAtBlock: BigInt!
+  claimedAtTransaction: Bytes!
+}
+
+type User @entity {
+  id: ID! # user address
+  claims: [Claim!]! @derivedFrom(field: "user")
+  totalClaimedByToken: [TokenClaim!]! @derivedFrom(field: "user")
+}
+
+type TokenClaim @entity {
+  id: ID! # user address + token address
+  user: User!
+  token: Bytes!
+  totalAmount: BigInt!
+  claimCount: BigInt!
 }
