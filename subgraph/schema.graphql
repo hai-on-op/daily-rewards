@@ -1,0 +1,6 @@
+type ExampleEntity @entity {
+  id: Bytes!
+  count: BigInt!
+  tokens: [Bytes!]! # address[]
+  roots: [Bytes!]! # bytes32[]
+}

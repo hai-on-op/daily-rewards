@@ -1,0 +1,35 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: REWARD_DISTRIBUTOR
+    network: optimism
+    source:
+      address: "0xB87B6be197f3482A2784F3a4acf8035B43baca3B"
+      abi: REWARD_DISTRIBUTOR
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - MerkleRootsUpdated
+        - OwnershipTransferred
+        - RewardSetterUpdated
+        - RewardsClaimed
+      abis:
+        - name: REWARD_DISTRIBUTOR
+          file: ./abis/REWARD_DISTRIBUTOR.json
+      eventHandlers:
+        - event: MerkleRootsUpdated(address[],bytes32[])
+          handler: handleMerkleRootsUpdated
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: RewardSetterUpdated(indexed address,indexed address)
+          handler: handleRewardSetterUpdated
+        - event: RewardsClaimed(indexed address,indexed address,uint256)
+          handler: handleRewardsClaimed
+      file: ./src/reward-distributor.ts

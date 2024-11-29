@@ -1,0 +1,8 @@
+{
+  "optimism": {
+    "REWARD_DISTRIBUTOR": {
+      "address": "0xB87B6be197f3482A2784F3a4acf8035B43baca3B",
+      "startBlock": 0
+    }
+  }
+}

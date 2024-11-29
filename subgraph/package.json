@@ -1,0 +1,18 @@
+{
+  "name": "hai-daily-reward-distributor",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ hai-daily-reward-distributor",
+    "create-local": "graph create --node http://localhost:8020/ hai-daily-reward-distributor",
+    "remove-local": "graph remove --node http://localhost:8020/ hai-daily-reward-distributor",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 hai-daily-reward-distributor",
+    "test": "graph test"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.80.0",
+    "@graphprotocol/graph-ts": "0.32.0"
+  },
+  "devDependencies": { "matchstick-as": "0.5.0" }
+}
