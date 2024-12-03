@@ -12,6 +12,7 @@ import {
   User,
   TokenClaim,
 } from "../generated/schema";
+import { log } from "@graphprotocol/graph-ts";
 
 function getOrCreateRewardDistributor(address: Bytes): RewardDistributor {
   let distributor = RewardDistributor.load(address.toHexString());
@@ -53,6 +54,7 @@ function getOrCreateTokenClaim(user: Bytes, token: Bytes): TokenClaim {
 export function handleMerkleRootsUpdated(event: MerkleRootsUpdated): void {
   const distributor = getOrCreateRewardDistributor(event.address);
 
+
   // Update merkle roots for each token
   for (let i = 0; i < event.params.tokens.length; i++) {
     const token = event.params.tokens[i];
@@ -70,6 +72,8 @@ export function handleMerkleRootsUpdated(event: MerkleRootsUpdated): void {
 }
 
 export function handleRewardSetterUpdated(event: RewardSetterUpdated): void {
+  log.debug("Reward setter updated to {}", [event.params.newSetter.toHexString()]);
+
   const distributor = getOrCreateRewardDistributor(event.address);
   distributor.rewardSetter = event.params.newSetter;
   distributor.save();
