@@ -10,8 +10,8 @@ contract RewardDistributor is IRewardDistributor, Ownable {
     address public rewardSetter;
     mapping(address => bytes32) public merkleRoots;
 
-    // TokenAddress => UserAddress => IsClaimed
-    mapping(address => mapping(address => bool)) public isClaimed;
+    // merkleRoot => UserAddress => IsClaimed
+    mapping(bytes32 => mapping(address => bool)) public isClaimed;
 
     constructor() Ownable(msg.sender) {}
 
@@ -65,7 +65,7 @@ contract RewardDistributor is IRewardDistributor, Ownable {
         uint256 amount,
         bytes32[] calldata merkleProof
     ) internal {
-        require(!isClaimed[token][msg.sender], "Already claimed");
+        require(!isClaimed[merkleRoots[token]][msg.sender], "Already claimed");
 
         bytes32 leaf = keccak256(
             bytes.concat(keccak256(abi.encode(address(msg.sender), amount)))
@@ -76,7 +76,7 @@ contract RewardDistributor is IRewardDistributor, Ownable {
             "Invalid merkle proof"
         );
         // Mark as claimed
-        isClaimed[token][msg.sender] = true;
+        isClaimed[merkleRoots[token]][msg.sender] = true;
         //// Transfer tokens
         IERC20(token).transfer(msg.sender, amount);
         //

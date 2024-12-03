@@ -26,7 +26,7 @@ interface IRewardDistributor {
 
     /// @notice Returns whether a reward has been claimed
     function isClaimed(
-        address token,
+        bytes32 root,
         address user
     ) external view returns (bool);
 

@@ -24,11 +24,11 @@ export const createCovalentFetcher = (
       console.log(`Found ${cachedTransactions.length} cached transactions for ${walletAddress}`);
     }
 
-    return cachedTransactions;
+    //return cachedTransactions;
 
 
     // Fetch transactions from Covalent
-    /*const client = new GoldRushClient(apiKey);
+   const client = new GoldRushClient(apiKey);
     let allTransactions: Transaction[] = [];
     let pageNumber = 0;
     let hasNextPage = true;
@@ -89,7 +89,7 @@ export const createCovalentFetcher = (
     await cache.updateTransactions(walletAddress, allTransactions);
     console.log(`Cached ${allTransactions.length} transactions for ${walletAddress}`);
     
-    return allTransactions;*/
+    return allTransactions;
   };
 };
 

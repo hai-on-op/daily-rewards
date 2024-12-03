@@ -133,7 +133,6 @@ export const calculateMinterRewards = async (
         cType
       );
 
-
       let usersListWithRewards = await processRewardEvent(
         bridgedData,
         usersListWithBridge,
@@ -153,4 +152,14 @@ export const calculateMinterRewards = async (
   return finalResult;
 };
 
-//calculateMinterRewards(config().START_BLOCK, config().END_BLOCK);
+calculateMinterRewards(125316512, 126283342).then((rewards) =>
+  console.log(
+    Object.entries(rewards['KITE']['APXETH'])
+      .map(([address, value]) => ({
+        address,
+        earned: value.earned,
+      }))
+      .filter(({ earned }) => earned > 0)
+      .sort((a, b) => b.earned - a.earned)
+  )
+);
