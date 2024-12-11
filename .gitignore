@@ -7,3 +7,5 @@ node_modules/
 /graph-node/data
 
 .counter.json
+
+/dist
