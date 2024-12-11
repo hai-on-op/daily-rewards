@@ -28,7 +28,7 @@ export const createCovalentFetcher = (
 
 
     // Fetch transactions from Covalent
-   const client = new GoldRushClient(apiKey);
+    const client = new GoldRushClient(apiKey);
     let allTransactions: Transaction[] = [];
     let pageNumber = 0;
     let hasNextPage = true;

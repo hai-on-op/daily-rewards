@@ -75,12 +75,128 @@ export const calculateMinterRewards = async (
 
   let usersListWithBridge: UserList = {};
 
-  const bridgedData = (await getBridgeData(
-    { fromBlock: 0, toBlock },
-    undefined,
-    [...targetUserList]
-  )) as BridgedAmountsDetailed;
-  console.log(bridgedData, "bridgedData");
+  if (!config().IGNORE_BRIDGE) {
+    const bridgedData = (await getBridgeData(
+      { fromBlock: 0, toBlock },
+      undefined,
+      [...targetUserList]
+    )) as BridgedAmountsDetailed;
+
+    for (let i = 0; i < rewardTokens.length; i++) {
+      const rewardToken = rewardTokens[i];
+      console.log("Calculating rewards for token: ", rewardToken);
+
+      const collateralTypes = Object.keys(
+        config().rewards.minter.config[rewardToken]
+      );
+
+      for (let j = 0; j < collateralTypes.length; j++) {
+        const cType = collateralTypes[j];
+        const rewardAmount = config().rewards.minter.config[rewardToken][cType];
+
+        const users: UserList = await getInitialState(
+          config().START_BLOCK,
+          config().END_BLOCK,
+          owners,
+          {
+            type: "MINTER_REWARDS",
+            withBridge: false,
+          },
+          cType
+        );
+
+        Object.values(users).forEach(async (user) => {
+          usersListWithBridge[user.address] = {
+            ...user,
+            totalBridgedTokens: getBridgedTokensAtBlock(
+              bridgedData,
+              user.address,
+              cType,
+              config().START_BLOCK
+            ),
+          };
+        });
+
+        const events = await getEvents(
+          config().START_BLOCK,
+          config().END_BLOCK,
+          owners,
+          cType
+        );
+
+        let usersListWithRewards = await processRewardEvent(
+          bridgedData,
+          usersListWithBridge,
+          events,
+          rewardAmount,
+          true
+        );
+
+        if (!finalResult[rewardToken]) {
+          finalResult[rewardToken] = {};
+        }
+
+        finalResult[rewardToken][cType] = usersListWithRewards;
+      }
+    }
+
+    return finalResult;
+  } else {
+    for (let i = 0; i < rewardTokens.length; i++) {
+      const rewardToken = rewardTokens[i];
+      console.log("Calculating rewards for token: ", rewardToken);
+
+      const collateralTypes = Object.keys(
+        config().rewards.minter.config[rewardToken]
+      );
+
+      for (let j = 0; j < collateralTypes.length; j++) {
+        const cType = collateralTypes[j];
+        const rewardAmount = config().rewards.minter.config[rewardToken][cType];
+
+        const users: UserList = await getInitialState(
+          config().START_BLOCK,
+          config().END_BLOCK,
+          owners,
+          {
+            type: "MINTER_REWARDS",
+            withBridge: false,
+          },
+          cType
+        );
+
+        Object.values(users).forEach(async (user) => {
+          usersListWithBridge[user.address] = {
+            ...user,
+            totalBridgedTokens: 0,
+          };
+        });
+
+        const events = await getEvents(
+          config().START_BLOCK,
+          config().END_BLOCK,
+          owners,
+          cType
+        );
+
+        let usersListWithRewards = await processRewardEvent(
+          [],
+          usersListWithBridge,
+          events,
+          rewardAmount,
+          !config().IGNORE_BRIDGE
+        );
+
+        if (!finalResult[rewardToken]) {
+          finalResult[rewardToken] = {};
+        }
+
+        finalResult[rewardToken][cType] = usersListWithRewards;
+      }
+    }
+
+    return finalResult;
+  }
 
   //const bridgedTokensAtBlock = getBridgedTokensAtBlock(
   //  bridgedData,
@@ -90,76 +206,16 @@ export const calculateMinterRewards = async (
   //);
   //
   //console.log(bridgedTokensAtBlock, "bridgedTokensAtBlock");
-
-  for (let i = 0; i < rewardTokens.length; i++) {
-    const rewardToken = rewardTokens[i];
-    console.log("Calculating rewards for token: ", rewardToken);
-
-    const collateralTypes = Object.keys(
-      config().rewards.minter.config[rewardToken]
-    );
-
-    for (let j = 0; j < collateralTypes.length; j++) {
-      const cType = collateralTypes[j];
-      const rewardAmount = config().rewards.minter.config[rewardToken][cType];
-
-      const users: UserList = await getInitialState(
-        config().START_BLOCK,
-        config().END_BLOCK,
-        owners,
-        {
-          type: "MINTER_REWARDS",
-          withBridge: false,
-        },
-        cType
-      );
-
-      Object.values(users).forEach(async (user) => {
-        usersListWithBridge[user.address] = {
-          ...user,
-          totalBridgedTokens: getBridgedTokensAtBlock(
-            bridgedData,
-            user.address,
-            cType,
-            config().START_BLOCK
-          ),
-        };
-      });
-
-      const events = await getEvents(
-        config().START_BLOCK,
-        config().END_BLOCK,
-        owners,
-        cType
-      );
-
-      let usersListWithRewards = await processRewardEvent(
-        bridgedData,
-        usersListWithBridge,
-        events,
-        rewardAmount,
-        true
-      );
-
-      if (!finalResult[rewardToken]) {
-        finalResult[rewardToken] = {};
-      }
-
-      finalResult[rewardToken][cType] = usersListWithRewards;
-    }
-  }
-
-  return finalResult;
 };
 
-calculateMinterRewards(125316512, 126283342).then((rewards) =>
-  console.log(
-    Object.entries(rewards['KITE']['APXETH'])
-      .map(([address, value]) => ({
-        address,
-        earned: value.earned,
-      }))
-      .filter(({ earned }) => earned > 0)
-      .sort((a, b) => b.earned - a.earned)
-  )
-);
+//calculateMinterRewards(125316512, 126283342).then((rewards) =>
+//  console.log(
+//    Object.entries(rewards["KITE"]["APXETH"])
+//      .map(([address, value]) => ({
+//        address,
+//        earned: value.earned,
+//      }))
+//      .filter(({ earned }) => earned > 0)
+//      .sort((a, b) => b.earned - a.earned)
+//  )
+//);

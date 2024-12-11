@@ -109,7 +109,8 @@ export const combineResults = async (): Promise<RewardsMap> => {
   for (const [rewardToken, amount] of Object.entries(
     config().rewards.lp.config
   )) {
-    const rewards = await calculateLpRewards(6600);
+    // TODO: Change it
+    const rewards = await calculateLpRewards(amount);
 
     lpRewards[rewardToken] = Object.entries(rewards)
       .map(([address, value]) => ({

@@ -96,6 +96,8 @@ export const config = () => {
     OP_ADDRESS: envs.OP_ADDRESS,
 
     DISTRIBUTOR_SUBGRAPH_URL: envs.DISTRIBUTOR_SUBGRAPH_URL,
+
+    IGNORE_BRIDGE: true
   };
 };
 

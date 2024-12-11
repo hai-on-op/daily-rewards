@@ -1,41 +1,95 @@
+# Main contract entity that manages the reward distribution system
 type RewardDistributor @entity {
+  " Equal to: <Contract Address> "
   id: ID!
+  
+  " Address authorized to update merkle roots "
   rewardSetter: Bytes!
+  
+  " List of all merkle roots for different tokens, derived from MerkleRoot entity "
   merkleRoots: [MerkleRoot!]! @derivedFrom(field: "distributor")
+  
+  " List of all claims made through this distributor, derived from Claim entity "
   claims: [Claim!]! @derivedFrom(field: "distributor")
 }
 
+# Represents a merkle root for a specific token's reward distribution
 type MerkleRoot @entity {
-  id: ID! # token address
+  " Equal to: <Token Address> "
+  id: ID!
+  
+  " Link to the distributor contract that manages this root "
   distributor: RewardDistributor!
+  
+  " Address of the token this merkle root is for "
   token: Bytes!
+  
+  " The merkle root hash containing all claimable rewards "
   root: Bytes!
+  
+  " Timestamp when this root was last updated [seconds] "
   updatedAt: BigInt!
+  
+  " Block number when this root was last updated "
   updatedAtBlock: BigInt!
+  
+  " Transaction hash that updated this root "
   updatedAtTransaction: Bytes!
 }
 
+# Records individual reward claim events
 type Claim @entity {
-  id: ID! # user + token + timestamp
+  " Equal to: <User Address>-<Token Address>-<Timestamp> "
+  id: ID!
+  
+  " Link to the distributor contract where claim was made "
   distributor: RewardDistributor!
-  user: User!
+  
+  " User who claimed the reward "
+  user: RewardUser!
+  
+  " Address of the token that was claimed "
   token: Bytes!
+  
+  " Amount of tokens claimed "
   amount: BigInt!
+  
+  " Timestamp when claim was made [seconds] "
   claimedAt: BigInt!
+  
+  " Block number when claim was made "
   claimedAtBlock: BigInt!
+  
+  " Transaction hash of the claim "
   claimedAtTransaction: Bytes!
 }
 
-type User @entity {
-  id: ID! # user address
+# Represents a user who can claim rewards
+type RewardUser @entity {
+  " Equal to: <User Address> "
+  id: ID!
+  
+  " List of all claims made by this user, derived from Claim entity "
   claims: [Claim!]! @derivedFrom(field: "user")
+  
+  " Aggregated claims per token, derived from TokenClaim entity "
   totalClaimedByToken: [TokenClaim!]! @derivedFrom(field: "user")
 }
 
+# Aggregates total claims per user per token
 type TokenClaim @entity {
-  id: ID! # user address + token address
-  user: User!
+  " Equal to: <User Address>-<Token Address> "
+  id: ID!
+  
+  " Link to the user who owns these claims "
+  user: RewardUser!
+  
+  " Address of the token that was claimed "
   token: Bytes!
+  
+  " Total amount claimed for this token "
   totalAmount: BigInt!
+  
+  " Number of times this token has been claimed "
   claimCount: BigInt!
 }

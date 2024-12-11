@@ -95,7 +95,7 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
   }
 }
 
-const main = async () => {
+export const main = async () => {
   const results = await combineResults();
 
   // Convert earned values to BigNumber with 18 decimals
@@ -181,4 +181,4 @@ const main = async () => {
   await updateMerkleRoots(merkleTries);
 };
 
-main().catch(console.error);
+//main().catch(console.error);
