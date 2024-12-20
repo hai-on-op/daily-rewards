@@ -83,6 +83,7 @@ export const processSafesDebt = async (
 ): Promise<ProcessedDebt[]> => {
   // Fetch accumulated rates for collateral types
   const rates: { [key: string]: number } = {};
+
   for (const cType of collateralTypes) {
     rates[cType] = await getAccumulatedRate(startBlock, cType, subgraphUrl);
   }

@@ -1,4 +1,4 @@
-export type TokenType = "RETH" | "WSTETH" | "APXETH" | "WETH" | "OP";
+export type TokenType = "RETH" | "WSTETH" | "APXETH" | "WETH" | "OP" | "TOTEM" | "STONES";
 export type RewardSource = "KITE" | "OP";
 
 export interface MinterRewardConfig {

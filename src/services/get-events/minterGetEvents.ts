@@ -112,7 +112,7 @@ const getSafeModificationEvents = async (
     await subgraphQueryPaginated(
       safeModificationQuery,
       "modifySAFECollateralizations",
-      config().GEB_SUBGRAPH_URL
+      config().MINTER_GEB_SUBGRAPH_URL
     );
 
   // Event used in liquidation
@@ -134,7 +134,7 @@ const getSafeModificationEvents = async (
     await subgraphQueryPaginated(
       confiscateSAFECollateralAndDebtsQuery,
       "confiscateSAFECollateralAndDebts",
-      config().GEB_SUBGRAPH_URL
+      config().MINTER_GEB_SUBGRAPH_URL
     );
 
   // Event transferring debt, rarely used
@@ -164,7 +164,7 @@ const getSafeModificationEvents = async (
   }[] = await subgraphQueryPaginated(
     transferSAFECollateralAndDebtsQuery,
     "transferSAFECollateralAndDebts",
-    config().GEB_SUBGRAPH_URL
+    config().MINTER_GEB_SUBGRAPH_URL
   );
 
   const transferSAFECollateralAndDebtsProcessed: SubgraphSafeModification[] =
@@ -245,7 +245,7 @@ const getUpdateAccumulatedRateEvent = async (
   }[] = await subgraphQueryPaginated(
     query,
     "updateAccumulatedRates",
-    config().GEB_SUBGRAPH_URL
+    config().MINTER_GEB_SUBGRAPH_URL
   );
 
   const events = data.map((x) => ({

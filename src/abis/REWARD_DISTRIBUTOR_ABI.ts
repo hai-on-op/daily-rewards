@@ -1,6 +1,12 @@
 export const REWARD_DISTRIBUTOR_ABI = [
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "targetDuration",
+        type: "uint256",
+      },
+    ],
     stateMutability: "nonpayable",
     type: "constructor",
   },
@@ -41,6 +47,12 @@ export const REWARD_DISTRIBUTOR_ABI = [
         name: "roots",
         type: "bytes32[]",
       },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "counter",
+        type: "uint256",
+      },
     ],
     name: "MerkleRootsUpdated",
     type: "event",
@@ -62,6 +74,19 @@ export const REWARD_DISTRIBUTOR_ABI = [
       },
     ],
     name: "OwnershipTransferred",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "newDuration",
+        type: "uint256",
+      },
+    ],
+    name: "RewardDurationUpdated",
     type: "event",
   },
   {
@@ -132,11 +157,24 @@ export const REWARD_DISTRIBUTOR_ABI = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "duration",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
-        internalType: "address",
+        internalType: "bytes32",
         name: "",
-        type: "address",
+        type: "bytes32",
       },
       {
         internalType: "address",
@@ -150,6 +188,32 @@ export const REWARD_DISTRIBUTOR_ABI = [
         internalType: "bool",
         name: "",
         type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "lastSettedMerkleRoot",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "merkleRootCounter",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -246,6 +310,19 @@ export const REWARD_DISTRIBUTOR_ABI = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "newDuration",
+        type: "uint256",
+      },
+    ],
+    name: "setDuration",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {

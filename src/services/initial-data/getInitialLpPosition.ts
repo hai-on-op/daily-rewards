@@ -12,6 +12,8 @@ export const buildLpPositionsQuery = (
   startBlock: number,
   poolAddress: string
 ): string => {
+
+
   return `
     {
       positions(

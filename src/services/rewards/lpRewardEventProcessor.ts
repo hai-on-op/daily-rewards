@@ -9,7 +9,7 @@ import {
   Rates,
 } from "../../types";
 import { getOrCreateUser } from "../../utils/getOrCreateUser";
-import { provider } from "../../utils/chain";
+import { lpProvider } from "../../utils/chain";
 import { sanityCheckAllUsers } from "../sanity-check/sanityCheck";
 import { getStakingWeightForLPPositions } from "../staking-weights/getStakingWeight";
 import { getPoolState } from "../pool-state/getPoolState";
@@ -24,10 +24,10 @@ export const processRewardEvent = async (
   events: LPRewardEvent[]
 ): Promise<UserList> => {
   // Starting and ending of the campaign
-  const startBlock = config().START_BLOCK;
-  const endBlock = config().END_BLOCK;
-  const startTimestamp = (await provider.getBlock(startBlock)).timestamp;
-  const endTimestamp = (await provider.getBlock(endBlock)).timestamp;
+  const startBlock = config().LP_START_BLOCK;
+  const endBlock = config().LP_END_BLOCK;
+  const startTimestamp = (await lpProvider.getBlock(startBlock)).timestamp;
+  const endTimestamp = (await lpProvider.getBlock(endBlock)).timestamp;
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
   // Ongoing Total supply of weight
@@ -47,7 +47,7 @@ export const processRewardEvent = async (
   const rates: Rates = {};
   for (let i = 0; i < CTYPES.length; i++) {
     const cType = CTYPES[i];
-    const cTypeRate = await getAccumulatedRate(startBlock, cType);
+    const cTypeRate = await getAccumulatedRate(startBlock, cType, config().LP_GEB_SUBGRAPH_URL);
     rates[cType] = cTypeRate;
   }
   // Ongoing uni v3 sqrtPrice
@@ -63,9 +63,7 @@ export const processRewardEvent = async (
   let redemptionPriceLastUpdate = 0;
   // ===== Main processing loop ======
   console.log(
-    `Distributing ${
-      rewardAmount
-    } at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
+    `Distributing ${rewardAmount} at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
   console.log("Applying all events...");
   // Main processing loop processing events in chronologic order that modify the current reward rate distribution for each user.

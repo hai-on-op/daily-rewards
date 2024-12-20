@@ -15,10 +15,10 @@ const config: HardhatUserConfig = {
     },
 
     // Optimism Goerli (testnet)
-    //"optimism-sepolia": {
-    //  url: process.env.OPTIMISM_GOERLI_RPC_URL,
-    //  accounts: [process.env.PRIVATE_KEY!].filter(Boolean),
-    //},
+    "optimism-sepolia": {
+      url: process.env.OPTIMISM_GOERLI_RPC_URL,
+      accounts: [process.env.PRIVATE_KEY!].filter(Boolean),
+    },
     
     // Optimism Mainnet
    /* optimism: {

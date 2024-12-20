@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { RewardDistributor, MockERC20 } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 interface Claim {
   user: string;
@@ -48,7 +49,7 @@ describe("RewardDistributor", function () {
     const RewardDistributor = await ethers.getContractFactory(
       "RewardDistributor"
     );
-    rewardDistributor = await RewardDistributor.deploy();
+    rewardDistributor = await RewardDistributor.deploy(29.5 * 60);
 
     // Setup
     await rewardDistributor.setRewardSetter(rewardSetter.address);
@@ -143,7 +144,7 @@ describe("RewardDistributor", function () {
         rewardDistributor.connect(rewardSetter).updateMerkleRoots(tokens, roots)
       )
         .to.emit(rewardDistributor, "MerkleRootsUpdated")
-        .withArgs(tokens, roots);
+        .withArgs(tokens, roots, 1);
 
       expect(
         await rewardDistributor.merkleRoots(await mockERC20.getAddress())
@@ -179,7 +180,7 @@ describe("RewardDistributor", function () {
         rewardDistributor.connect(rewardSetter).updateMerkleRoots(tokens, roots)
       )
         .to.emit(rewardDistributor, "MerkleRootsUpdated")
-        .withArgs(tokens, roots);
+        .withArgs(tokens, roots, 1);
 
       expect(
         await rewardDistributor.merkleRoots(await mockERC20.getAddress())
@@ -198,6 +199,18 @@ describe("RewardDistributor", function () {
         ethers.parseEther("300")
       );
       const newTree = generateMerkleTree(newClaims);
+
+      await expect(
+        rewardDistributor
+          .connect(rewardSetter)
+          .updateMerkleRoots([await mockERC20.getAddress()], [newTree.root])
+      ).to.reverted
+
+      await time.increase(29.5 * 60);
+    
+      // Mine a new block with the updated timestamp
+      await time.advanceBlock();
+  
 
       // Update with new root
       await expect(

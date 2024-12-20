@@ -2,7 +2,14 @@ import { config } from "../../config";
 import { subgraphQueryPaginated } from "../subgraph/utils";
 import { LPRewardEvent, RewardEventType } from "../../types";
 import { getExclusionList } from "../../utils/getExclusionList";
-import { blockToTimestamp } from "../../utils/chain";
+import { providers } from "ethers";
+import { lpProvider } from "../../utils/chain";
+
+export const blockToTimestamp = async (block: number) => {
+  return (await lpProvider.getBlock(block)).timestamp;
+};
+
+
 
 export const getEvents = async (
   startBlock: number,
@@ -109,7 +116,7 @@ export const getSafeModificationEvents = async (
     await subgraphQueryPaginated(
       safeModificationQuery,
       "modifySAFECollateralizations",
-      config().GEB_SUBGRAPH_URL
+      config().LP_GEB_SUBGRAPH_URL
     );
 
   // Event used in liquidation
@@ -129,7 +136,7 @@ export const getSafeModificationEvents = async (
     await subgraphQueryPaginated(
       confiscateSAFECollateralAndDebtsQuery,
       "confiscateSAFECollateralAndDebts",
-      config().GEB_SUBGRAPH_URL
+      config().LP_GEB_SUBGRAPH_URL
     );
 
   // Event transferring debt, rarely used
@@ -155,7 +162,7 @@ export const getSafeModificationEvents = async (
   }[] = await subgraphQueryPaginated(
     transferSAFECollateralAndDebtsQuery,
     "transferSAFECollateralAndDebts",
-    config().GEB_SUBGRAPH_URL
+    config().LP_GEB_SUBGRAPH_URL
   );
 
   const transferSAFECollateralAndDebtsProcessed: SubgraphSafeModification[] =
@@ -329,7 +336,7 @@ export const getUpdateAccumulatedRateEvent = async (
   }[] = await subgraphQueryPaginated(
     query,
     "updateAccumulatedRates",
-    config().GEB_SUBGRAPH_URL
+    config().LP_GEB_SUBGRAPH_URL
   );
 
   const events = data.map((x) => ({

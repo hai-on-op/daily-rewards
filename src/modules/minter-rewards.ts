@@ -40,25 +40,24 @@ export const calculateMinterRewards = async (
       console.log("Calculating rewards for collateral type: ", cType);
 
       const users: UserList = await getInitialState(
-        config().START_BLOCK,
-        config().END_BLOCK,
+        config().MINTER_START_BLOCK,
+        config().MINTER_END_BLOCK,
         owners,
         {
           type: "MINTER_REWARDS",
           withBridge: false,
         },
+        config().MINTER_GEB_SUBGRAPH_URL,
         cType
       );
-
-      console.log(Object.keys(users).length, "users");
 
       Object.keys(users).forEach((userAddress) =>
         usersAddresses.add(userAddress.toLowerCase())
       );
 
       const events = await getEvents(
-        config().START_BLOCK,
-        config().END_BLOCK,
+        config().MINTER_START_BLOCK,
+        config().MINTER_END_BLOCK,
         owners,
         cType
       );
@@ -73,8 +72,6 @@ export const calculateMinterRewards = async (
 
   const targetUserList = usersAddresses; // ['0x5275817b74021e97c980e95ede6bbac0d0d6f3a2']
 
-  let usersListWithBridge: UserList = {};
-
   if (!config().IGNORE_BRIDGE) {
     const bridgedData = (await getBridgeData(
       { fromBlock: 0, toBlock },
@@ -83,6 +80,8 @@ export const calculateMinterRewards = async (
     )) as BridgedAmountsDetailed;
 
     for (let i = 0; i < rewardTokens.length; i++) {
+      let usersListWithBridge: UserList = {};
+
       const rewardToken = rewardTokens[i];
       console.log("Calculating rewards for token: ", rewardToken);
 
@@ -95,13 +94,14 @@ export const calculateMinterRewards = async (
         const rewardAmount = config().rewards.minter.config[rewardToken][cType];
 
         const users: UserList = await getInitialState(
-          config().START_BLOCK,
-          config().END_BLOCK,
+          config().MINTER_START_BLOCK,
+          config().MINTER_END_BLOCK,
           owners,
           {
             type: "MINTER_REWARDS",
             withBridge: false,
           },
+          config().MINTER_GEB_SUBGRAPH_URL,
           cType
         );
 
@@ -112,14 +112,14 @@ export const calculateMinterRewards = async (
               bridgedData,
               user.address,
               cType,
-              config().START_BLOCK
+              config().MINTER_START_BLOCK
             ),
           };
         });
 
         const events = await getEvents(
-          config().START_BLOCK,
-          config().END_BLOCK,
+          config().MINTER_START_BLOCK,
+          config().MINTER_END_BLOCK,
           owners,
           cType
         );
@@ -154,14 +154,17 @@ export const calculateMinterRewards = async (
         const cType = collateralTypes[j];
         const rewardAmount = config().rewards.minter.config[rewardToken][cType];
 
+        const usersListWithBridge: UserList = {};
+
         const users: UserList = await getInitialState(
-          config().START_BLOCK,
-          config().END_BLOCK,
+          config().MINTER_START_BLOCK,
+          config().MINTER_END_BLOCK,
           owners,
           {
             type: "MINTER_REWARDS",
             withBridge: false,
           },
+          config().MINTER_GEB_SUBGRAPH_URL,
           cType
         );
 
@@ -173,8 +176,8 @@ export const calculateMinterRewards = async (
         });
 
         const events = await getEvents(
-          config().START_BLOCK,
-          config().END_BLOCK,
+          config().MINTER_START_BLOCK,
+          config().MINTER_END_BLOCK,
           owners,
           cType
         );
@@ -208,14 +211,30 @@ export const calculateMinterRewards = async (
   //console.log(bridgedTokensAtBlock, "bridgedTokensAtBlock");
 };
 
-//calculateMinterRewards(125316512, 126283342).then((rewards) =>
-//  console.log(
-//    Object.entries(rewards["KITE"]["APXETH"])
-//      .map(([address, value]) => ({
-//        address,
-//        earned: value.earned,
-//      }))
-//      .filter(({ earned }) => earned > 0)
-//      .sort((a, b) => b.earned - a.earned)
-//  )
-//);
+/*calculateMinterRewards(14461892, 21308720).then((rewards) => {
+  console.log(
+    rewards,
+    //"Stones",
+    //Object.entries(rewards["KITE"]["STONES"])
+    //  .map(([address, value]) => ({
+    //    address,
+    //    earned: value.earned,
+    //  }))
+    //  .sort((a, b) => b.earned - a.earned),
+    //"WETH",
+    //Object.entries(rewards["KITE"]["WETH"])
+    //  .map(([address, value]) => ({
+    //    address,
+    //    earned: value.earned,
+    //  }))
+    //  .sort((a, b) => b.earned - a.earned),
+    //"TOTEM",
+    Object.entries(rewards["DINERO"]["TOTEM"])
+      .map(([address, value]) => ({
+        address,
+        earned: value.earned,
+      }))
+      .sort((a, b) => b.earned - a.earned)
+  );
+  console.log(rewards);
+});*/

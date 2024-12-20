@@ -13,21 +13,29 @@ export const calculateLpRewards = async (rewardAmount: number) => {
   const cache = {}; // await cacheManager.loadAllCaches();
   console.log("Loaded cache from disk");
 
+  console.log("config().LP_GEB_SUBGRAPH_URL", config().LP_GEB_SUBGRAPH_URL)
+
   const users: UserList = await getInitialState(
-    config().START_BLOCK,
-    config().END_BLOCK,
+    config().LP_START_BLOCK,
+    config().LP_END_BLOCK,
     owners,
     {
       type: "LP_REWARDS",
       withBridge: false,
-    }
+    },
+    config().LP_GEB_SUBGRAPH_URL
   );
 
   const events = await getEvents(
-    config().START_BLOCK,
-    config().END_BLOCK,
+    config().LP_START_BLOCK,
+    config().LP_END_BLOCK,
     owners
   );
 
   return await processRewardEvent(rewardAmount, users, events);
 };
+
+
+calculateLpRewards(500).then(res => {
+  console.log(res)
+})

@@ -42,6 +42,12 @@ export function combineRewards(
 
     // Add minter rewards
     minterTokenRewards.forEach(({ address, earned }) => {
+      console.log("++++++++++++++++ Minter Reward combining");
+
+      console.log(address, earned);
+
+      console.log("++++++++++++++++");
+
       addressMap.set(address, (addressMap.get(address) || 0) + earned);
     });
 
@@ -60,8 +66,8 @@ export function combineRewards(
 
 export const combineResults = async (): Promise<RewardsMap> => {
   const minterRewards = await calculateMinterRewards(
-    config().START_BLOCK,
-    config().END_BLOCK
+    config().MINTER_START_BLOCK,
+    config().MINTER_END_BLOCK
   );
 
   // Minter Rewards
@@ -102,7 +108,22 @@ export const combineResults = async (): Promise<RewardsMap> => {
     };
   }
 
-  const minterRewardsAggregated = aggregateTokenRewards(minterRewards);
+  const kiteRewardsAggregated = aggregateTokenRewards(minterRewards, "KITE");
+  const opRewardsAggregated = aggregateTokenRewards(minterRewards, "OP");
+  const dineroRewardsAggregated = aggregateTokenRewards(
+    minterRewards,
+    "DINERO"
+  );
+
+  const minterRewardsAggregated = {
+    ...kiteRewardsAggregated,
+    ...opRewardsAggregated,
+    ...dineroRewardsAggregated,
+  };
+
+  console.log("++++++++++++++++ Minter Rewards Aggregated");
+  console.log(minterRewards, minterRewardsAggregated);
+  console.log("++++++++++++++++");
 
   let lpRewards: Record<string, { address: string; earned: number }[]> = {};
 
@@ -125,4 +146,5 @@ export const combineResults = async (): Promise<RewardsMap> => {
   const combinedRewards = combineRewards(lpRewards, minterRewardsAggregated);
 
   return combinedRewards;
+  //return {};
 };

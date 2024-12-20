@@ -17,7 +17,10 @@ interface CollateralTypeResult {
  * @param {string} cType - The collateral type identifier.
  * @returns {string} The GraphQL query string.
  */
-export const buildAccumulatedRateQuery = (block: number, cType: string): string => {
+export const buildAccumulatedRateQuery = (
+  block: number,
+  cType: string
+): string => {
   return `
     {
       collateralType(id: "${cType}", block: { number: ${block} }) {
@@ -65,6 +68,7 @@ export const getAccumulatedRate = async (
   subgraphUrl: string = config().GEB_SUBGRAPH_URL
 ): Promise<number> => {
   // Build the query
+
   const query = buildAccumulatedRateQuery(block, cType);
 
   // Fetch data

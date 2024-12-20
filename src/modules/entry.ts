@@ -1,26 +1,11 @@
 import { config } from "../config";
-import fs from "fs/promises";
-import path from "path";
 import { main } from "./main";
 
+import { lpProvider, minterProvider } from "../utils/chain";
+import { ethers } from "ethers";
+import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
+
 config();
-
-const COUNTER_FILE = path.join(__dirname, "../../.counter.json");
-
-async function readCounter(): Promise<number> {
-  try {
-    const data = await fs.readFile(COUNTER_FILE, "utf8");
-    const json = JSON.parse(data);
-    return json.counter || 0;
-  } catch (error) {
-    // If file doesn't exist or is invalid, return 0
-    return 0;
-  }
-}
-
-async function writeCounter(value: number): Promise<void> {
-  await fs.writeFile(COUNTER_FILE, JSON.stringify({ counter: value }, null, 2));
-}
 
 function multiplyConfigValues(config: any, multiplier: number): any {
   const result: any = {};
@@ -46,9 +31,28 @@ function multiplyLPConfigValues(config: any, multiplier: number): any {
 }
 
 const entry = async () => {
+  const cfg = config();
+
+  const provider = new ethers.providers.JsonRpcProvider(
+    cfg.DISTRIBUTOR_RPC_URL
+  );
+  const signer = new ethers.Wallet(cfg.REWARD_SETTER_PRIVATE_KEY, provider);
+
+  // Get contract instance
+  const rewardDistributor = new ethers.Contract(
+    cfg.REWARD_DISTRIBUTOR_ADDRESS,
+    REWARD_DISTRIBUTOR_ABI,
+    signer
+  );
+
   // Read current counter value
-  const entryCounter = await readCounter();
+  const entryCounter = Number(
+    String(await rewardDistributor.merkleRootCounter())
+  );
   console.log("Current entry count:", entryCounter);
+
+  process.env.LP_END_BLOCK = String(await lpProvider.getBlockNumber());
+  process.env.MINTER_END_BLOCK = String(await minterProvider.getBlockNumber());
 
   try {
     // Parse and update REWARD_MINTER_CONFIG
@@ -77,7 +81,6 @@ const entry = async () => {
     main();
 
     // Increment and save counter after successful execution
-    await writeCounter(entryCounter + 1);
     console.log("Entry count updated to:", entryCounter + 1);
   } catch (error) {
     console.error("Error in entry function:", error);

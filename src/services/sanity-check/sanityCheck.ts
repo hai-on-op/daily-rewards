@@ -24,8 +24,12 @@ export const finalSanityChecks = async (
 
 export const sanityCheckAllUsers = (users: UserList, event: LPRewardEvent) => {
   const numberCheck = (num: number) => !isFinite(num) || num < 0;
+
+
   if (event.address && event.address !== NULL_ADDRESS) {
     const usr = users[event.address];
+    console.log(usr)
+
     if (
       numberCheck(usr.debt) ||
       numberCheck(usr.stakingWeight) ||

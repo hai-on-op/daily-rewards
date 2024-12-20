@@ -106,32 +106,40 @@ export const getInitialState = async (
   endBlock: number,
   owners: Map<string, string>,
   stakingConfig: StakingWeightConfig,
+  gebSubgraph?: string,
   cType?: string
 ): Promise<UserList> => {
-  const positions = await getInitialLpPosition(
-    startBlock,
-    config().UNISWAP_POOL_ADDRESS,
-    config().UNISWAP_SUBGRAPH_URL
-  );
-  const debts = await getInitialSafesDebt(
-    startBlock,
-    owners,
-    config().COLLATERAL_TYPES,
-    config().GEB_SUBGRAPH_URL,
-    cType
-  );
+  console.log("geb subgrpah", gebSubgraph);
 
-  console.log(`Fetched ${debts.length} debt balances`);
+  const gebSubgraphUrl = gebSubgraph || config().GEB_SUBGRAPH_URL;
+
+
 
   let users: UserList = {};
 
-  if(stakingConfig.type === "LP_REWARDS") {
+  if (stakingConfig.type === "LP_REWARDS") {
+    const positions = await getInitialLpPosition(
+      startBlock,
+      config().UNISWAP_POOL_ADDRESS,
+      config().UNISWAP_SUBGRAPH_URL
+    );
+
     users = addLpPositionsToUsers(users, positions);
     console.log(`Fetched ${Object.keys(users).length} LP positions`);
-  
   }
 
   if (stakingConfig.type === "MINTER_REWARDS") {
+    const debts = await getInitialSafesDebt(
+      startBlock,
+      owners,
+      config().COLLATERAL_TYPES,
+      gebSubgraphUrl,
+      cType
+    );
+
+    console.log(`Fetched ${debts.length} debt balances`);
+
+    
     users = addDebtsToUsers(users, debts);
     console.log(`Fetched ${Object.keys(users).length} debt balances`);
   }
@@ -148,10 +156,8 @@ export const getInitialState = async (
   );
   const redemptionPrice = await getRedemptionPriceFromBlock(
     startBlock,
-    config().GEB_SUBGRAPH_URL
+    gebSubgraphUrl
   );
-
-
 
   users = setInitialStakingWeights(
     users,

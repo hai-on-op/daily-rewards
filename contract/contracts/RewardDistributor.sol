@@ -7,13 +7,28 @@ import "./IRewardDistributor.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract RewardDistributor is IRewardDistributor, Ownable {
+    uint256 public merkleRootCounter;
+
+    // Duration in seconds
+    uint256 public duration;
+
+    uint256 public lastSettedMerkleRoot;
+
     address public rewardSetter;
     mapping(address => bytes32) public merkleRoots;
 
     // merkleRoot => UserAddress => IsClaimed
     mapping(bytes32 => mapping(address => bool)) public isClaimed;
 
-    constructor() Ownable(msg.sender) {}
+    constructor(uint256 targetDuration) Ownable(msg.sender) {
+        setDuration(targetDuration);
+        merkleRootCounter = 0;
+    }
+
+    function setDuration(uint256 newDuration) public onlyOwner {
+        duration = newDuration;
+        emit RewardDurationUpdated(newDuration);
+    }
 
     function setRewardSetter(address newRewardSetter) external onlyOwner {
         address oldSetter = rewardSetter;
@@ -25,6 +40,7 @@ contract RewardDistributor is IRewardDistributor, Ownable {
         address[] calldata tokens,
         bytes32[] calldata roots
     ) external {
+        require(block.timestamp - lastSettedMerkleRoot > duration, "Too soon");
         require(msg.sender == rewardSetter, "Not reward setter");
         require(tokens.length == roots.length, "Array lengths must match");
 
@@ -33,7 +49,9 @@ contract RewardDistributor is IRewardDistributor, Ownable {
             merkleRoots[tokens[i]] = roots[i];
         }
 
-        emit MerkleRootsUpdated(tokens, roots);
+        lastSettedMerkleRoot = block.timestamp;
+        merkleRootCounter++;
+        emit MerkleRootsUpdated(tokens, roots, merkleRootCounter);
     }
 
     function claim(

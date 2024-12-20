@@ -43,6 +43,12 @@ export const config = () => {
   return {
     // Subgraph URLs
     GEB_SUBGRAPH_URL: envs.GEB_SUBGRAPH_URL,
+    LP_GEB_SUBGRAPH_URL: envs.LP_GEB_SUBGRAPH_URL
+      ? envs.LP_GEB_SUBGRAPH_URL
+      : envs.GEB_SUBGRAPH_URL,
+    MINTER_GEB_SUBGRAPH_URL: envs.MINTER_GEB_SUBGRAPH_URL
+      ? envs.MINTER_GEB_SUBGRAPH_URL
+      : envs.GEB_SUBGRAPH_URL,
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
 
     // Contract Addresses
@@ -57,16 +63,35 @@ export const config = () => {
 
     // Network Configuration
     RPC_URL: envs.RPC_URL,
+    LP_RPC_URL: envs.LP_RPC_URL ? envs.LP_RPC_URL : envs.RPC_URL,
+    MINTER_RPC_URL: envs.MINTER_RPC_URL ? envs.MINTER_RPC_URL : envs.RPC_URL,
     CHAIN_ID: envs.CHAIN_ID || "optimism-mainnet",
 
     // Blocks and Rewards
     START_BLOCK: Number(envs.START_BLOCK),
     END_BLOCK: Number(envs.END_BLOCK),
+
+    LP_START_BLOCK: Number(envs.LP_START_BLOCK)
+      ? Number(envs.LP_START_BLOCK)
+      : Number(envs.START_BLOCK),
+    LP_END_BLOCK: Number(envs.LP_END_BLOCK)
+      ? Number(envs.LP_END_BLOCK)
+      : Number(envs.END_BLOCK),
+
+    MINTER_START_BLOCK: Number(envs.MINTER_START_BLOCK)
+      ? Number(envs.MINTER_START_BLOCK)
+      : Number(envs.START_BLOCK),
+    MINTER_END_BLOCK: Number(envs.MINTER_END_BLOCK)
+      ? Number(envs.MINTER_END_BLOCK)
+      : Number(envs.END_BLOCK),
+
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
     REWARD_TOKEN: envs.REWARD_TOKEN,
 
     // Lists and Files
-    COLLATERAL_TYPES: ["RETH", "WSTETH", "APXETH"] as TokenType[],
+    COLLATERAL_TYPES: JSON.parse(
+      envs.REWARD_MINTER_COLLATERAL_TYPES
+    ) as TokenType[], // ["RETH", "WSTETH", "APXETH"] as TokenType[],
     LP_COLLATERAL_TYPES: ["OP", "WETH", "WSTETH"] as TokenType[],
     EXCLUSION_LIST_FILE: path.join(__dirname, "..", "..", "exclusion-list.csv"),
 
@@ -94,10 +119,11 @@ export const config = () => {
     REWARD_DISTRIBUTOR_ADDRESS: envs.REWARD_DISTRIBUTOR_ADDRESS,
     KITE_ADDRESS: envs.KITE_ADDRESS,
     OP_ADDRESS: envs.OP_ADDRESS,
+    DINERO_ADDRESS: envs.DINERO_ADDRESS,
 
     DISTRIBUTOR_SUBGRAPH_URL: envs.DISTRIBUTOR_SUBGRAPH_URL,
 
-    IGNORE_BRIDGE: true
+    IGNORE_BRIDGE: true,
   };
 };
 

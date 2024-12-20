@@ -12,7 +12,7 @@ import {
   getOrCreateUser,
   getOrCreateUserMutate,
 } from "../../utils/getOrCreateUser";
-import { provider } from "../../utils/chain";
+import { minterProvider } from "../../utils/chain";
 import { sanityCheckAllUsers } from "../sanity-check/sanityCheck";
 import { getStakingWeightForDebt } from "../staking-weights/getStakingWeight";
 import { getPoolState } from "../pool-state/getPoolState";
@@ -20,7 +20,7 @@ import { getRedemptionPriceFromTimestamp } from "../redemption-price/getRedempti
 import { getBridgedTokensAtBlock } from "../bridge-data/getBridgedTokensAtBlock";
 import { BridgedAmountsDetailed } from "../bridge-data/types";
 
-export const CTYPES = ["WSTETH", "RETH", "APXETH"];
+export const CTYPES = config().COLLATERAL_TYPES;
 
 export const processRewardEvent = async (
   bridgedData: BridgedAmountsDetailed,
@@ -31,20 +31,11 @@ export const processRewardEvent = async (
 ): Promise<UserList> => {
   let usersList = users;
 
-  console.log("++++++++++++++++++++++++++++++++++++");
-
-  console.log(bridgedData);
-  console.log(
-    events.map((e) => e.createdAtBlock),
-    "events"
-  );
-  console.log("++++++++++++++++++++++++++++++++++++");
-
   // Starting and ending of the campaign
-  const startBlock = config().START_BLOCK;
-  const endBlock = config().END_BLOCK;
-  const startTimestamp = (await provider.getBlock(startBlock)).timestamp;
-  const endTimestamp = (await provider.getBlock(endBlock)).timestamp;
+  const startBlock = config().MINTER_START_BLOCK;
+  const endBlock = config().MINTER_END_BLOCK;
+  const startTimestamp = (await minterProvider.getBlock(startBlock)).timestamp;
+  const endTimestamp = (await minterProvider.getBlock(endBlock)).timestamp;
 
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
@@ -69,7 +60,7 @@ export const processRewardEvent = async (
   const rates: Rates = {};
   for (let i = 0; i < CTYPES.length; i++) {
     const cType = CTYPES[i];
-    const cTypeRate = await getAccumulatedRate(startBlock, cType);
+    const cTypeRate = await getAccumulatedRate(startBlock, cType, config().MINTER_GEB_SUBGRAPH_URL);
     rates[cType] = cTypeRate;
   }
 
@@ -77,13 +68,14 @@ export const processRewardEvent = async (
   // ===== Main processing loop ======
 
   console.log(
-    `Distributing ${rewardAmount} at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
+    `Distributing ${rewardAmount}  at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
   console.log("Applying all events...");
   // Main processing loop processing events in chronologic order that modify the current reward rate distribution for each user.
 
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
+
 
     if (i % 1000 === 0 && i > 0) console.log(`  Processed ${i} events`);
 
@@ -98,17 +90,8 @@ export const processRewardEvent = async (
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
         const user = getOrCreateUserMutate(event.address ?? "", users);
+
         earn(user, rewardPerWeight);
-
-        // setting user totalBridgedTokens
-
-        //console.log(
-        //  "Getting bridged tokens at block: ",
-        //  event.createdAtBlock,
-        //  "event.createdAtBlock",
-        //  event.address,
-        //  "event address"
-        //);
 
         user.totalBridgedTokens = getBridgedTokensAtBlock(
           bridgedData,
@@ -118,6 +101,9 @@ export const processRewardEvent = async (
         );
 
         const accumulatedRate = rates[event.cType as string];
+
+      //  console.log("event", event, user, rates, accumulatedRate)
+
 
         // Convert to real debt after interests and update the debt balance
         const adjustedDeltaDebt = (event.value as number) * accumulatedRate;

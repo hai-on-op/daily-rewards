@@ -15,7 +15,7 @@ async function main() {
   const RewardDistributor = await ethers.getContractFactory(
     "RewardDistributor"
   );
-  const rewardDistributor = await RewardDistributor.deploy();
+  const rewardDistributor = await RewardDistributor.deploy(29.5 * 60);
   await rewardDistributor.waitForDeployment();
   console.log(
     "RewardDistributor deployed to:",
@@ -99,20 +99,65 @@ async function main() {
   });
 }
 
-/*async function deployRewardDistributor() {
+async function deployRewardDistributor() {
   const RewardDistributor = await ethers.getContractFactory(
     "RewardDistributor"
   );
-  const signer = await ethers.getSigners()
-  const rewardDistributor = new ethers.Contract('0x7eEabf2B41445d3f004FA2dA2EEDf803922aC8de', RewardDistributor.interface, signer[0]) //await RewardDistributor.deploy();
-  const rewardSetterTx = await rewardDistributor.setRewardSetter(
-    REWARD_SETTER_ADDRESS
-  );
-  await rewardSetterTx.wait();
-  console.log("Reward setter set to:", REWARD_SETTER_ADDRESS);
-}*/
+  const signer = await ethers.getSigners();
+  const rewardDistributor = new ethers.Contract(
+    "0x786594B1b10b7a8996dFD11096dB13B56bec4869",
+    RewardDistributor.interface,
+    signer[0]
+  ); //await RewardDistributor.deploy();
 
-main()
+  console.log(
+    await rewardDistributor.merkleRoots(
+      "0x47c6ae06686D35DD7656bE6AF3091Fcd626bbB2f"
+    ),
+    "Merkle Root"
+  );
+
+  //const rewardDistributor = await RewardDistributor.deploy(29.5 * 60);
+
+  //console.log(await rewardDistributor.getAddress());
+  //
+  //const rewardSetterTx = await rewardDistributor.setRewardSetter(
+  //  REWARD_SETTER_ADDRESS
+  //);
+  //await rewardSetterTx.wait();
+  //console.log("Reward setter set to:", REWARD_SETTER_ADDRESS);
+
+  /*const MockERC20 = await ethers.getContractFactory("MockERC20");
+  const mockOP = await MockERC20.deploy("Mock OP", "OP");
+  const mockDinero = await MockERC20.deploy("MOCK DINERO", "DINERO");
+  await mockOP.waitForDeployment();
+  await mockDinero.waitForDeployment();
+
+  console.log("MockOP deployed to:", await mockOP.getAddress());
+  console.log("MockDinero deployed to:", await mockDinero.getAddress());
+
+  const mintDineroTx = await mockDinero.mint(
+    "0x4A87a2A017Be7feA0F37f03F3379d43665486Ff8",
+    INITIAL_MINT_AMOUNT
+  );
+  await mintDineroTx.wait();
+  console.log(
+    "Minted DINERO tokens to RewardDistributor:",
+    ethers.formatEther(INITIAL_MINT_AMOUNT)
+  );
+
+  const mintOpTx = await mockOP.mint(
+    "0x4A87a2A017Be7feA0F37f03F3379d43665486Ff8",
+    INITIAL_MINT_AMOUNT
+  );
+  await mintOpTx.wait();
+  console.log(
+    "Minted OP tokens to RewardDistributor:",
+    ethers.formatEther(INITIAL_MINT_AMOUNT)
+  );*/
+}
+
+deployRewardDistributor()
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error);

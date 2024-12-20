@@ -67,6 +67,7 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
   const tokenAddressMap = {
     KITE: cfg.KITE_ADDRESS,
     OP: cfg.OP_ADDRESS,
+    DINERO: cfg.DINERO_ADDRESS,
   };
 
   // Build arrays for the contract call
@@ -98,14 +99,23 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
 export const main = async () => {
   const results = await combineResults();
 
+  console.log("results combined!!");
+
   // Convert earned values to BigNumber with 18 decimals
   const adjustedResults = Object.entries(results)
-    .map(([token, userRewards]) => ({
-      [token]: userRewards.map((reward) => ({
-        address: reward.address,
-        earned: ethers.utils.parseEther(reward.earned.toString()).toString(),
-      })),
-    }))
+    .map(([token, userRewards]) => {
+
+
+      return {
+        [token]: userRewards.map((reward) => {
+          console.log(reward.earned)
+
+          return ({
+          address: reward.address,
+          earned: ethers.utils.parseEther(reward.earned.toFixed(18)).toString(),
+        })}),
+      };
+    })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
   // Subtract claimed amounts
@@ -119,6 +129,7 @@ export const main = async () => {
     const tokenAddressMap = {
       KITE: config().KITE_ADDRESS,
       OP: config().OP_ADDRESS,
+      DINERO: config().DINERO_ADDRESS,
     };
 
     const claimedAmounts = await getClaimedAmounts(
@@ -144,6 +155,8 @@ export const main = async () => {
 
     console.log(`Found ${claimedAmounts.size} previous claims for ${token}`);
   }
+
+  console.log("doing merkle tries!!!");
 
   // Generating merkle tree
   const merkleTries = Object.entries(finalResults)

@@ -3,13 +3,18 @@ pragma solidity ^0.8.20;
 
 interface IRewardDistributor {
     /// @notice Emitted when a new reward setter is set
+    event RewardDurationUpdated(
+        uint256 newDuration
+    );
+
+    /// @notice Emitted when a new reward setter is set
     event RewardSetterUpdated(
         address indexed oldSetter,
         address indexed newSetter
     );
 
     /// @notice Emitted when merkle roots are updated
-    event MerkleRootsUpdated(address[] tokens, bytes32[] roots);
+    event MerkleRootsUpdated(address[] tokens, bytes32[] roots, uint256 counter);
 
     /// @notice Emitted when rewards are claimed
     event RewardsClaimed(
@@ -25,10 +30,7 @@ interface IRewardDistributor {
     function merkleRoots(address token) external view returns (bytes32);
 
     /// @notice Returns whether a reward has been claimed
-    function isClaimed(
-        bytes32 root,
-        address user
-    ) external view returns (bool);
+    function isClaimed(bytes32 root, address user) external view returns (bool);
 
     /// @notice Sets the address that can update merkle roots
     /// @param newRewardSetter The new address that can set merkle roots
