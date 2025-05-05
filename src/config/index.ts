@@ -38,6 +38,9 @@ export const config = () => {
       config: parseRewardConfig(envs.REWARD_LP_CONFIG),
       collateralTypes: parseCollateralTypes(envs.REWARD_LP_COLLATERAL_TYPES),
     },
+    haiVelo: {
+      config: parseRewardConfig(envs.REWARD_HAIVELO_CONFIG || "{}"),
+    },
   };
 
   return {

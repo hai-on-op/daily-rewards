@@ -22,7 +22,7 @@ export const getStakingWeightForLPPositions = (positions: LpPosition[]) => {
 
 export const getStakingWeightForDebt = (
   debt: number,
-  collateral?: number,
+  collateral: number,
   effectiveBridgedTokens?: number,
   withBridge?: boolean
 ): number => {
@@ -31,7 +31,7 @@ export const getStakingWeightForDebt = (
     effectiveBridgedTokens === undefined ||
     collateral === undefined
   ) {
-    return debt;
+    return collateral;
   }
 
   // Calculate the ratio of bridged collateral to total collateral
