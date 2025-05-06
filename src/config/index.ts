@@ -53,6 +53,7 @@ export const config = () => {
       ? envs.MINTER_GEB_SUBGRAPH_URL
       : envs.GEB_SUBGRAPH_URL,
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
+    STKITE_SUBGRAPH_URL: envs.STKITE_SUBGRAPH_URL,
 
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),
