@@ -18,11 +18,22 @@ import * as fs from "fs";
 import { get } from "http";
 export const CTYPES = config().LP_COLLATERAL_TYPES;
 
+import {
+  getStakingPositions,
+  calculateStakingAtTimestamp,
+  StakingPostion,
+  StakingState,
+} from "../skite-data";
+
+type BoostAmounts = Record<string, number>;
+
 export const processRewardEvent = async (
   rewardAmount: number,
   users: UserList,
   events: LPRewardEvent[]
 ): Promise<UserList> => {
+  const stakingPositions = await getStakingPositions();
+
   // Starting and ending of the campaign
   const startBlock = config().LP_START_BLOCK;
   const endBlock = config().LP_END_BLOCK;
@@ -31,7 +42,47 @@ export const processRewardEvent = async (
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
   // Ongoing Total supply of weight
-  let totalStakingWeight = sumAllWeights(users);
+
+  let timestamp = startTimestamp;
+
+  const calculateUserLPBoosts = (users: UserList): BoostAmounts => {
+    const stakingState = calculateStakingAtTimestamp(
+      stakingPositions,
+      timestamp
+    );
+
+    const totalLPLiquidity = Object.values(users).reduce(
+      (acc, user) =>
+        acc +
+        user.lpPositions
+          .map((lpPosition) => lpPosition.liquidity)
+          .reduce((acc, p) => acc + Number(p), 0),
+      0
+    );
+
+    return Object.entries(stakingState.users).reduce(
+      (pV, cV: Record<string, any>) => {
+        const userDeposited = users[cV[0]] ? users[cV[0]].stakingWeight : 0;
+
+        const userKiteShare = cV[1].share;
+
+        return {
+          ...pV,
+          [cV[0]]: Math.min(
+            userDeposited
+              ? userKiteShare /
+                  ((userDeposited ? userDeposited : 0) / totalLPLiquidity) +
+                  1
+              : 1,
+            2
+          ),
+        };
+      },
+      {}
+    );
+  };
+
+  let totalStakingWeight = sumAllWeights(users, calculateUserLPBoosts(users));
   console.log(`Total staking weight: ${totalStakingWeight}`);
   // Ongoing cumulative reward per weight over time
   let rewardPerWeight = 0;
@@ -42,12 +93,16 @@ export const processRewardEvent = async (
     }
   };
   // Ongoing time
-  let timestamp = startTimestamp;
+
   // Ongoing accumulated rate
   const rates: Rates = {};
   for (let i = 0; i < CTYPES.length; i++) {
     const cType = CTYPES[i];
-    const cTypeRate = await getAccumulatedRate(startBlock, cType, config().LP_GEB_SUBGRAPH_URL);
+    const cTypeRate = await getAccumulatedRate(
+      startBlock,
+      cType,
+      config().LP_GEB_SUBGRAPH_URL
+    );
     rates[cType] = cTypeRate;
   }
   // Ongoing uni v3 sqrtPrice
@@ -181,7 +236,7 @@ export const processRewardEvent = async (
     //   0
     // )},${users[u].stakingWeight},${totalStakingWeight},${users[u].earned}\n`)
     // Recalculate the sum of weights since the events the weights
-    totalStakingWeight = sumAllWeights(users);
+    totalStakingWeight = sumAllWeights(users, calculateUserLPBoosts(users));
   }
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
@@ -196,6 +251,11 @@ const earn = (user: UserAccount, rewardPerWeight: number) => {
   // Store his cumulative credited rewards for next time
   user.rewardPerWeightStored = rewardPerWeight;
 };
+
 // Simply sum all the stakingWeight of all users
-const sumAllWeights = (users: UserList) =>
-  Object.values(users).reduce((acc, user) => acc + user.stakingWeight, 0);
+const sumAllWeights = (users: UserList, boostAmounts: BoostAmounts) => {
+  return Object.values(users).reduce((acc, user) => {
+    const boostAmount = boostAmounts[user.address] ?? 1;
+    return acc + user.stakingWeight * boostAmount;
+  }, 0);
+};
