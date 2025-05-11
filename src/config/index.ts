@@ -36,9 +36,11 @@ export const config = () => {
     },
     lp: {
       config: parseRewardConfig(envs.REWARD_LP_CONFIG),
+      historicConfig: parseRewardConfig(envs.REWARD_LP_HISTORIC_CONFIG),
       collateralTypes: parseCollateralTypes(envs.REWARD_LP_COLLATERAL_TYPES),
     },
     haiVelo: {
+      historicConfig: parseRewardConfig(envs.REWARD_HAIVELO_HISTORIC_CONFIG),
       config: parseRewardConfig(envs.REWARD_HAIVELO_CONFIG || "{}"),
     },
   };
@@ -77,6 +79,9 @@ export const config = () => {
     START_BLOCK: Number(envs.START_BLOCK),
     END_BLOCK: Number(envs.END_BLOCK),
 
+    LP_HISTORIC_START_BLOCK: Number(envs.LP_HISTORIC_START_BLOCK)
+      ? Number(envs.LP_HISTORIC_START_BLOCK)
+      : Number(envs.HISTORIC_BLCOK),
     LP_START_BLOCK: Number(envs.LP_START_BLOCK)
       ? Number(envs.LP_START_BLOCK)
       : Number(envs.START_BLOCK),
@@ -91,11 +96,12 @@ export const config = () => {
       ? Number(envs.MINTER_END_BLOCK)
       : Number(envs.END_BLOCK),
 
-
+    HAIVELO_HISTORIC_START_BLOCK: Number(envs.LP_HISTORIC_START_BLOCK)
+      ? Number(envs.LP_HISTORIC_START_BLOCK)
+      : Number(envs.HISTORIC_BLCOK),
     HAIVELO_START_BLOCK: Number(envs.HAIVELO_START_BLOCK)
       ? Number(envs.HAIVELO_START_BLOCK)
       : Number(envs.START_BLOCK),
-
     HAIVELO_END_BLOCK: Number(envs.HAIVELO_END_BLOCK)
       ? Number(envs.HAIVELO_END_BLOCK)
       : Number(envs.END_BLOCK),

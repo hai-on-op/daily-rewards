@@ -13,15 +13,29 @@ import { getOrCreateUserMutate } from "../../utils";
 
 type BoostAmounts = Record<string, number>;
 
+type ProcessorOptions = {
+  startBlock: number;
+  endBlock: number;
+};
+
 export const processRewardEvents = async (
   rewardAmount: number,
   events: HaiveloCollateralEvent[],
-  users: UserList
+  users: UserList,
+  options?: ProcessorOptions
 ): Promise<UserList> => {
   const stakingPositions = await getStakingPositions();
 
-  const startBlock = config().HAIVELO_START_BLOCK;
-  const endBlock = config().HAIVELO_END_BLOCK;
+  const {
+    startBlock = config().HAIVELO_START_BLOCK,
+    endBlock = config().HAIVELO_END_BLOCK,
+  } = options
+    ? options
+    : {
+        startBlock: config().HAIVELO_START_BLOCK,
+        endBlock: config().HAIVELO_END_BLOCK,
+      };
+
   const startTimestamp = (await haiveloProvider.getBlock(startBlock)).timestamp;
   const endTimestamp = (await haiveloProvider.getBlock(endBlock)).timestamp;
 

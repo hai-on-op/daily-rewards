@@ -22,9 +22,11 @@ export interface RewardConfig {
   };
   lp: {
     config: LpRewardConfig;
+    historicConfig: LpRewardConfig;
     collateralTypes: TokenType[];
   };
   haiVelo: {
+    historicConfig: LpRewardConfig;
     config: HaiVeloRewardConfig;
   };
 } 

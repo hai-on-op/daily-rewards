@@ -9,16 +9,32 @@ import { ethers } from "ethers";
 import { processRewardEvents } from "../services/rewards/haiVeloRewardEventProcessor";
 import { config } from "../config";
 
+type RewardCalculatorOptions = {
+  startBlock: number;
+  endBlock: number;
+};
+
 export const calculateHaiveloRewards = async (
-  rewardAmount: number
+  rewardAmount: number,
+  options?: RewardCalculatorOptions
 ): Promise<UserList> => {
-  const REWARD_AMOUNT = 1000;
+  const REWARD_AMOUNT = rewardAmount;
+
+  const {
+    startBlock = config().LP_START_BLOCK,
+    endBlock = config().LP_END_BLOCK,
+  } = options
+    ? options
+    : {
+        startBlock: config().LP_START_BLOCK,
+        endBlock: config().LP_END_BLOCK,
+      };
 
   const haiVeloEvents = await getRawHaiveloCollateralData();
 
-  const INITIAL_BLOCK = config().HAIVELO_START_BLOCK;
+  const INITIAL_BLOCK = startBlock;
 
-  const END_BLOCK = config().HAIVELO_END_BLOCK;
+  const END_BLOCK = endBlock;
 
   const initialEvents = haiVeloEvents
     .filter((event) => Number(event.createdAtBlock) < INITIAL_BLOCK)
