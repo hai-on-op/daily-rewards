@@ -1,6 +1,9 @@
 import { UserPositions, RawPosition, ProcessedPosition } from "../../types";
 import { subgraphQueryPaginated } from "../subgraph/utils";
 
+const fullRangeLowerTick = -887220;
+const fullRangeUpperTick = 887220;
+
 /**
  * Builds the GraphQL query to fetch LP positions from the subgraph.
  *
@@ -12,13 +15,11 @@ export const buildLpPositionsQuery = (
   startBlock: number,
   poolAddress: string
 ): string => {
-
-
   return `
     {
       positions(
         block: { number: ${startBlock} },
-        where: { pool: "${poolAddress}" },
+        where: { pool: "${poolAddress}", liquidity_gt: 0 },
         first: 1000,
         skip: [[skip]]
       ) {
@@ -89,8 +90,15 @@ export const getInitialLpPosition = async (
   // Fetch raw positions
   const rawPositions = await fetchLpPositions(query, subgraphUrl);
 
+  const filteredPositions = rawPositions.filter((p) => {
+    return (
+      Number(p.tickLower.tickIdx) === fullRangeLowerTick &&
+      Number(p.tickUpper.tickIdx) === fullRangeUpperTick
+    );
+  });
+
   // Process positions
-  const userPositions = processLpPositions(rawPositions);
+  const userPositions = processLpPositions(filteredPositions);
 
   return userPositions;
 };

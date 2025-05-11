@@ -10,6 +10,10 @@ export const minterProvider = new providers.StaticJsonRpcProvider(
   config().MINTER_RPC_URL
 );
 
+export const haiveloProvider = new providers.StaticJsonRpcProvider(
+  config().HAIVELO_RPC_URL
+);
+
 export const blockToTimestamp = async (block: number) => {
   return (await provider.getBlock(block)).timestamp;
 };

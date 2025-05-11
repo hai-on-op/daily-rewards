@@ -54,6 +54,7 @@ export const config = () => {
       : envs.GEB_SUBGRAPH_URL,
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
     STKITE_SUBGRAPH_URL: envs.STKITE_SUBGRAPH_URL,
+    HAIVELO_SUBGRAPH_URL: envs.HAIVELO_SUBGRAPH_URL,
 
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),
@@ -69,6 +70,7 @@ export const config = () => {
     RPC_URL: envs.RPC_URL,
     LP_RPC_URL: envs.LP_RPC_URL ? envs.LP_RPC_URL : envs.RPC_URL,
     MINTER_RPC_URL: envs.MINTER_RPC_URL ? envs.MINTER_RPC_URL : envs.RPC_URL,
+    HAIVELO_RPC_URL: envs.HAIVELO_RPC_URL ? envs.HAIVELO_RPC_URL : envs.RPC_URL,
     CHAIN_ID: envs.CHAIN_ID || "optimism-mainnet",
 
     // Blocks and Rewards
@@ -87,6 +89,15 @@ export const config = () => {
       : Number(envs.START_BLOCK),
     MINTER_END_BLOCK: Number(envs.MINTER_END_BLOCK)
       ? Number(envs.MINTER_END_BLOCK)
+      : Number(envs.END_BLOCK),
+
+
+    HAIVELO_START_BLOCK: Number(envs.HAIVELO_START_BLOCK)
+      ? Number(envs.HAIVELO_START_BLOCK)
+      : Number(envs.START_BLOCK),
+
+    HAIVELO_END_BLOCK: Number(envs.HAIVELO_END_BLOCK)
+      ? Number(envs.HAIVELO_END_BLOCK)
       : Number(envs.END_BLOCK),
 
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),

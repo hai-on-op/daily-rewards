@@ -16,7 +16,7 @@ const query = `
   }
 `;
 
-type StakingPostion = {
+export type StakingPostion = {
   id: string;
   user: {
     id: string;
@@ -27,7 +27,7 @@ type StakingPostion = {
   type: string;
 };
 
-interface StakingState {
+export interface StakingState {
   totalStaked: string;
   users: {
     [address: string]: {
@@ -102,6 +102,16 @@ export const calculateStakingAtTimestamp = (
   return result;
 };
 
+export const getStakingPositions = async () => {
+  const stakingPositions = (await subgraphQueryPaginated(
+    query,
+    "stakingPositions",
+    config().STKITE_SUBGRAPH_URL
+  )) as StakingPostion[];
+
+  return stakingPositions;
+};
+
 const main = async () => {
   try {
     const stakingPositions = (await subgraphQueryPaginated(
@@ -133,4 +143,9 @@ const formatAmount = (amountStr: string): string => {
   return (Number(amount) / 1e18).toFixed(4) + " tokens";
 };
 
-main();
+if (require.main === module) {
+  main().catch((error) => {
+    console.error("Unhandled error in main:", error);
+    process.exit(1);
+  });
+}
