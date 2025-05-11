@@ -90,6 +90,7 @@ export const processHaiveloCollateral = (
 
     if (acc[userAddress]) {
       acc[userAddress].collateral += collateralAmount;
+      acc[userAddress].stakingWeight = acc[userAddress].collateral;
 
       if (acc[userAddress].collateral < 0 && acc[userAddress].collateral > -0.4) {
         acc[userAddress].collateral = 0;

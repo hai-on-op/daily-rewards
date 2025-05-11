@@ -7,20 +7,17 @@ import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
 
 config();
 
-function multiplyConfigValues(config: any, multiplier: number): any {
+function multiplyLPConfigValues(config: any, multiplier: number): any {
   const result: any = {};
 
-  for (const [token, tokenConfig] of Object.entries(config)) {
-    result[token] = {};
-    for (const [collateral, amount] of Object.entries(tokenConfig as any)) {
-      result[token][collateral] = (amount as number) * multiplier;
-    }
+  for (const [token, amount] of Object.entries(config)) {
+    result[token] = (amount as number) * multiplier;
   }
 
   return result;
 }
 
-function multiplyLPConfigValues(config: any, multiplier: number): any {
+function multiplyHaiveloConfigValues(config: any, multiplier: number): any {
   const result: any = {};
 
   for (const [token, amount] of Object.entries(config)) {
@@ -51,34 +48,43 @@ const entry = async () => {
   );
   console.log("Current entry count:", entryCounter);
 
-  process.env.LP_END_BLOCK = String(await lpProvider.getBlockNumber());
-  process.env.MINTER_END_BLOCK = String(await minterProvider.getBlockNumber());
+  // We consider this blocknumber index delay for the subgraph
+  const blockNumberDelay = 5;
+
+  process.env.LP_END_BLOCK = String(
+    (await lpProvider.getBlockNumber()) - blockNumberDelay
+  );
+  process.env.MINTER_END_BLOCK = String(
+    (await minterProvider.getBlockNumber()) - blockNumberDelay
+  );
+
+  const effectiveEntryCounter = entryCounter;
 
   try {
-    // Parse and update REWARD_MINTER_CONFIG
-    const currentMinterConfig = JSON.parse(
-      process.env.REWARD_MINTER_CONFIG || "{}"
-    );
-    const multipliedMinterConfig = multiplyConfigValues(
-      currentMinterConfig,
-      entryCounter + 1
-    );
-    process.env.REWARD_MINTER_CONFIG = JSON.stringify(multipliedMinterConfig);
-    console.log(
-      "Updated REWARD_MINTER_CONFIG:",
-      process.env.REWARD_MINTER_CONFIG
-    );
-
     // Parse and update REWARD_LP_CONFIG
     const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || "{}");
     const multipliedLPConfig = multiplyLPConfigValues(
       currentLPConfig,
-      entryCounter + 1
+      effectiveEntryCounter
     );
     process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
     console.log("Updated REWARD_LP_CONFIG:", process.env.REWARD_LP_CONFIG);
 
-    main();
+    // Parse and update REWARD_HAIVELO_CONFIG
+    const currentHaiveloConfig = JSON.parse(
+      process.env.REWARD_HAIVELO_CONFIG || "{}"
+    );
+    const multipliedHaiveloConfig = multiplyHaiveloConfigValues(
+      currentHaiveloConfig,
+      effectiveEntryCounter
+    );
+    process.env.REWARD_HAIVELO_CONFIG = JSON.stringify(multipliedHaiveloConfig);
+    console.log(
+      "Updated REWARD_HAIVELO_CONFIG:",
+      process.env.REWARD_HAIVELO_CONFIG
+    );
+
+    await main();
 
     // Increment and save counter after successful execution
     console.log("Entry count updated to:", entryCounter + 1);
@@ -93,3 +99,39 @@ entry()
   .catch((err) => {
     console.error(err);
   });
+
+// Legacy code for minter rewards
+
+/*
+  process.env.MINTER_END_BLOCK = String(await minterProvider.getBlockNumber());
+
+
+    // Parse and update REWARD_MINTER_CONFIG
+    const currentMinterConfig = JSON.parse(
+      process.env.REWARD_MINTER_CONFIG || "{}"
+    );
+    const multipliedMinterConfig = multiplyConfigValues(
+      currentMinterConfig,
+      effectiveEntryCounter
+    );
+    process.env.REWARD_MINTER_CONFIG = JSON.stringify(multipliedMinterConfig);
+    console.log(
+      "Updated REWARD_MINTER_CONFIG:",
+      process.env.REWARD_MINTER_CONFIG
+    );
+    
+
+    function multiplyConfigValues(config: any, multiplier: number): any {
+  const result: any = {};
+
+  for (const [token, tokenConfig] of Object.entries(config)) {
+    result[token] = {};
+    for (const [collateral, amount] of Object.entries(tokenConfig as any)) {
+      result[token][collateral] = (amount as number) * multiplier;
+    }
+  }
+
+  return result;
+}
+
+  */

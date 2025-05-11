@@ -32,30 +32,26 @@ export const calculateHaiveloRewards = async (
 
   const haiVeloEvents = await getRawHaiveloCollateralData();
 
-  const INITIAL_BLOCK = startBlock;
-
-  const END_BLOCK = endBlock;
-
   const initialEvents = haiVeloEvents
-    .filter((event) => Number(event.createdAtBlock) < INITIAL_BLOCK)
+    .filter((event) => Number(event.createdAtBlock) < startBlock)
     .sort((a, b) => 1 * (Number(a.createdAtBlock) - Number(b.createdAtBlock)));
-
-  //console.log(haiVeloEvents);
 
   const processingEvents = haiVeloEvents.filter(
     (event) =>
-      Number(event.createdAtBlock) >= INITIAL_BLOCK &&
-      Number(event.createdAtBlock) <= END_BLOCK
+      Number(event.createdAtBlock) >= startBlock &&
+      Number(event.createdAtBlock) <= endBlock
   );
 
   const initialHaiveloUser = processHaiveloCollateral(initialEvents);
 
-  //console.log(initialHaiveloUser);
-
   const users = processRewardEvents(
     REWARD_AMOUNT,
     processingEvents,
-    initialHaiveloUser
+    initialHaiveloUser,
+    {
+      startBlock: startBlock,
+      endBlock: endBlock,
+    }
   );
 
   return users;

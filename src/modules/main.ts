@@ -97,12 +97,14 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
 }
 
 export const main = async () => {
+  console.log("executing main");
+
   const results = await combineResults();
 
-  console.log("results combined!!");
+  console.log("results combined!!", results);
 
   // Convert earned values to BigNumber with 18 decimals
-  const adjustedResults = Object.entries(results)
+    const adjustedResults = Object.entries(results)
     .map(([token, userRewards]) => {
 
 
@@ -191,7 +193,7 @@ export const main = async () => {
   });
 
   // Generate merkle trees and update them on-chain
-  await updateMerkleRoots(merkleTries);
+  await updateMerkleRoots(merkleTries); 
 };
 
 //main().catch(console.error);
