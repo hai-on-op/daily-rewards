@@ -104,18 +104,19 @@ export const main = async () => {
   console.log("results combined!!", results);
 
   // Convert earned values to BigNumber with 18 decimals
-    const adjustedResults = Object.entries(results)
+  const adjustedResults = Object.entries(results)
     .map(([token, userRewards]) => {
-
-
       return {
         [token]: userRewards.map((reward) => {
-          console.log(reward.earned)
+          console.log(reward.earned);
 
-          return ({
-          address: reward.address,
-          earned: ethers.utils.parseEther(reward.earned.toFixed(18)).toString(),
-        })}),
+          return {
+            address: reward.address,
+            earned: ethers.utils
+              .parseEther(reward.earned.toFixed(18))
+              .toString(),
+          };
+        }),
       };
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
@@ -193,7 +194,7 @@ export const main = async () => {
   });
 
   // Generate merkle trees and update them on-chain
-  await updateMerkleRoots(merkleTries); 
+  await updateMerkleRoots(merkleTries);
 };
 
 //main().catch(console.error);

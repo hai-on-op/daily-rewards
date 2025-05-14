@@ -12,6 +12,7 @@
   "dependencies": {
     "@covalenthq/client-sdk": "^2.2.1",
     "@openzeppelin/merkle-tree": "^1.0.7",
+    "alchemy-sdk": "^3.5.8",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "ethers": "^5.7.2"
