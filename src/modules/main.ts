@@ -12,11 +12,16 @@ async function getClaimedAmounts(
   token: string,
   users: string[]
 ): Promise<Map<string, string>> {
+  users.map((u) => {
+    console.log(u, token );
+    return u?.toLowerCase();
+  });
+
   const query = `
     {
       tokenClaims(where: {
         token: "${token.toLowerCase()}"
-        user_in: ${JSON.stringify(users.map((u) => u.toLowerCase()))}
+        user_in: ${JSON.stringify(users.map((u) => u?.toLowerCase()))}
       }) {
         user {
           id
@@ -31,6 +36,9 @@ async function getClaimedAmounts(
       query,
       config().DISTRIBUTOR_SUBGRAPH_URL
     );
+
+    console.log(response.tokenClaims);
+
     return new Map(
       response.tokenClaims.map((claim: any) => [
         claim.user.id.toLowerCase(),
@@ -133,6 +141,7 @@ export const main = async () => {
       KITE: config().KITE_ADDRESS,
       OP: config().OP_ADDRESS,
       DINERO: config().DINERO_ADDRESS,
+      HAI: config().HAI_ADDRESS,
     };
 
     const claimedAmounts = await getClaimedAmounts(
@@ -159,7 +168,7 @@ export const main = async () => {
     console.log(`Found ${claimedAmounts.size} previous claims for ${token}`);
   }
 
-  console.log("doing merkle tries!!!");
+  console.log("doing merkle tries!!!", finalResults);
 
   // Generating merkle tree
   const merkleTries = Object.entries(finalResults)

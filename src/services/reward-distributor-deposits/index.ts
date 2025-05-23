@@ -2,14 +2,12 @@ import { Alchemy, AssetTransfersCategory, Network, Utils } from "alchemy-sdk";
 import { config as appConfig } from "../../config"; // Import the config
 
 // Load config values
-const { 
-  ALCHEMY_API_KEY, 
-  DEPOSIT_CONTRACT_ADDRESS, 
-  DEPOSIT_SENDER_ADDRESS, 
-  DEPOSIT_TOKEN_ADDRESS 
+const {
+  ALCHEMY_API_KEY,
+  DEPOSIT_CONTRACT_ADDRESS,
+  DEPOSIT_SENDER_ADDRESS,
+  DEPOSIT_TOKEN_ADDRESS,
 } = appConfig();
-
-console.log(ALCHEMY_API_KEY, DEPOSIT_CONTRACT_ADDRESS, DEPOSIT_SENDER_ADDRESS, DEPOSIT_TOKEN_ADDRESS);
 
 // Configure Alchemy SDK for Optimism
 const alchemyConfig = {
@@ -19,7 +17,7 @@ const alchemyConfig = {
 
 const alchemy = new Alchemy(alchemyConfig);
 
-async function getTokenTransfersToContract() {
+export async function getTokenTransfersToContract() {
   // Your contract address that receives the tokens
   const contractAddress = DEPOSIT_CONTRACT_ADDRESS; // Use the config value
 
@@ -73,7 +71,7 @@ async function getTokenTransfersToContract() {
 }
 
 // Alternative: Using Alchemy's asset transfers API (easier approach)
-async function getTokenTransfersUsingAssetAPI() {
+export async function getTokenTransfersUsingAssetAPI() {
   const contractAddress = DEPOSIT_CONTRACT_ADDRESS; // Use the config value
 
   // The address that sends the tokens
@@ -117,11 +115,16 @@ if (require.main === module) {
   async function main() {
     // Method 1: Using getLogs
     const transfersFromLogs = await getTokenTransfersToContract();
-    console.log("Transfers from logs:", transfersFromLogs);
+    console.log(
+      "Transfers from logs:",
+      transfersFromLogs.filter((t) => Number(t.value) >= 10 ** 18)
+    );
+
+    console.log(Number(transfersFromLogs[0].blockNumber), Number(transfersFromLogs[1].value))
 
     // Method 2: Using asset transfers API (recommended)
     const transfersFromAPI = await getTokenTransfersUsingAssetAPI();
-    console.log("Transfers from API:", transfersFromAPI);
+  //  console.log("Transfers from API:", transfersFromAPI);
   }
 
   main();

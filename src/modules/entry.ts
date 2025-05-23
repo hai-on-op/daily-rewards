@@ -1,7 +1,7 @@
 import { config } from "../config";
 import { main } from "./main";
 
-import { lpProvider, minterProvider } from "../utils/chain";
+import { haiveloProvider, lpProvider, minterProvider } from "../utils/chain";
 import { ethers } from "ethers";
 import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
 
@@ -42,9 +42,14 @@ const entry = async () => {
     signer
   );
 
+  const tx = await rewardDistributor.pause();  
+  console.log("Reward Distributor Paused!")
+
+  await tx.wait();
+
   // Read current counter value
   const entryCounter = Number(
-    String(await rewardDistributor.merkleRootCounter())
+    String(await rewardDistributor.epochCounter())
   );
   console.log("Current entry count:", entryCounter);
 
@@ -56,6 +61,9 @@ const entry = async () => {
   );
   process.env.MINTER_END_BLOCK = String(
     (await minterProvider.getBlockNumber()) - blockNumberDelay
+  );
+  process.env.HAIVELO_END_BLOCK = String(
+    (await haiveloProvider.getBlockNumber()) - blockNumberDelay
   );
 
   const effectiveEntryCounter = entryCounter;
@@ -88,6 +96,12 @@ const entry = async () => {
 
     // Increment and save counter after successful execution
     console.log("Entry count updated to:", entryCounter + 1);
+
+
+    //const tx = await rewardDistributor.pause();  
+    console.log("Reward Distributor Unpaused!")
+  
+    await tx.wait();
   } catch (error) {
     console.error("Error in entry function:", error);
     throw error;

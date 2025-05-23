@@ -141,7 +141,8 @@ export const config = () => {
     KITE_ADDRESS: envs.KITE_ADDRESS,
     OP_ADDRESS: envs.OP_ADDRESS,
     DINERO_ADDRESS: envs.DINERO_ADDRESS,
-
+    HAI_ADDRESS: envs.HAI_ADDRESS,
+    
     DISTRIBUTOR_SUBGRAPH_URL: envs.DISTRIBUTOR_SUBGRAPH_URL,
 
     // Reward Distributor Deposits Service
