@@ -1,5 +1,5 @@
 import { config } from "../config";
-import { getTokenTransfersToContract } from "../services/reward-distributor-deposits";
+import { getTokenTransfersToContract, TokenTransfer } from "../services/reward-distributor-deposits";
 import { UserList } from "../types";
 import { calculateHaiveloRewards } from "./haivelo-rewards";
 import { calculateLpRewards } from "./lp-rewards";
@@ -14,6 +14,14 @@ export type RewardResult = {
 
 export type RewardsMap = {
   [token: string]: RewardResult[];
+};
+
+type RewardObject = Record<string, { address: string; earned: number }[]>;
+
+type ProcessedTransfer = {
+  blockNumber: number;
+  value: number;
+  tokenSymbol: string;
 };
 
 export function combineRewards(rewardsMaps: RewardsMap[]): RewardsMap {
@@ -55,36 +63,38 @@ export function combineRewards(rewardsMaps: RewardsMap[]): RewardsMap {
   return combinedRewards;
 }
 
-export const combineResults = async (): Promise<RewardsMap> => {
-  console.log("executing combineResults");
-
-  type RewardObject = Record<string, { address: string; earned: number }[]>;
-
-  let haiVeloRewards: RewardObject = {};
-  let haiVeloHistoricalRewards: RewardObject = {};
-  let haiVeloDailyHistoricalRewards: Array<RewardObject> = [];
-  let lpRewards: RewardObject = {};
-  let lpHistoricalRewards: RewardObject = {};
-
+/**
+ * Fetches and processes token transfers to the contract for all supported tokens
+ */
+async function getProcessedTransfers(): Promise<ProcessedTransfer[]> {
   const FILTER_CONSTANT = 10 ** 18;
-  const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
-
-  const HaiVeloTransfers = (await getTokenTransfersToContract())
+  
+  const transfers: TokenTransfer[] = await getTokenTransfersToContract();
+  
+  return transfers
     .filter((t) => Number(t.value) >= FILTER_CONSTANT)
     .map((t) => ({
-      ...t,
+      blockNumber: t.blockNumber,
       value: Number(t.value) / 10 ** 18,
+      tokenSymbol: t.tokenSymbol,
     }));
+}
 
-  console.log(HaiVeloTransfers);
+/**
+ * Calculates historical HaiVelo rewards before the transfer-based system
+ */
+async function calculateHaiVeloHistoricalRewards(
+  earliestTransferBlock: number,
+  rewardDepositEpochBlock: number
+): Promise<RewardObject> {
+  const haiVeloHistoricalRewards: RewardObject = {};
 
   for (const [rewardToken, amount] of Object.entries(
     config().rewards.haiVelo.historicConfig
   )) {
     const rewards = await calculateHaiveloRewards(amount, {
       startBlock: config().HAIVELO_HISTORIC_START_BLOCK,
-      // The rewards of Transfers are calculated for the previous epoch
-      endBlock: HaiVeloTransfers[0].blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK, ///config().HAIVELO_START_BLOCK,
+      endBlock: earliestTransferBlock - rewardDepositEpochBlock,
     });
 
     haiVeloHistoricalRewards[rewardToken] = Object.entries(rewards)
@@ -96,75 +106,99 @@ export const combineResults = async (): Promise<RewardsMap> => {
       .sort((a, b) => b.earned - a.earned);
   }
 
-  for (let i = 0; i < HaiVeloTransfers.length; i++) {
-    const HaiVeloTransfer = HaiVeloTransfers[i];
+  return haiVeloHistoricalRewards;
+}
 
-    const rewardsAmount = Number(HaiVeloTransfer.value);
+/**
+ * Calculates rewards for a single HaiVelo transfer period
+ */
+async function calculateSingleTransferRewards(
+  rewardsAmount: number,
+  startBlock: number,
+  endBlock: number,
+  tokenSymbol: string
+): Promise<RewardObject> {
+  const rewards = await calculateHaiveloRewards(rewardsAmount, {
+    startBlock,
+    endBlock,
+  });
 
-    console.log("rewardsAmount====>", rewardsAmount);
+  return {
+    [tokenSymbol]: Object.entries(rewards)
+      .map(([address, value]) => ({
+        address,
+        earned: value.earned,
+      }))
+      .filter(({ earned }) => earned > 0)
+      .sort((a, b) => b.earned - a.earned),
+  };
+}
 
-    let rewards;
+/**
+ * Calculates HaiVelo rewards based on transfer deposits
+ */
+async function calculateHaiVeloDailyRewards(
+  transfers: ProcessedTransfer[]
+): Promise<RewardObject[]> {
+  if (transfers.length === 0) return [];
+
+  const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
+  const haiVeloDailyRewards: RewardObject[] = [];
+
+  for (let i = 0; i < transfers.length; i++) {
+    const currentTransfer = transfers[i];
+    const rewardsAmount = currentTransfer.value;
+
+    console.log(`Processing ${currentTransfer.tokenSymbol} transfer with amount:`, rewardsAmount);
+
+    let rewards: RewardObject;
 
     if (i === 0) {
-      rewards = await calculateHaiveloRewards(rewardsAmount, {
-        startBlock:
-          HaiVeloTransfers[0].blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK,
-        // The rewards of Transfers are calculated for the previous epoch
-        endBlock: HaiVeloTransfers[0].blockNumber, ///config().HAIVELO_START_BLOCK,
-      });
-    } else if (i === HaiVeloTransfers.length - 1) {
-      const calulcationBlock = config().HAIVELO_END_BLOCK;
-
-      let rewardAmountForTheLastIncompleteEpoch =
-        ((calulcationBlock - HaiVeloTransfers[i - 1].blockNumber) /
-          REWARD_DEPOSIT_ِEPOCH_BLOCK) *
+      // First transfer: calculate from epoch before first transfer to first transfer
+      rewards = await calculateSingleTransferRewards(
+        rewardsAmount,
+        currentTransfer.blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK,
+        currentTransfer.blockNumber,
+        currentTransfer.tokenSymbol
+      );
+    } else if (i === transfers.length - 1) {
+      // Last transfer: calculate partial epoch to end block
+      const calculationBlock = config().HAIVELO_END_BLOCK;
+      const previousTransfer = transfers[i - 1];
+      
+      const rewardAmountForLastIncompleteEpoch =
+        ((calculationBlock - previousTransfer.blockNumber) / REWARD_DEPOSIT_ِEPOCH_BLOCK) *
         rewardsAmount;
 
-      rewards = await calculateHaiveloRewards(
-        rewardAmountForTheLastIncompleteEpoch,
-        {
-          startBlock: HaiVeloTransfers[i - 1].blockNumber,
-          endBlock: calulcationBlock,
-        }
+      rewards = await calculateSingleTransferRewards(
+        rewardAmountForLastIncompleteEpoch,
+        previousTransfer.blockNumber,
+        calculationBlock,
+        currentTransfer.tokenSymbol
       );
     } else {
-      rewards = await calculateHaiveloRewards(rewardsAmount, {
-        startBlock: HaiVeloTransfers[i - 1].blockNumber,
-        endBlock: HaiVeloTransfers[i].blockNumber,
-      });
+      // Middle transfers: calculate from previous transfer to current transfer
+      const previousTransfer = transfers[i - 1];
+      rewards = await calculateSingleTransferRewards(
+        rewardsAmount,
+        previousTransfer.blockNumber,
+        currentTransfer.blockNumber,
+        currentTransfer.tokenSymbol
+      );
     }
 
-    // Add support for different reward tokens
-    haiVeloRewards["OP"] = Object.entries(rewards)
-      .map(([address, value]) => ({
-        address,
-        earned: value.earned,
-      }))
-      .filter(({ earned }) => earned > 0)
-      .sort((a, b) => b.earned - a.earned);
-
-    console.log("haiVeloRewards====>", haiVeloRewards);
-
-    haiVeloDailyHistoricalRewards.push(haiVeloRewards);
+    console.log(`${currentTransfer.tokenSymbol} rewards:`, rewards);
+    haiVeloDailyRewards.push(rewards);
   }
 
-  /* Legacy code for haiVelo rewards
-  for (const [rewardToken, amount] of Object.entries(
-    config().rewards.haiVelo.config
-  )) {
-    const rewards = await calculateHaiveloRewards(amount, {
-      startBlock: config().HAIVELO_START_BLOCK,
-      endBlock: config().HAIVELO_END_BLOCK,
-    });
+  return haiVeloDailyRewards;
+}
 
-    haiVeloRewards[rewardToken] = Object.entries(rewards)
-      .map(([address, value]) => ({
-        address,
-        earned: value.earned,
-      }))
-      .filter(({ earned }) => earned > 0)
-      .sort((a, b) => b.earned - a.earned);
-  }*/
+/**
+ * Calculates historical LP rewards
+ */
+async function calculateLpHistoricalRewards(): Promise<RewardObject> {
+  const lpHistoricalRewards: RewardObject = {};
 
   for (const [rewardToken, amount] of Object.entries(
     config().rewards.lp.historicConfig
@@ -183,6 +217,15 @@ export const combineResults = async (): Promise<RewardsMap> => {
       .sort((a, b) => b.earned - a.earned);
   }
 
+  return lpHistoricalRewards;
+}
+
+/**
+ * Calculates current LP rewards
+ */
+async function calculateCurrentLpRewards(): Promise<RewardObject> {
+  const lpRewards: RewardObject = {};
+
   for (const [rewardToken, amount] of Object.entries(
     config().rewards.lp.config
   )) {
@@ -197,15 +240,50 @@ export const combineResults = async (): Promise<RewardsMap> => {
       .sort((a, b) => b.earned - a.earned);
   }
 
-  // Combine LP and Minter rewards
-  const combinedRewards = combineRewards([
-    lpHistoricalRewards,
-    lpRewards,
+  return lpRewards;
+}
+
+export const combineResults = async (): Promise<RewardsMap> => {
+  console.log("executing combineResults");
+
+  const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
+
+  // Fetch and process transfers
+  const processedTransfers = await getProcessedTransfers();
+  console.log(`Processed ${processedTransfers.length} transfers:`, processedTransfers);
+
+  // Find the earliest block number across all transfers for historical calculation
+  const earliestTransferBlock = processedTransfers.length > 0 
+    ? Math.min(...processedTransfers.map(t => t.blockNumber))
+    : 0;
+
+  // Calculate all reward types
+  const [
     haiVeloHistoricalRewards,
-    ...haiVeloDailyHistoricalRewards,
+    haiVeloDailyRewards,
+    lpHistoricalRewards,
+    currentLpRewards,
+  ] = await Promise.all([
+    earliestTransferBlock > 0
+      ? calculateHaiVeloHistoricalRewards(
+          earliestTransferBlock,
+          REWARD_DEPOSIT_ِEPOCH_BLOCK
+        )
+      : {},
+    calculateHaiVeloDailyRewards(processedTransfers),
+    calculateLpHistoricalRewards(),
+    calculateCurrentLpRewards(),
   ]);
 
-  return combinedRewards;
+  // Combine all rewards
+  const allRewardMaps = [
+    lpHistoricalRewards,
+    currentLpRewards,
+    haiVeloHistoricalRewards,
+    ...haiVeloDailyRewards,
+  ];
+
+  return combineRewards(allRewardMaps);
 };
 
 // Legacy code for minter rewards
