@@ -92,16 +92,12 @@ const entry = async () => {
       process.env.REWARD_HAIVELO_CONFIG
     );
 
-    await main();
+    await main(entryCounter);
 
     // Increment and save counter after successful execution
     console.log("Entry count updated to:", entryCounter + 1);
 
 
-    //const tx = await rewardDistributor.pause();  
-    console.log("Reward Distributor Unpaused!")
-  
-    await tx.wait();
   } catch (error) {
     console.error("Error in entry function:", error);
     throw error;

@@ -1,6 +1,8 @@
 import { combineResults } from "./result-combiner";
 import { ethers } from "ethers";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import * as fs from "fs";
+import * as path from "path";
 
 import { uploadMerkleTree } from "./upload-merkle-tree";
 import { config } from "../config";
@@ -13,7 +15,7 @@ async function getClaimedAmounts(
   users: string[]
 ): Promise<Map<string, string>> {
   users.map((u) => {
-    console.log(u, token );
+    console.log(u, token);
     return u?.toLowerCase();
   });
 
@@ -76,6 +78,7 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
     KITE: cfg.KITE_ADDRESS,
     OP: cfg.OP_ADDRESS,
     DINERO: cfg.DINERO_ADDRESS,
+    HAI: cfg.HAI_ADDRESS,
   };
 
   // Build arrays for the contract call
@@ -104,7 +107,41 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
   }
 }
 
-export const main = async () => {
+async function saveMerkleTreesAsFiles(merkleTries: { [token: string]: any }, entryCounter: number) {
+  const currentDate = new Date();
+  const dateString = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const timestamp = currentDate.toISOString().replace(/[:.]/g, '-'); // Full timestamp for uniqueness
+  
+  // Create backup directory if it doesn't exist
+  const backupDir = path.join(process.cwd(), 'merkle-backups');
+  if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true });
+  }
+
+  console.log(`Saving merkle trees as backup files for entry ${entryCounter}...`);
+
+  for (const [token, tree] of Object.entries(merkleTries)) {
+    try {
+      const filename = `merkle-tree-${token}-entry${entryCounter}-${dateString}-${timestamp}.json`;
+      const filepath = path.join(backupDir, filename);
+      
+      const treeData = {
+        token,
+        entryCounter,
+        date: currentDate.toISOString(),
+        root: tree.root,
+        tree: tree.dump()
+      };
+
+      fs.writeFileSync(filepath, JSON.stringify(treeData, null, 2));
+      console.log(`Merkle tree for ${token} saved to: ${filename}`);
+    } catch (error) {
+      console.error(`Error saving merkle tree for ${token}:`, error);
+    }
+  }
+}
+
+export const main = async (entryCounter: number = 0) => {
   console.log("executing main");
 
   const results = await combineResults();
@@ -183,6 +220,8 @@ export const main = async () => {
 
   console.log(Object.keys(merkleTries));
 
+  console.log(merkleTries);
+
   // Upload Merkle tree to CloudFlare
 
   Object.entries(merkleTries).forEach(async ([token, tree]) => {
@@ -201,6 +240,9 @@ export const main = async () => {
       console.error(err);
     }
   });
+
+  // Save merkle trees as backup files
+  await saveMerkleTreesAsFiles(merkleTries, entryCounter);
 
   // Generate merkle trees and update them on-chain
   await updateMerkleRoots(merkleTries);
