@@ -42,15 +42,22 @@ const entry = async () => {
     signer
   );
 
-  const tx = await rewardDistributor.pause();  
-  console.log("Reward Distributor Paused!")
+  if (!rewardDistributor.paused()) {
+    const tx = await rewardDistributor.pause();
+    console.log("Reward Distributor Paused!");
 
-  await tx.wait();
+    await tx.wait();
+  }
 
   // Read current counter value
-  const entryCounter = Number(
-    String(await rewardDistributor.epochCounter())
-  );
+  const entryCounter = Number(String(await rewardDistributor.epochCounter()));
+
+  if (entryCounter === 0) {
+    const tx = await rewardDistributor.startInitialEpoch();
+    console.log("Reward Distributor Started Initial Epoch!");
+    await tx.wait();
+  }
+
   console.log("Current entry count:", entryCounter);
 
   // We consider this blocknumber index delay for the subgraph
@@ -66,7 +73,7 @@ const entry = async () => {
     (await haiveloProvider.getBlockNumber()) - blockNumberDelay
   );
 
-  const effectiveEntryCounter = entryCounter;
+  const effectiveEntryCounter = entryCounter - 1;
 
   try {
     // Parse and update REWARD_LP_CONFIG
@@ -96,8 +103,6 @@ const entry = async () => {
 
     // Increment and save counter after successful execution
     console.log("Entry count updated to:", entryCounter + 1);
-
-
   } catch (error) {
     console.error("Error in entry function:", error);
     throw error;

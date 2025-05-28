@@ -9,3 +9,7 @@ node_modules/
 .counter.json
 
 /dist
+
+.legacy.env
+
+merkle-backups

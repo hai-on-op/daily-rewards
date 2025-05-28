@@ -262,7 +262,7 @@ export const combineResults = async (): Promise<RewardsMap> => {
     haiVeloHistoricalRewards,
     haiVeloDailyRewards,
     lpHistoricalRewards,
-    currentLpRewards,
+    //currentLpRewards,
   ] = await Promise.all([
     earliestTransferBlock > 0
       ? calculateHaiVeloHistoricalRewards(
@@ -272,13 +272,13 @@ export const combineResults = async (): Promise<RewardsMap> => {
       : {},
     calculateHaiVeloDailyRewards(processedTransfers),
     calculateLpHistoricalRewards(),
-    calculateCurrentLpRewards(),
+    //calculateCurrentLpRewards(),
   ]);
 
   // Combine all rewards
   const allRewardMaps = [
     lpHistoricalRewards,
-    currentLpRewards,
+    //currentLpRewards, // Current LP rewards are removed since we want to redirect them to the Velo rewards
     haiVeloHistoricalRewards,
     ...haiVeloDailyRewards,
   ];
