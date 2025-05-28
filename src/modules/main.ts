@@ -107,30 +107,35 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
   }
 }
 
-async function saveMerkleTreesAsFiles(merkleTries: { [token: string]: any }, entryCounter: number) {
+async function saveMerkleTreesAsFiles(
+  merkleTries: { [token: string]: any },
+  entryCounter: number
+) {
   const currentDate = new Date();
-  const dateString = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-  const timestamp = currentDate.toISOString().replace(/[:.]/g, '-'); // Full timestamp for uniqueness
-  
+  const dateString = currentDate.toISOString().split("T")[0]; // YYYY-MM-DD format
+  const timestamp = currentDate.toISOString().replace(/[:.]/g, "-"); // Full timestamp for uniqueness
+
   // Create backup directory if it doesn't exist
-  const backupDir = path.join(process.cwd(), 'merkle-backups');
+  const backupDir = path.join(process.cwd(), "merkle-backups");
   if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
   }
 
-  console.log(`Saving merkle trees as backup files for entry ${entryCounter}...`);
+  console.log(
+    `Saving merkle trees as backup files for entry ${entryCounter}...`
+  );
 
   for (const [token, tree] of Object.entries(merkleTries)) {
     try {
       const filename = `merkle-tree-${token}-entry${entryCounter}-${dateString}-${timestamp}.json`;
       const filepath = path.join(backupDir, filename);
-      
+
       const treeData = {
         token,
         entryCounter,
         date: currentDate.toISOString(),
         root: tree.root,
-        tree: tree.dump()
+        tree: tree.dump(),
       };
 
       fs.writeFileSync(filepath, JSON.stringify(treeData, null, 2));
@@ -222,6 +227,12 @@ export const main = async (entryCounter: number = 0) => {
 
   console.log(merkleTries);
 
+  // Generate merkle trees and update them on-chain
+  await updateMerkleRoots(merkleTries);
+
+  // Save merkle trees as backup files
+  await saveMerkleTreesAsFiles(merkleTries, entryCounter);
+
   // Upload Merkle tree to CloudFlare
 
   Object.entries(merkleTries).forEach(async ([token, tree]) => {
@@ -240,12 +251,6 @@ export const main = async (entryCounter: number = 0) => {
       console.error(err);
     }
   });
-
-  // Save merkle trees as backup files
-  await saveMerkleTreesAsFiles(merkleTries, entryCounter);
-
-  // Generate merkle trees and update them on-chain
-  await updateMerkleRoots(merkleTries);
 };
 
 //main().catch(console.error);
