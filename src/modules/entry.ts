@@ -42,6 +42,8 @@ const entry = async () => {
     signer
   );
 
+  console.log("Reward Distributor Paused:", await rewardDistributor.paused());
+
   if (!rewardDistributor.paused()) {
     const tx = await rewardDistributor.pause();
     console.log("Reward Distributor Paused!");

@@ -2,6 +2,7 @@ export const REWARD_DISTRIBUTOR_ABI = [
   {
     inputs: [
       { internalType: "uint256", name: "_epochDuration", type: "uint256" },
+      { internalType: "uint256", name: "_bufferDuration", type: "uint256" },
       { internalType: "address", name: "_rootSetter", type: "address" },
     ],
     stateMutability: "nonpayable",
@@ -23,6 +24,16 @@ export const REWARD_DISTRIBUTOR_ABI = [
   {
     inputs: [],
     name: "RewardDistributor_ArrayLengthsMustMatch",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "RewardDistributor_InitialEpochAlreadyStarted",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "RewardDistributor_InitialEpochNotStarted",
     type: "error",
   },
   { inputs: [], name: "RewardDistributor_InvalidAmount", type: "error" },
@@ -210,6 +221,13 @@ export const REWARD_DISTRIBUTOR_ABI = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "bufferDuration",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       { internalType: "address", name: "_token", type: "address" },
       { internalType: "uint256", name: "_wad", type: "uint256" },
@@ -252,13 +270,6 @@ export const REWARD_DISTRIBUTOR_ABI = [
     ],
     name: "isClaimed",
     outputs: [{ internalType: "bool", name: "_hasClaimed", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "lastUpdatedTime",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
@@ -319,6 +330,20 @@ export const REWARD_DISTRIBUTOR_ABI = [
     inputs: [],
     name: "rootSetter",
     outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "startInitialEpoch",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "startTimestamp",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
