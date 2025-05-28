@@ -42,9 +42,11 @@ const entry = async () => {
     signer
   );
 
-  console.log("Reward Distributor Paused:", await rewardDistributor.paused());
+  const isRewardDistributorPaused = await rewardDistributor.paused();
 
-  if (!rewardDistributor.paused()) {
+  console.log("Reward Distributor Paused:", isRewardDistributorPaused);
+
+  if (!isRewardDistributorPaused) {
     const tx = await rewardDistributor.pause();
     console.log("Reward Distributor Paused!");
 
@@ -58,56 +60,58 @@ const entry = async () => {
     const tx = await rewardDistributor.startInitialEpoch();
     console.log("Reward Distributor Started Initial Epoch!");
     await tx.wait();
-  }
+  } else {
+    console.log("Current entry count:", entryCounter);
 
-  console.log("Current entry count:", entryCounter);
+    // We consider this blocknumber index delay for the subgraph
+    const blockNumberDelay = 5;
 
-  // We consider this blocknumber index delay for the subgraph
-  const blockNumberDelay = 5;
-
-  process.env.LP_END_BLOCK = String(
-    (await lpProvider.getBlockNumber()) - blockNumberDelay
-  );
-  process.env.MINTER_END_BLOCK = String(
-    (await minterProvider.getBlockNumber()) - blockNumberDelay
-  );
-  process.env.HAIVELO_END_BLOCK = String(
-    (await haiveloProvider.getBlockNumber()) - blockNumberDelay
-  );
-
-  const effectiveEntryCounter = entryCounter - 1;
-
-  try {
-    // Parse and update REWARD_LP_CONFIG
-    const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || "{}");
-    const multipliedLPConfig = multiplyLPConfigValues(
-      currentLPConfig,
-      effectiveEntryCounter
+    process.env.LP_END_BLOCK = String(
+      (await lpProvider.getBlockNumber()) - blockNumberDelay
     );
-    process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
-    console.log("Updated REWARD_LP_CONFIG:", process.env.REWARD_LP_CONFIG);
-
-    // Parse and update REWARD_HAIVELO_CONFIG
-    const currentHaiveloConfig = JSON.parse(
-      process.env.REWARD_HAIVELO_CONFIG || "{}"
+    process.env.MINTER_END_BLOCK = String(
+      (await minterProvider.getBlockNumber()) - blockNumberDelay
     );
-    const multipliedHaiveloConfig = multiplyHaiveloConfigValues(
-      currentHaiveloConfig,
-      effectiveEntryCounter
-    );
-    process.env.REWARD_HAIVELO_CONFIG = JSON.stringify(multipliedHaiveloConfig);
-    console.log(
-      "Updated REWARD_HAIVELO_CONFIG:",
-      process.env.REWARD_HAIVELO_CONFIG
+    process.env.HAIVELO_END_BLOCK = String(
+      (await haiveloProvider.getBlockNumber()) - blockNumberDelay
     );
 
-    await main(entryCounter);
+    const effectiveEntryCounter = entryCounter - 1;
 
-    // Increment and save counter after successful execution
-    console.log("Entry count updated to:", entryCounter + 1);
-  } catch (error) {
-    console.error("Error in entry function:", error);
-    throw error;
+    try {
+      // Parse and update REWARD_LP_CONFIG
+      const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || "{}");
+      const multipliedLPConfig = multiplyLPConfigValues(
+        currentLPConfig,
+        effectiveEntryCounter
+      );
+      process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
+      console.log("Updated REWARD_LP_CONFIG:", process.env.REWARD_LP_CONFIG);
+
+      // Parse and update REWARD_HAIVELO_CONFIG
+      const currentHaiveloConfig = JSON.parse(
+        process.env.REWARD_HAIVELO_CONFIG || "{}"
+      );
+      const multipliedHaiveloConfig = multiplyHaiveloConfigValues(
+        currentHaiveloConfig,
+        effectiveEntryCounter
+      );
+      process.env.REWARD_HAIVELO_CONFIG = JSON.stringify(
+        multipliedHaiveloConfig
+      );
+      console.log(
+        "Updated REWARD_HAIVELO_CONFIG:",
+        process.env.REWARD_HAIVELO_CONFIG
+      );
+
+      await main(entryCounter);
+
+      // Increment and save counter after successful execution
+      console.log("Entry count updated to:", entryCounter + 1);
+    } catch (error) {
+      console.error("Error in entry function:", error);
+      throw error;
+    }
   }
 };
 
