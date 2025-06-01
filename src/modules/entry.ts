@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { main } from "./main";
+import { notifyTransaction, getTelegramBot } from "./telegram-bot";
 
 import { haiveloProvider, lpProvider, minterProvider } from "../utils/chain";
 import { ethers } from "ethers";
@@ -30,6 +31,14 @@ function multiplyHaiveloConfigValues(config: any, multiplier: number): any {
 const entry = async () => {
   const cfg = config();
 
+  // Initialize Telegram bot
+  try {
+    const telegramBot = getTelegramBot(false); // Use non-polling mode
+    console.log(`Telegram bot initialized with ${telegramBot.getUserCount()} users`);
+  } catch (error) {
+    console.warn('Telegram bot initialization failed:', error);
+  }
+
   const provider = new ethers.providers.JsonRpcProvider(
     cfg.DISTRIBUTOR_RPC_URL
   );
@@ -47,19 +56,74 @@ const entry = async () => {
   console.log("Reward Distributor Paused:", isRewardDistributorPaused);
 
   if (!isRewardDistributorPaused) {
-    const tx = await rewardDistributor.pause();
-    console.log("Reward Distributor Paused!");
+    try {
+      // Notify pause initiation
+      await notifyTransaction({
+        type: 'initiate',
+        operation: 'Pause Reward Distributor',
+        details: { currentStatus: 'unpaused' }
+      });
 
-    await tx.wait();
+      const tx = await rewardDistributor.pause();
+      console.log("Reward Distributor Paused!");
+
+      const receipt = await tx.wait();
+
+      // Notify pause success
+      await notifyTransaction({
+        type: 'success',
+        operation: 'Pause Reward Distributor',
+        txHash: tx.hash,
+        blockNumber: receipt?.blockNumber,
+        details: { newStatus: 'paused' }
+      });
+
+    } catch (error) {
+      // Notify pause failure
+      await notifyTransaction({
+        type: 'failure',
+        operation: 'Pause Reward Distributor',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
   }
 
   // Read current counter value
   const entryCounter = Number(String(await rewardDistributor.epochCounter()));
 
   if (entryCounter === 0) {
-    const tx = await rewardDistributor.startInitialEpoch();
-    console.log("Reward Distributor Started Initial Epoch!");
-    await tx.wait();
+    try {
+      // Notify initial epoch start
+      await notifyTransaction({
+        type: 'initiate',
+        operation: 'Start Initial Epoch',
+        details: { epochCounter: 0 }
+      });
+
+      const tx = await rewardDistributor.startInitialEpoch();
+      console.log("Reward Distributor Started Initial Epoch!");
+
+      const receipt = await tx.wait();
+
+      // Notify success
+      await notifyTransaction({
+        type: 'success',
+        operation: 'Start Initial Epoch',
+        txHash: tx.hash,
+        blockNumber: receipt?.blockNumber,
+        details: { newEpochCounter: 1 }
+      });
+
+    } catch (error) {
+      // Notify failure
+      await notifyTransaction({
+        type: 'failure',
+        operation: 'Start Initial Epoch',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
   } else {
     console.log("Current entry count:", entryCounter);
 
@@ -104,12 +168,48 @@ const entry = async () => {
         process.env.REWARD_HAIVELO_CONFIG
       );
 
+      // Notify start of reward processing
+      await notifyTransaction({
+        type: 'initiate',
+        operation: 'Process Daily Rewards',
+        details: {
+          entryCounter,
+          effectiveEntryCounter,
+          lpEndBlock: process.env.LP_END_BLOCK,
+          minterEndBlock: process.env.MINTER_END_BLOCK,
+          haiveloEndBlock: process.env.HAIVELO_END_BLOCK
+        }
+      });
+
       await main(entryCounter);
 
       // Increment and save counter after successful execution
       console.log("Entry count updated to:", entryCounter + 1);
+
+      // Notify successful completion
+      await notifyTransaction({
+        type: 'success',
+        operation: 'Process Daily Rewards',
+        details: {
+          completedEntryCounter: entryCounter,
+          nextEntryCounter: entryCounter + 1
+        }
+      });
+
     } catch (error) {
       console.error("Error in entry function:", error);
+      
+      // Notify failure
+      await notifyTransaction({
+        type: 'failure',
+        operation: 'Process Daily Rewards',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: {
+          failedAtEntryCounter: entryCounter,
+          effectiveEntryCounter
+        }
+      });
+      
       throw error;
     }
   }

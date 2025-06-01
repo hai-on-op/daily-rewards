@@ -13,3 +13,6 @@ node_modules/
 .legacy.env
 
 merkle-backups
+
+# Telegram bot user storage
+telegram-users.json

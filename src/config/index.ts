@@ -152,6 +152,10 @@ export const config = () => {
     DEPOSIT_TOKEN_ADDRESS: envs.DEPOSIT_TOKEN_ADDRESS,
 
     IGNORE_BRIDGE: true,
+
+    // Telegram Bot Configuration
+    TELEGRAM_BOT_TOKEN: envs.TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_STORAGE_FILE: envs.TELEGRAM_CHAT_STORAGE_FILE || path.join(__dirname, "..", "..", "telegram-users.json"),
   };
 };
 
