@@ -1,5 +1,8 @@
 import { config } from "../config";
-import { getTokenTransfersToContract, TokenTransfer } from "../services/reward-distributor-deposits";
+import {
+  getTokenTransfersToContract,
+  TokenTransfer,
+} from "../services/reward-distributor-deposits";
 import { UserList } from "../types";
 import { calculateHaiveloRewards } from "./haivelo-rewards";
 import { calculateLpRewards } from "./lp-rewards";
@@ -68,9 +71,9 @@ export function combineRewards(rewardsMaps: RewardsMap[]): RewardsMap {
  */
 async function getProcessedTransfers(): Promise<ProcessedTransfer[]> {
   const FILTER_CONSTANT = 10 ** 18;
-  
+
   const transfers: TokenTransfer[] = await getTokenTransfersToContract();
-  
+
   return transfers
     .filter((t) => Number(t.value) >= FILTER_CONSTANT)
     .map((t) => ({
@@ -149,11 +152,18 @@ async function calculateHaiVeloDailyRewards(
     const currentTransfer = transfers[i];
     const rewardsAmount = currentTransfer.value;
 
-    console.log(`Processing ${currentTransfer.tokenSymbol} transfer with amount:`, rewardsAmount);
-
     let rewards: RewardObject;
 
-    if (i === 0) {
+    if (transfers.length === 1) {
+      // Single transfer: calculate full period from epoch before transfer to end block
+      const calculationBlock = config().HAIVELO_END_BLOCK;
+      rewards = await calculateSingleTransferRewards(
+        rewardsAmount,
+        currentTransfer.blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK,
+        calculationBlock,
+        currentTransfer.tokenSymbol
+      );
+    } else if (i === 0) {
       // First transfer: calculate from epoch before first transfer to first transfer
       rewards = await calculateSingleTransferRewards(
         rewardsAmount,
@@ -165,9 +175,10 @@ async function calculateHaiVeloDailyRewards(
       // Last transfer: calculate partial epoch to end block
       const calculationBlock = config().HAIVELO_END_BLOCK;
       const previousTransfer = transfers[i - 1];
-      
+
       const rewardAmountForLastIncompleteEpoch =
-        ((calculationBlock - previousTransfer.blockNumber) / REWARD_DEPOSIT_ِEPOCH_BLOCK) *
+        ((calculationBlock - previousTransfer.blockNumber) /
+          REWARD_DEPOSIT_ِEPOCH_BLOCK) *
         rewardsAmount;
 
       rewards = await calculateSingleTransferRewards(
@@ -179,6 +190,7 @@ async function calculateHaiVeloDailyRewards(
     } else {
       // Middle transfers: calculate from previous transfer to current transfer
       const previousTransfer = transfers[i - 1];
+
       rewards = await calculateSingleTransferRewards(
         rewardsAmount,
         previousTransfer.blockNumber,
@@ -250,12 +262,16 @@ export const combineResults = async (): Promise<RewardsMap> => {
 
   // Fetch and process transfers
   const processedTransfers = await getProcessedTransfers();
-  console.log(`Processed ${processedTransfers.length} transfers:`, processedTransfers);
+  console.log(
+    `Processed ${processedTransfers.length} transfers:`,
+    processedTransfers
+  );
 
   // Find the earliest block number across all transfers for historical calculation
-  const earliestTransferBlock = processedTransfers.length > 0 
-    ? Math.min(...processedTransfers.map(t => t.blockNumber))
-    : 0;
+  const earliestTransferBlock =
+    processedTransfers.length > 0
+      ? Math.min(...processedTransfers.map((t) => t.blockNumber))
+      : 0;
 
   // Calculate all reward types
   const [
