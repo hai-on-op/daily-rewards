@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Rewards Unpause Task
+
+
+[Timer]
+OnCalendar=*:40
+Persistent=true
+
+[Install]
+WantedBy=timers.target
