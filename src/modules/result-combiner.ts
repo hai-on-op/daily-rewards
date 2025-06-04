@@ -149,6 +149,7 @@ async function calculateHaiVeloDailyRewards(
   const haiVeloDailyRewards: RewardObject[] = [];
 
   for (let i = 0; i < transfers.length; i++) {
+    console.log("transfers length", transfers);
     const currentTransfer = transfers[i];
     const rewardsAmount = currentTransfer.value;
 
@@ -158,7 +159,8 @@ async function calculateHaiVeloDailyRewards(
       // Single transfer: calculate full period from epoch before transfer to end block
       const calculationBlock = config().HAIVELO_END_BLOCK;
       rewards = await calculateSingleTransferRewards(
-        rewardsAmount,
+        (rewardsAmount * (calculationBlock - currentTransfer.blockNumber)) /
+          REWARD_DEPOSIT_ِEPOCH_BLOCK,
         currentTransfer.blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK,
         calculationBlock,
         currentTransfer.tokenSymbol
@@ -177,7 +179,7 @@ async function calculateHaiVeloDailyRewards(
       const previousTransfer = transfers[i - 1];
 
       const rewardAmountForLastIncompleteEpoch =
-        ((calculationBlock - previousTransfer.blockNumber) /
+        ((calculationBlock - currentTransfer.blockNumber) /
           REWARD_DEPOSIT_ِEPOCH_BLOCK) *
         rewardsAmount;
 
@@ -277,7 +279,7 @@ export const combineResults = async (): Promise<RewardsMap> => {
   const [
     haiVeloHistoricalRewards,
     haiVeloDailyRewards,
-    lpHistoricalRewards,
+    // lpHistoricalRewards,
     //currentLpRewards,
   ] = await Promise.all([
     earliestTransferBlock > 0
@@ -287,13 +289,13 @@ export const combineResults = async (): Promise<RewardsMap> => {
         )
       : {},
     calculateHaiVeloDailyRewards(processedTransfers),
-    calculateLpHistoricalRewards(),
+    //calculateLpHistoricalRewards(),
     //calculateCurrentLpRewards(),
   ]);
 
   // Combine all rewards
   const allRewardMaps = [
-    lpHistoricalRewards,
+    //lpHistoricalRewards,
     //currentLpRewards, // Current LP rewards are removed since we want to redirect them to the Velo rewards
     haiVeloHistoricalRewards,
     ...haiVeloDailyRewards,
