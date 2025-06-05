@@ -183,6 +183,7 @@ async function calculateHaiVeloDailyRewards(
           REWARD_DEPOSIT_ِEPOCH_BLOCK) *
         rewardsAmount;
 
+
       rewards = await calculateSingleTransferRewards(
         rewardAmountForLastIncompleteEpoch,
         previousTransfer.blockNumber,
@@ -279,7 +280,7 @@ export const combineResults = async (): Promise<RewardsMap> => {
   const [
     haiVeloHistoricalRewards,
     haiVeloDailyRewards,
-    // lpHistoricalRewards,
+    lpHistoricalRewards,
     //currentLpRewards,
   ] = await Promise.all([
     earliestTransferBlock > 0
@@ -289,13 +290,13 @@ export const combineResults = async (): Promise<RewardsMap> => {
         )
       : {},
     calculateHaiVeloDailyRewards(processedTransfers),
-    //calculateLpHistoricalRewards(),
+    calculateLpHistoricalRewards(),
     //calculateCurrentLpRewards(),
   ]);
 
   // Combine all rewards
   const allRewardMaps = [
-    //lpHistoricalRewards,
+    lpHistoricalRewards,
     //currentLpRewards, // Current LP rewards are removed since we want to redirect them to the Velo rewards
     haiVeloHistoricalRewards,
     ...haiVeloDailyRewards,
