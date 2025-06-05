@@ -128,7 +128,7 @@ const entry = async () => {
     console.log("Current entry count:", entryCounter);
 
     // We consider this blocknumber index delay for the subgraph
-    const blockNumberDelay = 5;
+    const blockNumberDelay = 30;
 
     process.env.LP_END_BLOCK = String(
       (await lpProvider.getBlockNumber()) - blockNumberDelay

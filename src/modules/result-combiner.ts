@@ -162,7 +162,7 @@ async function calculateHaiVeloDailyRewards(
         (rewardsAmount * (calculationBlock - currentTransfer.blockNumber)) /
           REWARD_DEPOSIT_ِEPOCH_BLOCK,
         currentTransfer.blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK,
-        calculationBlock,
+        calculationBlock - REWARD_DEPOSIT_ِEPOCH_BLOCK ,
         currentTransfer.tokenSymbol
       );
     } else if (i === 0) {
@@ -187,7 +187,7 @@ async function calculateHaiVeloDailyRewards(
       rewards = await calculateSingleTransferRewards(
         rewardAmountForLastIncompleteEpoch,
         previousTransfer.blockNumber,
-        calculationBlock,
+        calculationBlock - REWARD_DEPOSIT_ِEPOCH_BLOCK,
         currentTransfer.tokenSymbol
       );
     } else {
