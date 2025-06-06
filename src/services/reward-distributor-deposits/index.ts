@@ -46,7 +46,7 @@ export async function getTokenTransfersToContract(): Promise<TokenTransfer[]> {
   const senderAddress = DEPOSIT_SENDER_ADDRESS;
 
   // All token addresses we want to track
-  const tokenAddresses = [KITE_ADDRESS, OP_ADDRESS, DINERO_ADDRESS, HAI_ADDRESS];
+  const tokenAddresses = [HAI_ADDRESS]; //[KITE_ADDRESS, OP_ADDRESS, DINERO_ADDRESS, HAI_ADDRESS];
 
   // ERC20 Transfer event signature
   // Transfer(address indexed from, address indexed to, uint256 value)
