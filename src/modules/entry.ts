@@ -34,9 +34,11 @@ const entry = async () => {
   // Initialize Telegram bot
   try {
     const telegramBot = getTelegramBot(false); // Use non-polling mode
-    console.log(`Telegram bot initialized with ${telegramBot.getUserCount()} users`);
+    console.log(
+      `Telegram bot initialized with ${telegramBot.getUserCount()} users`
+    );
   } catch (error) {
-    console.warn('Telegram bot initialization failed:', error);
+    console.warn("Telegram bot initialization failed:", error);
   }
 
   const provider = new ethers.providers.JsonRpcProvider(
@@ -92,13 +94,13 @@ const entry = async () => {
   // Read current counter value
   const entryCounter = Number(String(await rewardDistributor.epochCounter()));
 
-  if (false) {
+  if (entryCounter === 0) {
     try {
       // Notify initial epoch start
       await notifyTransaction({
-        type: 'initiate',
-        operation: 'Start Initial Epoch',
-        details: { epochCounter: 0 }
+        type: "initiate",
+        operation: "Start Initial Epoch",
+        details: { epochCounter: 0 },
       });
 
       const tx = await rewardDistributor.startInitialEpoch();
@@ -108,16 +110,13 @@ const entry = async () => {
 
       // Notify success
       await notifyTransaction({
-        type: 'success',
-        operation: 'Start Initial Epoch',
+        type: "success",
+        operation: "Start Initial Epoch",
         txHash: tx.hash,
         blockNumber: receipt?.blockNumber,
-        details: { newEpochCounter: 1 }
+        details: { newEpochCounter: 1 },
       });
-
-    } catch (error) {
-  
-    }
+    } catch (error) {}
   } else {
     console.log("Current entry count:", entryCounter);
 
@@ -164,15 +163,15 @@ const entry = async () => {
 
       // Notify start of reward processing
       await notifyTransaction({
-        type: 'initiate',
-        operation: 'Process Daily Rewards',
+        type: "initiate",
+        operation: "Process Daily Rewards",
         details: {
           entryCounter,
           effectiveEntryCounter,
           lpEndBlock: process.env.LP_END_BLOCK,
           minterEndBlock: process.env.MINTER_END_BLOCK,
-          haiveloEndBlock: process.env.HAIVELO_END_BLOCK
-        }
+          haiveloEndBlock: process.env.HAIVELO_END_BLOCK,
+        },
       });
 
       await main(entryCounter);
@@ -182,28 +181,27 @@ const entry = async () => {
 
       // Notify successful completion
       await notifyTransaction({
-        type: 'success',
-        operation: 'Process Daily Rewards',
+        type: "success",
+        operation: "Process Daily Rewards",
         details: {
           completedEntryCounter: entryCounter,
-          nextEntryCounter: entryCounter + 1
-        }
+          nextEntryCounter: entryCounter + 1,
+        },
       });
-
     } catch (error) {
       console.error("Error in entry function:", error);
-      
+
       // Notify failure
       await notifyTransaction({
-        type: 'failure',
-        operation: 'Process Daily Rewards',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        type: "failure",
+        operation: "Process Daily Rewards",
+        error: error instanceof Error ? error.message : "Unknown error",
         details: {
           failedAtEntryCounter: entryCounter,
-          effectiveEntryCounter
-        }
+          effectiveEntryCounter,
+        },
       });
-      
+
       throw error;
     }
   }
