@@ -38,6 +38,9 @@ export const processRewardEvent = async (
   events: LPRewardEvent[],
   options?: ProcessorOptions
 ): Promise<UserList> => {
+
+  console.log("Processing Rewards Amount", rewardAmount);
+
   const stakingPositions = await getStakingPositions();
 
   const {
@@ -153,7 +156,7 @@ export const processRewardEvent = async (
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
         const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight);
+        earn(user, rewardPerWeight, calculateUserLPBoosts(users));
         const accumulatedRate = rates[event.cType as string];
         // Convert to real debt after interests and update the debt balance
         const adjustedDeltaDebt = (event.value as number) * accumulatedRate;
@@ -168,7 +171,7 @@ export const processRewardEvent = async (
       case RewardEventType.POOL_POSITION_UPDATE: {
         const updatedPosition = event.value as LpPosition;
         const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight);
+        earn(user, rewardPerWeight, calculateUserLPBoosts(users));
         // Detect the special of a simple NFT transfer (not form a mint/burn/modify position)
         for (let u of Object.keys(users)) {
           for (let p in users[u].lpPositions) {
@@ -178,7 +181,7 @@ export const processRewardEvent = async (
             ) {
               console.log("ERC721 transfer");
               // We found the source address of an ERC721 transfer
-              earn(users[u], rewardPerWeight);
+              earn(users[u], rewardPerWeight, calculateUserLPBoosts(users));
               users[u].lpPositions = users[u].lpPositions.filter(
                 (x) => x.tokenId !== updatedPosition.tokenId
               );
@@ -216,7 +219,7 @@ export const processRewardEvent = async (
       case RewardEventType.POOL_SWAP: {
         // Pool swap changes the price which affects everyone's staking weight
         // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
+        Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));
         sqrtPrice = event.value as number;
         // Then update everyone weight
         Object.values(users).map(
@@ -231,7 +234,7 @@ export const processRewardEvent = async (
         const cTypeRate = rates[event.cType as string];
         rates[event.cType as string] = cTypeRate + rateMultiplier;
         // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
+        Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));
         // Update everyone's debt
         Object.values(users).map((u) => (u.debt *= rateMultiplier + 1));
         Object.values(users).map(
@@ -256,14 +259,15 @@ export const processRewardEvent = async (
   }
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
-  Object.values(users).map((u) => earn(u, rewardPerWeight));
+  Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));
   return users;
 };
 // Credit reward to a user
-const earn = (user: UserAccount, rewardPerWeight: number) => {
+const earn = (user: UserAccount, rewardPerWeight: number, boostAmounts: BoostAmounts) => {
+  const boostAmount = boostAmounts[user.address] ?? 1;
   // Credit to the user his due rewards
   user.earned +=
-    (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight;
+    (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight * boostAmount;
   // Store his cumulative credited rewards for next time
   user.rewardPerWeightStored = rewardPerWeight;
 };
