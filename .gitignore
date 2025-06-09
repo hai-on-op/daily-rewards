@@ -16,3 +16,5 @@ merkle-backups
 
 # Telegram bot user storage
 telegram-users.json
+
+/legacy

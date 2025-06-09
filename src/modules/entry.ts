@@ -51,7 +51,7 @@ const entry = async () => {
     signer
   );
 
-  const isRewardDistributorPaused = await rewardDistributor.paused();
+  /*const isRewardDistributorPaused = await rewardDistributor.paused();
 
   console.log("Reward Distributor Paused:", isRewardDistributorPaused);
 
@@ -87,12 +87,12 @@ const entry = async () => {
       });
       throw error;
     }
-  }
+  }*/
 
   // Read current counter value
   const entryCounter = Number(String(await rewardDistributor.epochCounter()));
 
-  if (entryCounter === 0) {
+  if (false) {
     try {
       // Notify initial epoch start
       await notifyTransaction({
@@ -116,13 +116,7 @@ const entry = async () => {
       });
 
     } catch (error) {
-      // Notify failure
-      await notifyTransaction({
-        type: 'failure',
-        operation: 'Start Initial Epoch',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
+  
     }
   } else {
     console.log("Current entry count:", entryCounter);

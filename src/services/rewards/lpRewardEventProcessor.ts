@@ -145,7 +145,6 @@ export const processRewardEvent = async (
     const event = events[i];
     if (i % 1000 === 0 && i > 0) console.log(`  Processed ${i} events`);
 
-    console.log("Debugging event  ===> Before redemption price update");
 
     // Update the redemption price, only async task in this processing loop
     if (redemptionPriceLastUpdate + 3600 * 24 <= event.timestamp) {
@@ -153,14 +152,11 @@ export const processRewardEvent = async (
       redemptionPriceLastUpdate = event.timestamp;
     }
 
-    console.log("Debugging event  ===> After redemption price update");
     updateRewardPerWeight(event.timestamp);
     // Increment time
     timestamp = event.timestamp;
     // The way the rewards are credited is different for each event type
-    console.log("Debugging event  ===> Update Reward Per Weight");
 
-    console.log("Debugging event  ===> ", event.type);
 
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
@@ -269,6 +265,8 @@ export const processRewardEvent = async (
     // Recalculate the sum of weights since the events the weights
     totalStakingWeight = sumAllWeights(users, calculateUserLPBoosts(users));
   }
+
+  console.log("Debugging event  ===> Before final crediting of all rewards");
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
   Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));

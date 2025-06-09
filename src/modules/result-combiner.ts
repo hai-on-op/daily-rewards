@@ -218,6 +218,8 @@ async function calculateLpHistoricalRewards(): Promise<RewardObject> {
   for (const [rewardToken, amount] of Object.entries(
     config().rewards.lp.historicConfig
   )) {
+
+
     const rewards = await calculateLpRewards(amount, {
       startBlock: config().LP_HISTORIC_START_BLOCK,
       endBlock: config().LP_START_BLOCK,
