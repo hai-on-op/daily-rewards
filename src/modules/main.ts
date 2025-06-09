@@ -95,7 +95,7 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
     console.log(`Merkle root for ${token} (${tokenAddress}):`, tree.root);
   }
 
-  /*try {
+  try {
     console.log("Updating merkle roots...");
     
     // Notify transaction initiation
@@ -145,7 +145,7 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
     });
     
     throw error;
-  }*/
+  }
 }
 
 async function saveMerkleTreesAsFiles(
@@ -278,7 +278,7 @@ export const main = async (entryCounter: number = 0) => {
 
   Object.entries(merkleTries).forEach(async ([token, tree]) => {
     try {
-      /*await uploadMerkleTree({
+      await uploadMerkleTree({
         config: {
           accountId: config().CLOUDFLARE_ACCOUNT_ID,
           namespaceId: config().CLOUDFLARE_NAMESPACE_ID,
@@ -287,7 +287,7 @@ export const main = async (entryCounter: number = 0) => {
         treeId: token,
         merkleTree: JSON.stringify(tree.dump()),
       });
-      console.log(`Merkle tree for ${token} uploaded successfully`);*/
+      console.log(`Merkle tree for ${token} uploaded successfully`);
     } catch (err) {
       console.error(err);
     }
