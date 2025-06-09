@@ -139,22 +139,34 @@ export const processRewardEvent = async (
   console.log(
     `Distributing ${rewardAmount} at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
-  console.log("Applying all events...");
+  console.log(`Applying all (${events.length}) events... `);
   // Main processing loop processing events in chronologic order that modify the current reward rate distribution for each user.
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
     if (i % 1000 === 0 && i > 0) console.log(`  Processed ${i} events`);
+
+    console.log("Debugging event  ===> Before redemption price update");
+
     // Update the redemption price, only async task in this processing loop
     if (redemptionPriceLastUpdate + 3600 * 24 <= event.timestamp) {
       redemptionPrice = await getRedemptionPriceFromTimestamp(event.timestamp);
       redemptionPriceLastUpdate = event.timestamp;
     }
+
+    console.log("Debugging event  ===> After redemption price update");
     updateRewardPerWeight(event.timestamp);
     // Increment time
     timestamp = event.timestamp;
     // The way the rewards are credited is different for each event type
+    console.log("Debugging event  ===> Update Reward Per Weight");
+
+    console.log("Debugging event  ===> ", event.type);
+
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
+
+
+
         const [__, user] = getOrCreateUser(event.address ?? "", users);
         earn(user, rewardPerWeight, calculateUserLPBoosts(users));
         const accumulatedRate = rates[event.cType as string];
