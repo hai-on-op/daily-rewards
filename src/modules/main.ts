@@ -7,7 +7,11 @@ import * as path from "path";
 import { uploadMerkleTree } from "./upload-merkle-tree";
 import { config } from "../config";
 import { subgraphQuery } from "../services/subgraph/utils";
-import { notifyTransaction, notifyMerkleUpdate, TransactionNotification } from "./telegram-bot";
+import {
+  notifyTransaction,
+  notifyMerkleUpdate,
+  TransactionNotification,
+} from "./telegram-bot";
 
 import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
 
@@ -97,16 +101,16 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
 
   try {
     console.log("Updating merkle roots...");
-    
+
     // Notify transaction initiation
     await notifyTransaction({
-      type: 'initiate',
-      operation: 'Update Merkle Roots',
+      type: "initiate",
+      operation: "Update Merkle Roots",
       details: {
         tokens: Object.keys(merkleTries),
         tokenAddresses,
-        tokenCount: tokenAddresses.length
-      }
+        tokenCount: tokenAddresses.length,
+      },
     });
 
     const tx = await rewardDistributor.updateMerkleRoots(tokenAddresses, roots);
@@ -117,33 +121,32 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
 
     // Notify transaction success
     await notifyTransaction({
-      type: 'success',
-      operation: 'Update Merkle Roots',
+      type: "success",
+      operation: "Update Merkle Roots",
       txHash: tx.hash,
       blockNumber: receipt?.blockNumber,
       details: {
         tokens: Object.keys(merkleTries),
-        gasUsed: receipt?.gasUsed?.toString()
-      }
+        gasUsed: receipt?.gasUsed?.toString(),
+      },
     });
-
+    //
     // Send merkle update notification
     await notifyMerkleUpdate(Object.keys(merkleTries), roots);
-
   } catch (error) {
     console.error("Error updating merkle roots:", error);
-    
+
     // Notify transaction failure
     await notifyTransaction({
-      type: 'failure',
-      operation: 'Update Merkle Roots',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      type: "failure",
+      operation: "Update Merkle Roots",
+      error: error instanceof Error ? error.message : "Unknown error",
       details: {
         tokens: Object.keys(merkleTries),
-        tokenAddresses
-      }
+        tokenAddresses,
+      },
     });
-    
+
     throw error;
   }
 }
