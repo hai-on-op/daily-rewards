@@ -272,7 +272,7 @@ export const main = async (entryCounter: number = 0) => {
   console.log(merkleTries);
 
   // Generate merkle trees and update them on-chain
-  //await updateMerkleRoots(merkleTries);
+  await updateMerkleRoots(merkleTries);
 
   // Save merkle trees as backup files
   await saveMerkleTreesAsFiles(merkleTries, entryCounter);
