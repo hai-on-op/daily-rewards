@@ -53,7 +53,7 @@ const entry = async () => {
     signer
   );
 
-  /*const isRewardDistributorPaused = await rewardDistributor.paused();
+  const isRewardDistributorPaused = await rewardDistributor.paused();
 
   console.log("Reward Distributor Paused:", isRewardDistributorPaused);
 
@@ -89,7 +89,7 @@ const entry = async () => {
       });
       throw error;
     }
-  }*/
+  }
 
   // Read current counter value
   const entryCounter = Number(String(await rewardDistributor.epochCounter()));
