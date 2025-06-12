@@ -24,6 +24,8 @@ export const processRewardEvents = async (
   users: UserList,
   options?: ProcessorOptions
 ): Promise<UserList> => {
+  console.log("rewardAmount", rewardAmount);
+
   const stakingPositions = await getStakingPositions();
 
   const {
@@ -80,7 +82,7 @@ export const processRewardEvents = async (
     calculateUserhaiVeloBoosts(users)
   );
 
-  let rewardPerWeight = rewardRate / totalStakingWeight;
+  let rewardPerWeight = 0; //rewardRate / totalStakingWeight;
 
   let updateRewardPerWeight = (evtTime: number) => {
     if (totalStakingWeight > 0) {
@@ -100,7 +102,7 @@ export const processRewardEvents = async (
 
     const user = getOrCreateUserMutate(event.safe.owner.address, users);
 
-    Object.values(users).map((u) => earn(u, rewardPerWeight));
+    Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users)));
 
     user.collateral += Number(event.deltaCollateral);
 
@@ -129,17 +131,25 @@ export const processRewardEvents = async (
 
   updateRewardPerWeight(endTimestamp);
 
-  Object.values(users).map((u) => earn(u, rewardPerWeight));
+  Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users)));
 
   return users;
 };
 
 // Credit reward to a user
-const earn = (user: UserAccount, rewardPerWeight: number) => {
+const earn = (
+  user: UserAccount,
+  rewardPerWeight: number,
+  boostAmounts: BoostAmounts
+) => {
+  const boostAmount = boostAmounts[user.address] ?? 1;
+
   // Credit to the user his due rewards
 
   user.earned +=
-    (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight;
+    (rewardPerWeight - user.rewardPerWeightStored) *
+    user.stakingWeight *
+    boostAmount;
   // Store his cumulative credited rewards for next time
   user.rewardPerWeightStored = rewardPerWeight;
 };

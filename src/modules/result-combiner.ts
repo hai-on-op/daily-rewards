@@ -149,7 +149,6 @@ async function calculateHaiVeloDailyRewards(
   const haiVeloDailyRewards: RewardObject[] = [];
 
   for (let i = 0; i < transfers.length; i++) {
-    console.log("transfers length", transfers);
     const currentTransfer = transfers[i];
     const rewardsAmount = currentTransfer.value;
 
@@ -162,7 +161,7 @@ async function calculateHaiVeloDailyRewards(
         (rewardsAmount * (calculationBlock - currentTransfer.blockNumber)) /
           REWARD_DEPOSIT_ِEPOCH_BLOCK,
         currentTransfer.blockNumber - REWARD_DEPOSIT_ِEPOCH_BLOCK,
-        calculationBlock - REWARD_DEPOSIT_ِEPOCH_BLOCK ,
+        calculationBlock - REWARD_DEPOSIT_ِEPOCH_BLOCK,
         currentTransfer.tokenSymbol
       );
     } else if (i === 0) {
@@ -182,7 +181,6 @@ async function calculateHaiVeloDailyRewards(
         ((calculationBlock - currentTransfer.blockNumber) /
           REWARD_DEPOSIT_ِEPOCH_BLOCK) *
         rewardsAmount;
-
 
       rewards = await calculateSingleTransferRewards(
         rewardAmountForLastIncompleteEpoch,
@@ -218,8 +216,6 @@ async function calculateLpHistoricalRewards(): Promise<RewardObject> {
   for (const [rewardToken, amount] of Object.entries(
     config().rewards.lp.historicConfig
   )) {
-
-
     const rewards = await calculateLpRewards(amount, {
       startBlock: config().LP_HISTORIC_START_BLOCK,
       endBlock: config().LP_START_BLOCK,

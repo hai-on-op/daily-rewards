@@ -8,7 +8,10 @@ import {
   getStakingWeightForDebt,
   getStakingWeightForLPPositions,
 } from "../staking-weights/getStakingWeight";
-import { getOrCreateUser } from "../../utils/getOrCreateUser";
+import {
+  getOrCreateUser,
+  getOrCreateUserMutate,
+} from "../../utils/getOrCreateUser";
 import { config } from "../../config";
 
 export type RewardType = "LP_REWARDS" | "MINTER_REWARDS";
@@ -113,9 +116,9 @@ export const getInitialState = async (
 
   const gebSubgraphUrl = gebSubgraph || config().GEB_SUBGRAPH_URL;
 
-
-
   let users: UserList = {};
+
+  console.log("users stage 0: =====", Object.keys(users).length);
 
   if (stakingConfig.type === "LP_REWARDS") {
     const positions = await getInitialLpPosition(
@@ -124,8 +127,26 @@ export const getInitialState = async (
       config().UNISWAP_SUBGRAPH_URL
     );
 
+    console.log("positions found", Object.keys(positions).length);
+
+    console.log("COLLATERAL_TYPES", config().LP_COLLATERAL_TYPES);
+
+    const debts = await getInitialSafesDebt(
+      startBlock,
+      owners,
+      config().COLLATERAL_TYPES,
+      gebSubgraphUrl,
+      cType
+    );
+
     users = addLpPositionsToUsers(users, positions);
     console.log(`Fetched ${Object.keys(users).length} LP positions`);
+
+    for (let debt of debts) {
+      const user = getOrCreateUserMutate(debt.address, users);
+      user.debt += debt.debt;
+      users[debt.address] = user;
+    }
   }
 
   if (stakingConfig.type === "MINTER_REWARDS") {
@@ -139,7 +160,6 @@ export const getInitialState = async (
 
     console.log(`Fetched ${debts.length} debt balances`);
 
-    
     users = addDebtsToUsers(users, debts);
     console.log(`Fetched ${Object.keys(users).length} debt balances`);
   }

@@ -4,6 +4,15 @@ import { subgraphQueryPaginated } from "../subgraph/utils";
 const fullRangeLowerTick = -887220;
 const fullRangeUpperTick = 887220;
 
+
+export type LpPosition = {
+  tokenId: number;
+  upperTick: number;
+  lowerTick: number;
+  liquidity: number;
+};
+
+
 /**
  * Builds the GraphQL query to fetch LP positions from the subgraph.
  *
@@ -19,7 +28,7 @@ export const buildLpPositionsQuery = (
     {
       positions(
         block: { number: ${startBlock} },
-        where: { pool: "${poolAddress}", liquidity_gt: 0 },
+        where: { pool: "${poolAddress}" },
         first: 1000,
         skip: [[skip]]
       ) {
@@ -90,15 +99,30 @@ export const getInitialLpPosition = async (
   // Fetch raw positions
   const rawPositions = await fetchLpPositions(query, subgraphUrl);
 
-  const filteredPositions = rawPositions.filter((p) => {
-    return (
-      Number(p.tickLower.tickIdx) === fullRangeLowerTick &&
-      Number(p.tickUpper.tickIdx) === fullRangeUpperTick
-    );
-  });
+  console.log("rawPositions found:", rawPositions.length);
 
-  // Process positions
-  const userPositions = processLpPositions(filteredPositions);
+  let userPositions = rawPositions.reduce((acc, p) => {
+    if (acc[p.owner]) {
+      acc[p.owner].positions.push({
+        lowerTick: parseInt(p.tickLower.tickIdx),
+        upperTick: parseInt(p.tickUpper.tickIdx),
+        liquidity: parseInt(p.liquidity),
+        tokenId: parseInt(p.id)
+      });
+    } else {
+      acc[p.owner] = {
+        positions: [
+          {
+            lowerTick: parseInt(p.tickLower.tickIdx),
+            upperTick: parseInt(p.tickUpper.tickIdx),
+            liquidity: parseInt(p.liquidity),
+            tokenId: parseInt(p.id)
+          }
+        ]
+      };
+    }
+    return acc;
+  }, {} as { [key: string]: { positions: LpPosition[] } });
 
   return userPositions;
 };

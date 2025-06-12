@@ -10,6 +10,7 @@ const {
   OP_ADDRESS,
   DINERO_ADDRESS,
   HAI_ADDRESS,
+  REWARD_DISTRIBUTOR_ADDRESS
 } = appConfig();
 
 // Configure Alchemy SDK for Optimism
@@ -40,7 +41,7 @@ export type TokenTransfer = {
 
 export async function getTokenTransfersToContract(): Promise<TokenTransfer[]> {
   // Your contract address that receives the tokens
-  const contractAddress = DEPOSIT_CONTRACT_ADDRESS;
+  const contractAddress = REWARD_DISTRIBUTOR_ADDRESS;
 
   // The address that sends the tokens
   const senderAddress = DEPOSIT_SENDER_ADDRESS;

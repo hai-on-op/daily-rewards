@@ -8,7 +8,7 @@ import {
   UserList,
   Rates,
 } from "../../types";
-import { getOrCreateUser } from "../../utils/getOrCreateUser";
+import { getOrCreateUser, getOrCreateUserMutate } from "../../utils/getOrCreateUser";
 import { lpProvider } from "../../utils/chain";
 import { sanityCheckAllUsers } from "../sanity-check/sanityCheck";
 import { getStakingWeightForLPPositions } from "../staking-weights/getStakingWeight";
@@ -63,8 +63,15 @@ export const processRewardEvent = async (
   // Ongoing Total supply of weight
 
   let timestamp = startTimestamp;
+  let cachedBoostAmounts: BoostAmounts | null = null;
+  let lastStakingTimestamp = 0;
 
   const calculateUserLPBoosts = (users: UserList): BoostAmounts => {
+    // Only recalculate if staking state has changed
+    if (cachedBoostAmounts && lastStakingTimestamp === timestamp) {
+      return cachedBoostAmounts;
+    }
+
     const stakingState = calculateStakingAtTimestamp(
       stakingPositions,
       timestamp
@@ -79,10 +86,9 @@ export const processRewardEvent = async (
       0
     );
 
-    return Object.entries(stakingState.users).reduce(
+    cachedBoostAmounts = Object.entries(stakingState.users).reduce(
       (pV, cV: Record<string, any>) => {
         const userDeposited = users[cV[0]] ? users[cV[0]].stakingWeight : 0;
-
         const userKiteShare = cV[1].share;
 
         return {
@@ -99,6 +105,8 @@ export const processRewardEvent = async (
       },
       {}
     );
+    lastStakingTimestamp = timestamp;
+    return cachedBoostAmounts;
   };
 
   let totalStakingWeight = sumAllWeights(users, calculateUserLPBoosts(users));
@@ -160,11 +168,9 @@ export const processRewardEvent = async (
 
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
-
-
-
-        const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight, calculateUserLPBoosts(users));
+        const user = getOrCreateUserMutate(event.address ?? "", users);
+        const boostAmounts = calculateUserLPBoosts(users);
+        earn(user, rewardPerWeight, boostAmounts);
         const accumulatedRate = rates[event.cType as string];
         // Convert to real debt after interests and update the debt balance
         const adjustedDeltaDebt = (event.value as number) * accumulatedRate;
@@ -178,8 +184,9 @@ export const processRewardEvent = async (
       }
       case RewardEventType.POOL_POSITION_UPDATE: {
         const updatedPosition = event.value as LpPosition;
-        const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight, calculateUserLPBoosts(users));
+        const user = getOrCreateUserMutate(event.address ?? "", users);
+        const boostAmounts = calculateUserLPBoosts(users);
+        earn(user, rewardPerWeight, boostAmounts);
         // Detect the special of a simple NFT transfer (not form a mint/burn/modify position)
         for (let u of Object.keys(users)) {
           for (let p in users[u].lpPositions) {
@@ -225,9 +232,8 @@ export const processRewardEvent = async (
         break;
       }
       case RewardEventType.POOL_SWAP: {
-        // Pool swap changes the price which affects everyone's staking weight
-        // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));
+        const boostAmounts = calculateUserLPBoosts(users);
+        Object.values(users).map((u) => earn(u, rewardPerWeight, boostAmounts));
         sqrtPrice = event.value as number;
         // Then update everyone weight
         Object.values(users).map(
@@ -237,12 +243,12 @@ export const processRewardEvent = async (
         break;
       }
       case RewardEventType.UPDATE_ACCUMULATED_RATE: {
+        const boostAmounts = calculateUserLPBoosts(users);
+        Object.values(users).map((u) => earn(u, rewardPerWeight, boostAmounts));
         // Update accumulated rate increases everyone's debt by the rate multiplier
         const rateMultiplier = event.value as number;
         const cTypeRate = rates[event.cType as string];
         rates[event.cType as string] = cTypeRate + rateMultiplier;
-        // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));
         // Update everyone's debt
         Object.values(users).map((u) => (u.debt *= rateMultiplier + 1));
         Object.values(users).map(
