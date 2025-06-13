@@ -244,9 +244,10 @@ export const main = async (entryCounter: number = 0) => {
         const remaining = ethers.BigNumber.from(reward.earned).sub(
           ethers.BigNumber.from(claimed)
         );
+        const isDusty = remaining.lte(ethers.BigNumber.from(ethers.BigNumber.from(10).pow(16)));
         return {
           address: reward.address,
-          earned: remaining.toString(),
+          earned: isDusty ? "0" : remaining.toString(),
         };
       })
       .filter((reward) => reward.earned !== "0");
