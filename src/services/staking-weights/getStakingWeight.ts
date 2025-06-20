@@ -31,7 +31,7 @@ export const getStakingWeightForDebt = (
     effectiveBridgedTokens === undefined ||
     collateral === undefined
   ) {
-    return collateral;
+    return debt;
   }
 
   // Calculate the ratio of bridged collateral to total collateral
