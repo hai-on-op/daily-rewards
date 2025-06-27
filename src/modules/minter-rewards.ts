@@ -13,7 +13,13 @@ export const calculateMinterRewards = async (
 ) => {
   const minterSetupData = config().rewards.minter;
 
-  const owners = await getSafeOwnerMapping(config().END_BLOCK);
+  console.log('--------------------------------');
+  console.log('minterSetupData', minterSetupData);
+  console.log('--------------------------------');
+
+  const owners = await getSafeOwnerMapping(config().MINTER_END_BLOCK);
+  console.log('owners', owners);
+  console.log('--------------------------------');
 
   const rewardTokens = Object.keys(minterSetupData.config);
 
@@ -50,6 +56,9 @@ export const calculateMinterRewards = async (
         config().MINTER_GEB_SUBGRAPH_URL,
         cType
       );
+
+      console.log('users', users);
+      console.log('--------------------------------');
 
       Object.values(users).forEach(async user => {
         usersListWithBridge[user.address] = {
