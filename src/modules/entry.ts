@@ -1,10 +1,10 @@
-import { config } from "../config";
-import { main } from "./main";
-import { notifyTransaction, getTelegramBot } from "./telegram-bot";
+import { config } from '../config';
+import { main } from './main';
+import { notifyTransaction, getTelegramBot } from './telegram-bot';
 
-import { haiveloProvider, lpProvider, minterProvider } from "../utils/chain";
-import { ethers } from "ethers";
-import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
+import { haiveloProvider, lpProvider, minterProvider } from '../utils/chain';
+import { ethers } from 'ethers';
+import { REWARD_DISTRIBUTOR_ABI } from '../abis/REWARD_DISTRIBUTOR_ABI';
 
 config();
 
@@ -38,7 +38,7 @@ const entry = async () => {
       `Telegram bot initialized with ${telegramBot.getUserCount()} users`
     );
   } catch (error) {
-    console.warn("Telegram bot initialization failed:", error);
+    console.warn('Telegram bot initialization failed:', error);
   }
 
   const provider = new ethers.providers.JsonRpcProvider(
@@ -55,7 +55,7 @@ const entry = async () => {
 
   const isRewardDistributorPaused = await rewardDistributor.paused();
 
-  console.log("Reward Distributor Paused:", isRewardDistributorPaused);
+  console.log('Reward Distributor Paused:', isRewardDistributorPaused);
 
   if (!isRewardDistributorPaused) {
     try {
@@ -67,7 +67,7 @@ const entry = async () => {
       });
 
       const tx = await rewardDistributor.pause();
-      console.log("Reward Distributor Paused!");
+      console.log('Reward Distributor Paused!');
 
       const receipt = await tx.wait();
 
@@ -79,7 +79,6 @@ const entry = async () => {
         blockNumber: receipt?.blockNumber,
         details: { newStatus: 'paused' }
       });
-
     } catch (error) {
       // Notify pause failure
       await notifyTransaction({
@@ -98,27 +97,27 @@ const entry = async () => {
     try {
       // Notify initial epoch start
       await notifyTransaction({
-        type: "initiate",
-        operation: "Start Initial Epoch",
-        details: { epochCounter: 0 },
+        type: 'initiate',
+        operation: 'Start Initial Epoch',
+        details: { epochCounter: 0 }
       });
 
       const tx = await rewardDistributor.startInitialEpoch();
-      console.log("Reward Distributor Started Initial Epoch!");
+      console.log('Reward Distributor Started Initial Epoch!');
 
       const receipt = await tx.wait();
 
       // Notify success
       await notifyTransaction({
-        type: "success",
-        operation: "Start Initial Epoch",
+        type: 'success',
+        operation: 'Start Initial Epoch',
         txHash: tx.hash,
         blockNumber: receipt?.blockNumber,
-        details: { newEpochCounter: 1 },
+        details: { newEpochCounter: 1 }
       });
     } catch (error) {}
   } else {
-    console.log("Current entry count:", entryCounter);
+    console.log('Current entry count:', entryCounter);
 
     // We consider this blocknumber index delay for the subgraph
     const blockNumberDelay = 30;
@@ -137,17 +136,17 @@ const entry = async () => {
 
     try {
       // Parse and update REWARD_LP_CONFIG
-      const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || "{}");
+      const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || '{}');
       const multipliedLPConfig = multiplyLPConfigValues(
         currentLPConfig,
         effectiveEntryCounter
       );
       process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
-      console.log("Updated REWARD_LP_CONFIG:", process.env.REWARD_LP_CONFIG);
+      console.log('Updated REWARD_LP_CONFIG:', process.env.REWARD_LP_CONFIG);
 
       // Parse and update REWARD_HAIVELO_CONFIG
       const currentHaiveloConfig = JSON.parse(
-        process.env.REWARD_HAIVELO_CONFIG || "{}"
+        process.env.REWARD_HAIVELO_CONFIG || '{}'
       );
       const multipliedHaiveloConfig = multiplyHaiveloConfigValues(
         currentHaiveloConfig,
@@ -157,49 +156,49 @@ const entry = async () => {
         multipliedHaiveloConfig
       );
       console.log(
-        "Updated REWARD_HAIVELO_CONFIG:",
+        'Updated REWARD_HAIVELO_CONFIG:',
         process.env.REWARD_HAIVELO_CONFIG
       );
 
       // Notify start of reward processing
       await notifyTransaction({
-        type: "initiate",
-        operation: "Process Daily Rewards",
+        type: 'initiate',
+        operation: 'Process Daily Rewards',
         details: {
           entryCounter,
           effectiveEntryCounter,
           lpEndBlock: process.env.LP_END_BLOCK,
           minterEndBlock: process.env.MINTER_END_BLOCK,
-          haiveloEndBlock: process.env.HAIVELO_END_BLOCK,
-        },
+          haiveloEndBlock: process.env.HAIVELO_END_BLOCK
+        }
       });
 
       await main(entryCounter);
 
       // Increment and save counter after successful execution
-      console.log("Entry count updated to:", entryCounter + 1);
+      console.log('Entry count updated to:', entryCounter + 1);
 
       // Notify successful completion
       await notifyTransaction({
-        type: "success",
-        operation: "Process Daily Rewards",
+        type: 'success',
+        operation: 'Process Daily Rewards',
         details: {
           completedEntryCounter: entryCounter,
-          nextEntryCounter: entryCounter + 1,
-        },
+          nextEntryCounter: entryCounter + 1
+        }
       });
     } catch (error) {
-      console.error("Error in entry function:", error);
+      console.error('Error in entry function:', error);
 
       // Notify failure
       await notifyTransaction({
-        type: "failure",
-        operation: "Process Daily Rewards",
-        error: error instanceof Error ? error.message : "Unknown error",
+        type: 'failure',
+        operation: 'Process Daily Rewards',
+        error: error instanceof Error ? error.message : 'Unknown error',
         details: {
           failedAtEntryCounter: entryCounter,
-          effectiveEntryCounter,
-        },
+          effectiveEntryCounter
+        }
       });
 
       throw error;
@@ -209,7 +208,7 @@ const entry = async () => {
 
 entry()
   .then(() => {})
-  .catch((err) => {
+  .catch(err => {
     console.error(err);
   });
 

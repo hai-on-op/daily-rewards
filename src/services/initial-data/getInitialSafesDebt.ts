@@ -1,7 +1,7 @@
 // getInitialSafesDebt.ts
 
-import { subgraphQueryPaginated } from "../subgraph/utils";
-import { getAccumulatedRate } from "./getAccumulatedRate";
+import { subgraphQueryPaginated } from '../subgraph/utils';
+import { getAccumulatedRate } from './getAccumulatedRate';
 
 /**
  * Interface representing the structure of a safe's debt data.
@@ -33,7 +33,7 @@ export const buildSafesDebtQuery = (
   startBlock: number,
   cType?: string
 ): string => {
-  const collateralFilter = cType ? `, collateralType: "${cType}"` : "";
+  const collateralFilter = cType ? `, collateralType: "${cType}"` : '';
   return `
     {
       safes(
@@ -61,7 +61,7 @@ export const fetchSafesDebt = async (
   query: string,
   subgraphUrl: string
 ): Promise<SafeDebt[]> => {
-  return await subgraphQueryPaginated(query, "safes", subgraphUrl);
+  return await subgraphQueryPaginated(query, 'safes', subgraphUrl);
 };
 
 /**
@@ -102,7 +102,7 @@ export const processSafesDebt = async (
 
     debts.push({
       address: ownerAddress,
-      debt: Number(u.debt) * cRate,
+      debt: Number(u.debt) * cRate
     });
   }
 
@@ -134,14 +134,18 @@ export const getInitialSafesDebt = async (
 
   console.log(`Fetched ${debtsGraph.length} debts`);
 
-  // Process safes to get adjusted debts
-  const debts = await processSafesDebt(
-    debtsGraph,
-    ownerMapping,
-    startBlock,
-    collateralTypes,
-    subgraphUrl
-  );
+  let debts: ProcessedDebt[] = [];
+
+  if (debtsGraph.length > 0) {
+    // Process safes to get adjusted debts
+    debts = await processSafesDebt(
+      debtsGraph,
+      ownerMapping,
+      startBlock,
+      collateralTypes,
+      subgraphUrl
+    );
+  }
 
   return debts;
 };

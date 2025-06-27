@@ -113,8 +113,9 @@ export const config = () => {
     COLLATERAL_TYPES: JSON.parse(
       envs.REWARD_MINTER_COLLATERAL_TYPES
     ) as TokenType[], // ["RETH", "WSTETH", "APXETH"] as TokenType[],
-    LP_COLLATERAL_TYPES: ["OP", "WETH", "WSTETH"] as TokenType[],
-    EXCLUSION_LIST_FILE: path.join(__dirname, "..", "..", "exclusion-list.csv"),
+    PLACEHOLDER_COLLATERAL_TYPES: ['HAIVELO'] as TokenType[],
+    LP_COLLATERAL_TYPES: ['OP', 'WETH', 'WSTETH'] as TokenType[],
+    EXCLUSION_LIST_FILE: path.join(__dirname, '..', '..', 'exclusion-list.csv'),
 
     // API Keys
     COVALENT_API_KEY: envs.COVALENT_API_KEY,

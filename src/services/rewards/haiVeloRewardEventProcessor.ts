@@ -2,14 +2,14 @@ import {
   getStakingPositions,
   calculateStakingAtTimestamp,
   StakingPostion,
-  StakingState,
-} from "../skite-data";
+  StakingState
+} from '../skite-data';
 
-import { HaiveloCollateralEvent } from "../initial-data/getInitialHaiveloState";
-import { UserAccount, UserList } from "../../types";
-import { config } from "../../config";
-import { haiveloProvider } from "../../utils/chain";
-import { getOrCreateUserMutate } from "../../utils";
+import { HaiveloCollateralEvent } from '../initial-data/getInitialHaiveloState';
+import { UserAccount, UserList } from '../../types';
+import { config } from '../../config';
+import { haiveloProvider } from '../../utils/chain';
+import { getOrCreateUserMutate } from '../../utils';
 
 type BoostAmounts = Record<string, number>;
 
@@ -24,18 +24,16 @@ export const processRewardEvents = async (
   users: UserList,
   options?: ProcessorOptions
 ): Promise<UserList> => {
-  console.log("rewardAmount", rewardAmount);
-
   const stakingPositions = await getStakingPositions();
 
   const {
     startBlock = config().HAIVELO_START_BLOCK,
-    endBlock = config().HAIVELO_END_BLOCK,
+    endBlock = config().HAIVELO_END_BLOCK
   } = options
     ? options
     : {
         startBlock: config().HAIVELO_START_BLOCK,
-        endBlock: config().HAIVELO_END_BLOCK,
+        endBlock: config().HAIVELO_END_BLOCK
       };
 
   const startTimestamp = (await haiveloProvider.getBlock(startBlock)).timestamp;
@@ -70,7 +68,7 @@ export const processRewardEvents = async (
                   1
               : 1,
             2
-          ),
+          )
         };
       },
       {}
@@ -102,7 +100,9 @@ export const processRewardEvents = async (
 
     const user = getOrCreateUserMutate(event.safe.owner.address, users);
 
-    Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users)));
+    Object.values(users).map(u =>
+      earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users))
+    );
 
     user.collateral += Number(event.deltaCollateral);
 
@@ -114,9 +114,9 @@ export const processRewardEvents = async (
     user.stakingWeight = user.collateral;
 
     const sanityCheckUsers = () => {
-      Object.values(users).forEach((user) => {
+      Object.values(users).forEach(user => {
         if (user.earned < 0) {
-          throw Error("Earned is negative");
+          throw Error('Earned is negative');
         }
       });
     };
@@ -131,7 +131,9 @@ export const processRewardEvents = async (
 
   updateRewardPerWeight(endTimestamp);
 
-  Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users)));
+  Object.values(users).map(u =>
+    earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users))
+  );
 
   return users;
 };

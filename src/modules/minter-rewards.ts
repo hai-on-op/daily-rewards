@@ -1,36 +1,41 @@
-import { config } from "../config";
-import { getBridgeData } from "../services/bridge-data";
-import { getBridgedTokensAtBlock } from "../services/bridge-data/getBridgedTokensAtBlock";
-import { BridgedAmountsDetailed } from "../services/bridge-data/types";
-import { getEvents } from "../services/get-events/minterGetEvents";
-import { getInitialState } from "../services/initial-data/getInitialState";
-import { getSafeOwnerMapping } from "../services/initial-data/getSafeOwnerMapping";
-import { UserList } from "../types";
-import { processRewardEvent } from "../services/rewards/minterRewardEventProcessor";
+import { BridgedAmountsDetailed } from '../services/bridge-data/types';
+import { getEvents } from '../services/get-events/minterGetEvents';
+import { getInitialState } from '../services/initial-data/getInitialState';
+import { getSafeOwnerMapping } from '../services/initial-data/getSafeOwnerMapping';
+import { UserList } from '../types';
+import { processRewardEvent } from '../services/rewards/minterRewardEventProcessor';
+import { config } from '../config';
+import { minterProvider } from '../utils/chain';
 
 export const calculateMinterRewards = async (
   fromBlock: number,
   toBlock: number
 ) => {
+  const minterSetupData = config().rewards.minter;
+
   const owners = await getSafeOwnerMapping(config().END_BLOCK);
 
-  const rewardTokens = Object.keys(config().rewards.minter.config);
+  const rewardTokens = Object.keys(minterSetupData.config);
 
   type FinalResult = Record<string, Record<string, UserList>>;
 
   let finalResult: FinalResult = {};
-
   for (let i = 0; i < rewardTokens.length; i++) {
     const rewardToken = rewardTokens[i];
-    console.log("Calculating rewards for token: ", rewardToken);
-
-    const collateralTypes = Object.keys(
-      config().rewards.minter.config[rewardToken]
-    );
+    const collateralTypes = Object.keys(minterSetupData.config[rewardToken]);
 
     for (let j = 0; j < collateralTypes.length; j++) {
       const cType = collateralTypes[j];
-      const rewardAmount = config().rewards.minter.config[rewardToken][cType];
+
+      const startBlock = config().MINTER_START_BLOCK;
+      const endBlock = config().MINTER_END_BLOCK;
+      const dailyRewardAmount = minterSetupData.config[rewardToken][cType];
+      const totalBlocks = endBlock - startBlock;
+      const secsInDay = 86400;
+      const opBlockTime = 2;
+      const blocksInDay = Math.floor(secsInDay / opBlockTime);
+      const perBlockRewardAmount = dailyRewardAmount / blocksInDay;
+      const rewardAmount = perBlockRewardAmount * totalBlocks;
 
       const usersListWithBridge: UserList = {};
 
@@ -39,17 +44,17 @@ export const calculateMinterRewards = async (
         config().MINTER_END_BLOCK,
         owners,
         {
-          type: "MINTER_REWARDS",
-          withBridge: false,
+          type: 'MINTER_REWARDS',
+          withBridge: false
         },
         config().MINTER_GEB_SUBGRAPH_URL,
         cType
       );
 
-      Object.values(users).forEach(async (user) => {
+      Object.values(users).forEach(async user => {
         usersListWithBridge[user.address] = {
           ...user,
-          totalBridgedTokens: 0,
+          totalBridgedTokens: 0
         };
       });
 
@@ -73,20 +78,10 @@ export const calculateMinterRewards = async (
       }
 
       finalResult[rewardToken][cType] = usersListWithRewards;
-
     }
-
-    return finalResult;
   }
 
-  //const bridgedTokensAtBlock = getBridgedTokensAtBlock(
-  //  bridgedData,
-  //  "0x0556bdc524fcd2b8855eaacb1e10638b292a47a3",
-  //  "apxETH",
-  //  config().END_BLOCK
-  //);
-  //
-  //console.log(bridgedTokensAtBlock, "bridgedTokensAtBlock");
+  return finalResult;
 };
 
 /*calculateMinterRewards(14461892, 21308720).then((rewards) => {
@@ -116,7 +111,6 @@ export const calculateMinterRewards = async (
   );
   console.log(rewards);
 });*/
-
 
 /**
  * 
