@@ -5,8 +5,7 @@ import { notifyTransaction, getTelegramBot } from './telegram-bot';
 import { haiveloProvider, lpProvider, minterProvider } from '../utils/chain';
 import { multiplyConfigValues } from '../utils/config';
 import { initializeTelegramBot } from './telegram-bot';
-import { ethers } from 'ethers';
-import { REWARD_DISTRIBUTOR_ABI } from '../abis/REWARD_DISTRIBUTOR_ABI';
+import { initializeContracts } from '../services/contract-initialization';
 
 config();
 
@@ -16,17 +15,8 @@ const entry = async () => {
   // Initialize Telegram bot
   await initializeTelegramBot();
 
-  const provider = new ethers.providers.JsonRpcProvider(
-    cfg.DISTRIBUTOR_RPC_URL
-  );
-  const signer = new ethers.Wallet(cfg.REWARD_SETTER_PRIVATE_KEY, provider);
-
-  // Get contract instance
-  const rewardDistributor = new ethers.Contract(
-    cfg.REWARD_DISTRIBUTOR_ADDRESS,
-    REWARD_DISTRIBUTOR_ABI,
-    signer
-  );
+  // Initialize contracts
+  const { rewardDistributor } = await initializeContracts();
 
   const isRewardDistributorPaused = await rewardDistributor.paused();
 
