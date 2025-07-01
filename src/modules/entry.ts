@@ -4,6 +4,7 @@ import { notifyTransaction, getTelegramBot } from './telegram-bot';
 
 import { haiveloProvider, lpProvider, minterProvider } from '../utils/chain';
 import { multiplyConfigValues } from '../utils/config';
+import { initializeTelegramBot } from './telegram-bot';
 import { ethers } from 'ethers';
 import { REWARD_DISTRIBUTOR_ABI } from '../abis/REWARD_DISTRIBUTOR_ABI';
 
@@ -13,14 +14,7 @@ const entry = async () => {
   const cfg = config();
 
   // Initialize Telegram bot
-  try {
-    const telegramBot = getTelegramBot(false); // Use non-polling mode
-    console.log(
-      `Telegram bot initialized with ${telegramBot.getUserCount()} users`
-    );
-  } catch (error) {
-    console.warn('Telegram bot initialization failed:', error);
-  }
+  await initializeTelegramBot();
 
   const provider = new ethers.providers.JsonRpcProvider(
     cfg.DISTRIBUTOR_RPC_URL

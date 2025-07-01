@@ -300,4 +300,19 @@ export const notifyMerkleUpdate = async (tokens: string[], roots: string[]): Pro
   }
 };
 
+/**
+ * Initializes the Telegram bot in non-polling mode
+ * @returns Promise that resolves when initialization is complete
+ */
+export const initializeTelegramBot = async (): Promise<void> => {
+  try {
+    const telegramBot = getTelegramBot(false); // Use non-polling mode
+    console.log(
+      `Telegram bot initialized with ${telegramBot.getUserCount()} users`
+    );
+  } catch (error) {
+    console.warn('Telegram bot initialization failed:', error);
+  }
+};
+
 export { TransactionNotification }; 
