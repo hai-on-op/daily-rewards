@@ -19,10 +19,10 @@ import { config } from '../config';
 import { main } from './main';
 import { notifyTransaction, getTelegramBot } from './telegram-bot';
 
-import { haiveloProvider, lpProvider, minterProvider } from '../utils/chain';
-import { multiplyConfigValues } from '../utils/config';
+import { multiplyConfigValues, setEndBlocksWithDelay } from '../utils';
 import { initializeTelegramBot } from './telegram-bot';
 import { initializeContracts } from '../services/contract-initialization';
+import { executeContractMethodWithNotifications, executeRewardProcessingWithNotifications } from '../services/transaction-handler';
 
 config();
 
@@ -40,36 +40,17 @@ const entry = async () => {
   console.log('Reward Distributor Paused:', isRewardDistributorPaused);
 
   if (!isRewardDistributorPaused) {
-    try {
-      // Notify pause initiation
-      await notifyTransaction({
-        type: 'initiate',
+    await executeContractMethodWithNotifications(
+      rewardDistributor,
+      'pause',
+      [],
+      {
         operation: 'Pause Reward Distributor',
-        details: { currentStatus: 'unpaused' }
-      });
-
-      const tx = await rewardDistributor.pause();
-      console.log('Reward Distributor Paused!');
-
-      const receipt = await tx.wait();
-
-      // Notify pause success
-      await notifyTransaction({
-        type: 'success',
-        operation: 'Pause Reward Distributor',
-        txHash: tx.hash,
-        blockNumber: receipt?.blockNumber,
-        details: { newStatus: 'paused' }
-      });
-    } catch (error) {
-      // Notify pause failure
-      await notifyTransaction({
-        type: 'failure',
-        operation: 'Pause Reward Distributor',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
+        details: { currentStatus: 'unpaused' },
+        successDetails: { newStatus: 'paused' }
+      }
+    );
+    console.log('Reward Distributor Paused!');
   }
 
   // Read current counter value
@@ -77,114 +58,68 @@ const entry = async () => {
 
   if (entryCounter === 0) {
     try {
-      // Notify initial epoch start
-      await notifyTransaction({
-        type: 'initiate',
-        operation: 'Start Initial Epoch',
-        details: { epochCounter: 0 }
-      });
-
-      const tx = await rewardDistributor.startInitialEpoch();
+      await executeContractMethodWithNotifications(
+        rewardDistributor,
+        'startInitialEpoch',
+        [],
+        {
+          operation: 'Start Initial Epoch',
+          details: { epochCounter: 0 },
+          successDetails: { newEpochCounter: 1 }
+        }
+      );
       console.log('Reward Distributor Started Initial Epoch!');
-
-      const receipt = await tx.wait();
-
-      // Notify success
-      await notifyTransaction({
-        type: 'success',
-        operation: 'Start Initial Epoch',
-        txHash: tx.hash,
-        blockNumber: receipt?.blockNumber,
-        details: { newEpochCounter: 1 }
-      });
-    } catch (error) {}
+    } catch (error) {
+      // Error handling is already done in the transaction handler
+    }
   } else {
     console.log('Current entry count:', entryCounter);
 
-    // We consider this blocknumber index delay for the subgraph
-    const blockNumberDelay = 30;
-
-    process.env.LP_END_BLOCK = String(
-      (await lpProvider.getBlockNumber()) - blockNumberDelay
-    );
-    process.env.MINTER_END_BLOCK = String(
-      (await minterProvider.getBlockNumber()) - blockNumberDelay
-    );
-    process.env.HAIVELO_END_BLOCK = String(
-      (await haiveloProvider.getBlockNumber()) - blockNumberDelay
-    );
+    // Set end blocks with delay for subgraph indexing
+    const blockNumberConfig = await setEndBlocksWithDelay();
 
     const effectiveEntryCounter = entryCounter - 1;
 
-    try {
-      // Parse and update REWARD_LP_CONFIG
-      const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || '{}');
-      const multipliedLPConfig = multiplyConfigValues(
-        currentLPConfig,
-        effectiveEntryCounter
-      );
-      process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
-      console.log('Updated REWARD_LP_CONFIG:', process.env.REWARD_LP_CONFIG);
-
-      // Parse and update REWARD_HAIVELO_CONFIG
-      const currentHaiveloConfig = JSON.parse(
-        process.env.REWARD_HAIVELO_CONFIG || '{}'
-      );
-      const multipliedHaiveloConfig = multiplyConfigValues(
-        currentHaiveloConfig,
-        effectiveEntryCounter
-      );
-      process.env.REWARD_HAIVELO_CONFIG = JSON.stringify(
-        multipliedHaiveloConfig
-      );
-      console.log(
-        'Updated REWARD_HAIVELO_CONFIG:',
-        process.env.REWARD_HAIVELO_CONFIG
-      );
-
-      // Notify start of reward processing
-      await notifyTransaction({
-        type: 'initiate',
-        operation: 'Process Daily Rewards',
-        details: {
-          entryCounter,
-          effectiveEntryCounter,
-          lpEndBlock: process.env.LP_END_BLOCK,
-          minterEndBlock: process.env.MINTER_END_BLOCK,
-          haiveloEndBlock: process.env.HAIVELO_END_BLOCK
-        }
-      });
-
-      await main(entryCounter);
-
-      // Increment and save counter after successful execution
-      console.log('Entry count updated to:', entryCounter + 1);
-
-      // Notify successful completion
-      await notifyTransaction({
-        type: 'success',
-        operation: 'Process Daily Rewards',
-        details: {
-          completedEntryCounter: entryCounter,
-          nextEntryCounter: entryCounter + 1
-        }
-      });
-    } catch (error) {
-      console.error('Error in entry function:', error);
-
-      // Notify failure
-      await notifyTransaction({
-        type: 'failure',
-        operation: 'Process Daily Rewards',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: {
-          failedAtEntryCounter: entryCounter,
+    await executeRewardProcessingWithNotifications(
+      async () => {
+        // Parse and update REWARD_LP_CONFIG
+        const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || '{}');
+        const multipliedLPConfig = multiplyConfigValues(
+          currentLPConfig,
           effectiveEntryCounter
-        }
-      });
+        );
+        process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
+        console.log('Updated REWARD_LP_CONFIG:', process.env.REWARD_LP_CONFIG);
 
-      throw error;
-    }
+        // Parse and update REWARD_HAIVELO_CONFIG
+        const currentHaiveloConfig = JSON.parse(
+          process.env.REWARD_HAIVELO_CONFIG || '{}'
+        );
+        const multipliedHaiveloConfig = multiplyConfigValues(
+          currentHaiveloConfig,
+          effectiveEntryCounter
+        );
+        process.env.REWARD_HAIVELO_CONFIG = JSON.stringify(
+          multipliedHaiveloConfig
+        );
+        console.log(
+          'Updated REWARD_HAIVELO_CONFIG:',
+          process.env.REWARD_HAIVELO_CONFIG
+        );
+
+        await main(entryCounter);
+
+        // Increment and save counter after successful execution
+        console.log('Entry count updated to:', entryCounter + 1);
+      },
+      {
+        entryCounter,
+        effectiveEntryCounter,
+        lpEndBlock: blockNumberConfig.lpEndBlock,
+        minterEndBlock: blockNumberConfig.minterEndBlock,
+        haiveloEndBlock: blockNumberConfig.haiveloEndBlock
+      }
+    );
   }
 };
 
