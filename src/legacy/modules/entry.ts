@@ -20,30 +20,11 @@ import { main } from './main';
 import { notifyTransaction, getTelegramBot } from './telegram-bot';
 
 import { haiveloProvider, lpProvider, minterProvider } from '../utils/chain';
+import { multiplyConfigValues } from '../utils/config';
 import { ethers } from 'ethers';
 import { REWARD_DISTRIBUTOR_ABI } from '../abis/REWARD_DISTRIBUTOR_ABI';
 
 config();
-
-function multiplyLPConfigValues(config: any, multiplier: number): any {
-  const result: any = {};
-
-  for (const [token, amount] of Object.entries(config)) {
-    result[token] = (amount as number) * multiplier;
-  }
-
-  return result;
-}
-
-function multiplyHaiveloConfigValues(config: any, multiplier: number): any {
-  const result: any = {};
-
-  for (const [token, amount] of Object.entries(config)) {
-    result[token] = (amount as number) * multiplier;
-  }
-
-  return result;
-}
 
 const entry = async () => {
   const cfg = config();
@@ -154,7 +135,7 @@ const entry = async () => {
     try {
       // Parse and update REWARD_LP_CONFIG
       const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || '{}');
-      const multipliedLPConfig = multiplyLPConfigValues(
+      const multipliedLPConfig = multiplyConfigValues(
         currentLPConfig,
         effectiveEntryCounter
       );
@@ -165,7 +146,7 @@ const entry = async () => {
       const currentHaiveloConfig = JSON.parse(
         process.env.REWARD_HAIVELO_CONFIG || '{}'
       );
-      const multipliedHaiveloConfig = multiplyHaiveloConfigValues(
+      const multipliedHaiveloConfig = multiplyConfigValues(
         currentHaiveloConfig,
         effectiveEntryCounter
       );
