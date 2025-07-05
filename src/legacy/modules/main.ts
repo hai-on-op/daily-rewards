@@ -21,107 +21,8 @@ import * as path from "path";
 import { uploadMerkleTree } from "../../modules/upload-merkle-tree";
 import { config } from "../../config";
 import { createClaimedAmountsUseCases } from "../../services/claimed-amounts/factory";
-import {
-  notifyTransaction,
-  notifyMerkleUpdate,
-  TransactionNotification,
-} from "../../modules/telegram-bot";
-
-import { REWARD_DISTRIBUTOR_ABI } from "../../abis/REWARD_DISTRIBUTOR_ABI";
-
-
-async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
-  const cfg = config();
-
-  // Setup provider and signer
-  const provider = new ethers.providers.JsonRpcProvider(
-    cfg.DISTRIBUTOR_RPC_URL
-  );
-  const signer = new ethers.Wallet(cfg.REWARD_SETTER_PRIVATE_KEY, provider);
-
-  // Get contract instance
-  const rewardDistributor = new ethers.Contract(
-    cfg.REWARD_DISTRIBUTOR_ADDRESS,
-    REWARD_DISTRIBUTOR_ABI,
-    signer
-  );
-
-  // Prepare arrays for updateMerkleRoots
-  const tokenAddresses = [];
-  const roots = [];
-
-  // Map token names to addresses
-  const tokenAddressMap = {
-    KITE: cfg.KITE_ADDRESS,
-    OP: cfg.OP_ADDRESS,
-    DINERO: cfg.DINERO_ADDRESS,
-    HAI: cfg.HAI_ADDRESS,
-  };
-
-  // Build arrays for the contract call
-  for (const [token, tree] of Object.entries(merkleTries)) {
-    const tokenAddress = tokenAddressMap[token as keyof typeof tokenAddressMap];
-    if (!tokenAddress) {
-      console.warn(`No address found for token: ${token}`);
-      continue;
-    }
-
-    tokenAddresses.push(tokenAddress);
-    roots.push(tree.root);
-    console.log(`Merkle root for ${token} (${tokenAddress}):`, tree.root);
-  }
-
-  try {
-    console.log("Updating merkle roots...");
-
-    // Notify transaction initiation
-    await notifyTransaction({
-      type: "initiate",
-      operation: "Update Merkle Roots",
-      details: {
-        tokens: Object.keys(merkleTries),
-        tokenAddresses,
-        tokenCount: tokenAddresses.length,
-      },
-    });
-
-    const tx = await rewardDistributor.updateMerkleRoots(tokenAddresses, roots);
-    console.log("Transaction hash:", tx.hash);
-
-    const receipt = await tx.wait();
-    console.log("Transaction confirmed in block:", receipt?.blockNumber);
-
-    // Notify transaction success
-    await notifyTransaction({
-      type: "success",
-      operation: "Update Merkle Roots",
-      txHash: tx.hash,
-      blockNumber: receipt?.blockNumber,
-      details: {
-        tokens: Object.keys(merkleTries),
-        gasUsed: receipt?.gasUsed?.toString(),
-      },
-    });
-    //
-    // Send merkle update notification
-    await notifyMerkleUpdate(Object.keys(merkleTries), roots);
-  } catch (error) {
-    console.error("Error updating merkle roots:", error);
-
-    // Notify transaction failure
-    await notifyTransaction({
-      type: "failure",
-      operation: "Update Merkle Roots",
-      error: error instanceof Error ? error.message : "Unknown error",
-      details: {
-        tokens: Object.keys(merkleTries),
-        tokenAddresses,
-      },
-    });
-
-    throw error;
-  }
-}
+import { initializeContracts } from "../../services/contract-initialization";
+import { updateMerkleRootsWithNotifications } from "../../services/merkle-root-updater";
 
 async function saveMerkleTreesAsFiles(
   merkleTries: { [token: string]: any },
@@ -228,8 +129,14 @@ export const main = async (entryCounter: number = 0) => {
     })
     .reduce((pV, cV) => ({ ...pV, ...cV }), {});
 
+  // Initialize contracts for merkle root update
+  const { rewardDistributor } = await initializeContracts();
+
   // Generate merkle trees and update them on-chain
-  await updateMerkleRoots(merkleTries);
+  await updateMerkleRootsWithNotifications({
+    merkleTries,
+    rewardDistributor
+  });
 
   // Save merkle trees as backup files
   await saveMerkleTreesAsFiles(merkleTries, entryCounter);
