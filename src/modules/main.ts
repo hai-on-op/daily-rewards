@@ -6,7 +6,7 @@ import * as path from 'path';
 
 import { uploadMerkleTree } from './upload-merkle-tree';
 import { config } from '../config';
-import { subgraphQuery } from '../services/subgraph/utils';
+import { createClaimedAmountsUseCases } from '../services/claimed-amounts/factory';
 import {
   notifyTransaction,
   notifyMerkleUpdate,
@@ -15,48 +15,7 @@ import {
 
 import { REWARD_DISTRIBUTOR_ABI } from '../abis/REWARD_DISTRIBUTOR_ABI';
 
-async function getClaimedAmounts(
-  token: string,
-  users: string[]
-): Promise<Map<string, string>> {
-  users.map(u => {
-    console.log(u, token);
-    return u?.toLowerCase();
-  });
 
-  const query = `
-    {
-      tokenClaims(where: {
-        token: "${token.toLowerCase()}"
-        user_in: ${JSON.stringify(users.map(u => u?.toLowerCase()))}
-      }) {
-        user {
-          id
-        }
-        totalAmount
-      }
-    }
-  `;
-
-  try {
-    const response = await subgraphQuery(
-      query,
-      config().DISTRIBUTOR_SUBGRAPH_URL
-    );
-
-    console.log(response.tokenClaims);
-
-    return new Map(
-      response.tokenClaims.map((claim: any) => [
-        claim.user.id.toLowerCase(),
-        claim.totalAmount
-      ])
-    );
-  } catch (error) {
-    console.error(`Error fetching claimed amounts for token ${token}:`, error);
-    return new Map();
-  }
-}
 
 async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
   const cfg = config();
@@ -213,13 +172,14 @@ export const main = async (entryCounter: number = 0) => {
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
+  // Initialize claimed amounts use cases
+  const claimedAmountsUseCases = createClaimedAmountsUseCases();
+
   // Subtract claimed amounts
   const finalResults: typeof adjustedResults = {};
 
   for (const [token, rewards] of Object.entries(adjustedResults)) {
     console.log(`Processing claims for token: ${token}`);
-
-    // Get all claimed amounts for this token
 
     const tokenAddressMap = {
       KITE: config().KITE_ADDRESS,
@@ -228,29 +188,15 @@ export const main = async (entryCounter: number = 0) => {
       HAI: config().HAI_ADDRESS
     };
 
-    const claimedAmounts = await getClaimedAmounts(
-      tokenAddressMap[token.toUpperCase() as keyof typeof tokenAddressMap],
-      rewards.map(r => r.address)
+    const tokenAddress = tokenAddressMap[token.toUpperCase() as keyof typeof tokenAddressMap];
+    
+    // Process rewards with claimed amounts using the new layered architecture
+    finalResults[token] = await claimedAmountsUseCases.processRewardsWithClaimedAmounts(
+      tokenAddress,
+      rewards
     );
 
-    // Subtract claimed amounts from earned amounts
-    finalResults[token] = rewards
-      .map(reward => {
-        const claimed = claimedAmounts.get(reward.address.toLowerCase()) || '0';
-        const remaining = ethers.BigNumber.from(reward.earned).sub(
-          ethers.BigNumber.from(claimed)
-        );
-        const isDusty = remaining.lte(
-          ethers.BigNumber.from(ethers.BigNumber.from(10).pow(16))
-        );
-        return {
-          address: reward.address,
-          earned: isDusty ? '0' : remaining.toString()
-        };
-      })
-      .filter(reward => reward.earned !== '0');
-
-    console.log(`Found ${claimedAmounts.size} previous claims for ${token}`);
+    console.log(`Processed ${rewards.length} rewards for ${token}, ${finalResults[token].length} remain after filtering`);
   }
 
   console.log('doing merkle tries!!!', finalResults);

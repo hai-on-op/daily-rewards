@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",
+    "test:claimed-amounts": "jest src/services/claimed-amounts/__tests__/",
     "test-telegram": "ts-node src/test-telegram.ts",
     "telegram-bot": "ts-node src/modules/on-chain.ts",
     "telegram-bot:prod": "yarn build && node dist/modules/on-chain.js",
