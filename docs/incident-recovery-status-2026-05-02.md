@@ -112,16 +112,12 @@ Recommended follow-ups:
   - `lastRootUpdate.verification.ok = true`
   - `lastUnpause` updates after the unpause timer
   - `errors = []`
-<<<<<<< HEAD
-- If remote access is needed, keep `report-api` bound to `127.0.0.1` and expose it through Tailscale Serve:
+- If remote access is needed, keep `report-api` bound to `127.0.0.1` and expose it through Tailscale Serve or another private Tailscale-only reverse proxy:
 
 ```bash
 sudo tailscale serve --bg --http=3100 localhost:3100
 tailscale serve status
 ```
-=======
-- If remote access is needed, bind `report-api` to the VPS Tailscale IP or expose it through a private Tailscale-only reverse proxy.
->>>>>>> 526fc1a5f5e812020021993233d05ac2f61abbcd
 - Consider renaming or supplementing `safeToUnpause` with a clearer field like `unpauseReady`; it correctly becomes `false` after the contract is already unpaused, but that can be confusing.
 - If `0xfe2f55dcefb42b018ed7f2b44d8cb8158733f5fe` returns the unresolved `288.168162112565880761` KITE later, add a new adjustment entry with the return transaction and rerun the normal verification flow.
 
