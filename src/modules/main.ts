@@ -1,4 +1,4 @@
-import { combineResults } from "./result-combiner";
+import { createRewardCalculationService } from "../services/reward-combiner/factory";
 import { processAllRewards } from "../services/reward-processor";
 import { generateMerkleTrees } from "../services/merkle-tree-generator";
 import { uploadMerkleTreesToCloudFlare } from "../services/cloudflare-uploader";
@@ -12,7 +12,8 @@ export const main = async (entryCounter: number = 0) => {
   console.log("executing main");
 
   // Step 1: Combine results from all data sources
-  const results = await combineResults();
+  const rewardCalculationService = createRewardCalculationService();
+  const results = await rewardCalculationService.calculateAllRewards();
 
   // Step 2: Process all rewards (convert to BigNumber and filter claimed amounts)
   const finalResults = await processAllRewards(results);
