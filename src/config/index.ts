@@ -1,6 +1,7 @@
 import path from "path";
 import { config as dotenv } from "dotenv";
-import { RewardConfig, TokenType } from "./types";
+import { RewardConfig, TokenType, TimedMinterRewardConfig } from "./types";
+import { validateTimedMinterConfig } from "../utils/minter-config-resolver";
 
 dotenv();
 
@@ -23,6 +24,28 @@ const parseCollateralTypes = (typesStr: string): TokenType[] => {
   }
 };
 
+const parseTimedMinterRewardConfig = (configStr: string): TimedMinterRewardConfig | undefined => {
+  if (!configStr) {
+    return undefined;
+  }
+  
+  try {
+    const timedConfig = JSON.parse(configStr) as TimedMinterRewardConfig;
+    
+    // Validate the configuration
+    const validationErrors = validateTimedMinterConfig(timedConfig);
+    if (validationErrors.length > 0) {
+      console.error("Time-based minter config validation errors:", validationErrors);
+      throw new Error(`Invalid time-based minter config: ${validationErrors.join(', ')}`);
+    }
+    
+    return timedConfig;
+  } catch (error) {
+    console.error("Error parsing time-based minter reward config:", error);
+    throw new Error("Invalid time-based minter reward config format");
+  }
+};
+
 export const config = () => {
   const envs = process.env as any;
 
@@ -30,6 +53,7 @@ export const config = () => {
   const rewardConfig: RewardConfig = {
     minter: {
       config: parseRewardConfig(envs.REWARD_MINTER_CONFIG),
+      timedConfig: parseTimedMinterRewardConfig(envs.REWARD_MINTER_TIMED_CONFIG),
       collateralTypes: parseCollateralTypes(
         envs.REWARD_MINTER_COLLATERAL_TYPES
       ),

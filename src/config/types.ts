@@ -17,6 +17,17 @@ export interface MinterRewardConfig {
   };
 }
 
+// New time-based configuration interfaces
+export interface MinterRewardPeriodConfig {
+  fromBlock: number;
+  toBlock?: number; // undefined means "to infinity"
+  config: MinterRewardConfig;
+}
+
+export interface TimedMinterRewardConfig {
+  periods: MinterRewardPeriodConfig[];
+}
+
 export interface LpRewardConfig {
   [source: string]: number;
 }
@@ -27,7 +38,8 @@ export interface HaiVeloRewardConfig {
 
 export interface RewardConfig {
   minter: {
-    config: MinterRewardConfig;
+    config: MinterRewardConfig; // Legacy support
+    timedConfig?: TimedMinterRewardConfig; // New time-based config
     collateralTypes: TokenType[];
   };
   lp: {

@@ -39,7 +39,7 @@ export const main = async (entryCounter: number = 0) => {
   });
 
   // Step 7: Upload merkle trees to CloudFlare
-  //await uploadMerkleTreesToCloudFlare(merkleTries);
+  await uploadMerkleTreesToCloudFlare(merkleTries);
 };
 
 // main().catch(console.error);
