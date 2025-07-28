@@ -2,9 +2,9 @@
  * Reward calculation repository implementation
  */
 
-import { calculateHaiveloRewards } from '../../../modules/haivelo-rewards';
-import { calculateLpRewards } from '../../../modules/lp-rewards';
-import { calculateMinterRewards } from '../../../modules/minter-rewards';
+import { calculateHaiveloRewardsV2 as calculateHaiveloRewards } from '../../../modules/haivelo-rewards-v2';
+import { calculateLpRewardsV2 as calculateLpRewards } from '../../../modules/lp-rewards-v2';
+import { calculateMinterRewardsV2 as calculateMinterRewards } from '../../../modules/minter-rewards-v2';
 import { RewardCalculationRepository } from '../domain/repositories';
 import { UserList } from '../../../types';
 

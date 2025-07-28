@@ -1,6 +1,14 @@
 import path from "path";
 import { config as dotenv } from "dotenv";
-import { LpStakingRewardWindow, LpStakingType, MinterRewardWindow, RewardConfig, TokenType } from "./types";
+import {
+  LpStakingRewardWindow,
+  LpStakingType,
+  MinterRewardWindow,
+  RewardConfig,
+  TimedMinterRewardConfig,
+  TokenType,
+} from "./types";
+import { validateTimedMinterConfig } from "../utils/minter-config-resolver";
 
 dotenv();
 
@@ -34,6 +42,31 @@ const parseStringArray = (
   } catch (error) {
     console.error("Error parsing string array:", error);
     return fallback;
+  }
+};
+
+const parseTimedMinterRewardConfig = (
+  configStr: string | undefined
+): TimedMinterRewardConfig | undefined => {
+  if (!configStr) {
+    return undefined;
+  }
+
+  try {
+    const timedConfig = JSON.parse(configStr) as TimedMinterRewardConfig;
+
+    const validationErrors = validateTimedMinterConfig(timedConfig);
+    if (validationErrors.length > 0) {
+      console.error("Time-based minter config validation errors:", validationErrors);
+      throw new Error(
+        `Invalid time-based minter config: ${validationErrors.join(", ")}`
+      );
+    }
+
+    return timedConfig;
+  } catch (error) {
+    console.error("Error parsing time-based minter reward config:", error);
+    throw new Error("Invalid time-based minter reward config format");
   }
 };
 
@@ -106,11 +139,15 @@ const parseLpStakingTypes = (typesStr: string | undefined): LpStakingType[] => {
 
 export const config = () => {
   const envs = process.env as any;
+  const timedMinterConfig = parseTimedMinterRewardConfig(
+    envs.REWARD_MINTER_TIMED_CONFIG
+  );
 
   // Parse reward configurations
   const rewardConfig: RewardConfig = {
     minter: {
       config: parseRewardConfig(envs.REWARD_MINTER_CONFIG),
+      timedConfig: timedMinterConfig,
       collateralTypes: parseCollateralTypes(
         envs.REWARD_MINTER_COLLATERAL_TYPES
       ),
@@ -141,6 +178,12 @@ export const config = () => {
   const minterWindows = parseMinterWindows(envs.REWARD_MINTER_WINDOWS);
   if (minterWindows.length > 0) {
     rewardConfig.minter.windows = minterWindows;
+  } else if (timedMinterConfig) {
+    rewardConfig.minter.windows = timedMinterConfig.periods.map((period) => ({
+      startBlock: period.fromBlock,
+      endBlock: period.toBlock,
+      config: period.config,
+    }));
   } else {
     const fallbackStart = Number(envs.MINTER_START_BLOCK) ? Number(envs.MINTER_START_BLOCK) : Number(envs.START_BLOCK);
     // Only set endBlock if explicitly configured, otherwise leave undefined for latest block fetch
