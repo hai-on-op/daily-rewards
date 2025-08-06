@@ -1,13 +1,139 @@
-import { config } from "../config";
-import { main } from "./main";
+import { config } from '../config';
+import { main } from './main';
+import { notifyTransaction, getTelegramBot } from './telegram-bot';
 
-import { lpProvider, minterProvider } from "../utils/chain";
-import { ethers } from "ethers";
-import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
+import { multiplyConfigValues, setEndBlocksWithDelay } from '../utils';
+import { initializeTelegramBot } from './telegram-bot';
+import { initializeContracts } from '../services/contract-initialization';
+import { executeContractMethodWithNotifications, executeRewardProcessingWithNotifications } from '../services/transaction-handler';
 
 config();
 
-function multiplyConfigValues(config: any, multiplier: number): any {
+const entry = async () => {
+  const cfg = config();
+
+  // Initialize Telegram bot
+  await initializeTelegramBot();
+
+  // Initialize contracts
+  const { rewardDistributor } = await initializeContracts();
+
+  const isRewardDistributorPaused = await rewardDistributor.paused();
+
+  console.log('Reward Distributor Paused:', isRewardDistributorPaused);
+
+  if (!isRewardDistributorPaused) {
+    await executeContractMethodWithNotifications(
+      rewardDistributor,
+      'pause',
+      [],
+      {
+        operation: 'Pause Reward Distributor',
+        details: { currentStatus: 'unpaused' },
+        successDetails: { newStatus: 'paused' }
+      }
+    );
+    console.log('Reward Distributor Paused!');
+  }
+
+  // Read current counter value
+  const entryCounter = Number(String(await rewardDistributor.epochCounter()));
+
+  if (entryCounter === 0) {
+    try {
+      await executeContractMethodWithNotifications(
+        rewardDistributor,
+        'startInitialEpoch',
+        [],
+        {
+          operation: 'Start Initial Epoch',
+          details: { epochCounter: 0 },
+          successDetails: { newEpochCounter: 1 }
+        }
+      );
+      console.log('Reward Distributor Started Initial Epoch!');
+    } catch (error) {
+      // Error handling is already done in the transaction handler
+    }
+  } else {
+    console.log('Current entry count:', entryCounter);
+
+    // Set end blocks with delay for subgraph indexing
+    const blockNumberConfig = await setEndBlocksWithDelay();
+
+    const effectiveEntryCounter = entryCounter - 1;
+
+    await executeRewardProcessingWithNotifications(
+      async () => {
+        // Parse and update REWARD_LP_CONFIG
+        const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || '{}');
+        const multipliedLPConfig = multiplyConfigValues(
+          currentLPConfig,
+          effectiveEntryCounter
+        );
+        process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
+        console.log('Updated REWARD_LP_CONFIG:', process.env.REWARD_LP_CONFIG);
+
+        // Parse and update REWARD_HAIVELO_CONFIG
+        const currentHaiveloConfig = JSON.parse(
+          process.env.REWARD_HAIVELO_CONFIG || '{}'
+        );
+        const multipliedHaiveloConfig = multiplyConfigValues(
+          currentHaiveloConfig,
+          effectiveEntryCounter
+        );
+        process.env.REWARD_HAIVELO_CONFIG = JSON.stringify(
+          multipliedHaiveloConfig
+        );
+        console.log(
+          'Updated REWARD_HAIVELO_CONFIG:',
+          process.env.REWARD_HAIVELO_CONFIG
+        );
+
+        await main(entryCounter);
+
+        // Increment and save counter after successful execution
+        console.log('Entry count updated to:', entryCounter + 1);
+      },
+      {
+        entryCounter,
+        effectiveEntryCounter,
+        lpEndBlock: blockNumberConfig.lpEndBlock,
+        minterEndBlock: blockNumberConfig.minterEndBlock,
+        haiveloEndBlock: blockNumberConfig.haiveloEndBlock
+      }
+    );
+  }
+};
+
+entry()
+  .then(() => {})
+  .catch(err => {
+    console.error(err);
+  });
+
+// Legacy code for minter rewards
+
+/*
+  process.env.MINTER_END_BLOCK = String(await minterProvider.getBlockNumber());
+
+
+    // Parse and update REWARD_MINTER_CONFIG
+    const currentMinterConfig = JSON.parse(
+      process.env.REWARD_MINTER_CONFIG || "{}"
+    );
+    const multipliedMinterConfig = multiplyConfigValues(
+      currentMinterConfig,
+      effectiveEntryCounter
+    );
+    process.env.REWARD_MINTER_CONFIG = JSON.stringify(multipliedMinterConfig);
+    console.log(
+      "Updated REWARD_MINTER_CONFIG:",
+      process.env.REWARD_MINTER_CONFIG
+    );
+    
+
+    function multiplyConfigValues(config: any, multiplier: number): any {
   const result: any = {};
 
   for (const [token, tokenConfig] of Object.entries(config)) {
@@ -20,76 +146,4 @@ function multiplyConfigValues(config: any, multiplier: number): any {
   return result;
 }
 
-function multiplyLPConfigValues(config: any, multiplier: number): any {
-  const result: any = {};
-
-  for (const [token, amount] of Object.entries(config)) {
-    result[token] = (amount as number) * multiplier;
-  }
-
-  return result;
-}
-
-const entry = async () => {
-  const cfg = config();
-
-  const provider = new ethers.providers.JsonRpcProvider(
-    cfg.DISTRIBUTOR_RPC_URL
-  );
-  const signer = new ethers.Wallet(cfg.REWARD_SETTER_PRIVATE_KEY, provider);
-
-  // Get contract instance
-  const rewardDistributor = new ethers.Contract(
-    cfg.REWARD_DISTRIBUTOR_ADDRESS,
-    REWARD_DISTRIBUTOR_ABI,
-    signer
-  );
-
-  // Read current counter value
-  const entryCounter = Number(
-    String(await rewardDistributor.merkleRootCounter())
-  );
-  console.log("Current entry count:", entryCounter);
-
-  process.env.LP_END_BLOCK = String(await lpProvider.getBlockNumber());
-  process.env.MINTER_END_BLOCK = String(await minterProvider.getBlockNumber());
-
-  try {
-    // Parse and update REWARD_MINTER_CONFIG
-    const currentMinterConfig = JSON.parse(
-      process.env.REWARD_MINTER_CONFIG || "{}"
-    );
-    const multipliedMinterConfig = multiplyConfigValues(
-      currentMinterConfig,
-      entryCounter + 1
-    );
-    process.env.REWARD_MINTER_CONFIG = JSON.stringify(multipliedMinterConfig);
-    console.log(
-      "Updated REWARD_MINTER_CONFIG:",
-      process.env.REWARD_MINTER_CONFIG
-    );
-
-    // Parse and update REWARD_LP_CONFIG
-    const currentLPConfig = JSON.parse(process.env.REWARD_LP_CONFIG || "{}");
-    const multipliedLPConfig = multiplyLPConfigValues(
-      currentLPConfig,
-      entryCounter + 1
-    );
-    process.env.REWARD_LP_CONFIG = JSON.stringify(multipliedLPConfig);
-    console.log("Updated REWARD_LP_CONFIG:", process.env.REWARD_LP_CONFIG);
-
-    main();
-
-    // Increment and save counter after successful execution
-    console.log("Entry count updated to:", entryCounter + 1);
-  } catch (error) {
-    console.error("Error in entry function:", error);
-    throw error;
-  }
-};
-
-entry()
-  .then(() => {})
-  .catch((err) => {
-    console.error(err);
-  });
+  */

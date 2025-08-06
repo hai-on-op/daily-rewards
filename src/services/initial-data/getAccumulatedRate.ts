@@ -71,8 +71,13 @@ export const getAccumulatedRate = async (
 
   const query = buildAccumulatedRateQuery(block, cType);
 
-  // Fetch data
-  const data = await fetchAccumulatedRate(query, subgraphUrl);
+  let data = await fetchAccumulatedRate(query, subgraphUrl);
+
+  if (data.collateralType == null) {
+    data.collateralType = {
+      accumulatedRate: '1'
+    };
+  }
 
   // Process data
   const accumulatedRate = processAccumulatedRate(data);

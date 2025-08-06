@@ -1,0 +1,20 @@
+[Unit]
+Description=Daily Rewards Unpause Task
+After=network.target entry-task.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/daily-rewards
+EnvironmentFile=/var/www/daily-rewards/.env
+ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/unpause.ts
+StandardOutput=append:/var/log/unpause-task.log
+StandardError=append:/var/log/unpause-task.log
+TimeoutStartSec=300
+
+# Retry configuration
+Restart=on-failure
+RestartSec=30
+StartLimitBurst=5
+StartLimitIntervalSec=600

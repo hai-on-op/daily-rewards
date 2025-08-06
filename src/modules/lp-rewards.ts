@@ -2,22 +2,39 @@ import { config } from "../config";
 import { getEvents } from "../services/get-events/lpGetEvents";
 import { getInitialState } from "../services/initial-data/getInitialState";
 import { getSafeOwnerMapping } from "../services/initial-data/getSafeOwnerMapping";
-import { UserList } from "../types";
+import { RewardEventType, UserList } from "../types";
 import { processRewardEvent } from "../services/rewards/lpRewardEventProcessor";
 import path from "path";
 
-export const calculateLpRewards = async (rewardAmount: number) => {
-  const owners = await getSafeOwnerMapping(config().END_BLOCK);
+type RewardCalculatorOptions = {
+  startBlock: number;
+  endBlock: number;
+};
+
+export const calculateLpRewards = async (
+  rewardAmount: number,
+  options?: RewardCalculatorOptions
+) => {
+  const {
+    startBlock = config().LP_START_BLOCK,
+    endBlock = config().LP_END_BLOCK,
+  } = options
+    ? options
+    : {
+        startBlock: config().LP_START_BLOCK,
+        endBlock: config().LP_END_BLOCK,
+      };
+
+  const owners = await getSafeOwnerMapping(endBlock);
+
+  console.log("owners found:", Object.keys(owners).length);
 
   // Load existing cache
   const cache = {}; // await cacheManager.loadAllCaches();
-  console.log("Loaded cache from disk");
-
-  console.log("config().LP_GEB_SUBGRAPH_URL", config().LP_GEB_SUBGRAPH_URL)
 
   const users: UserList = await getInitialState(
-    config().LP_START_BLOCK,
-    config().LP_END_BLOCK,
+    startBlock,
+    endBlock,
     owners,
     {
       type: "LP_REWARDS",
@@ -26,16 +43,20 @@ export const calculateLpRewards = async (rewardAmount: number) => {
     config().LP_GEB_SUBGRAPH_URL
   );
 
-  const events = await getEvents(
-    config().LP_START_BLOCK,
-    config().LP_END_BLOCK,
-    owners
-  );
+  console.log("users found", Object.keys(users).length);
 
-  return await processRewardEvent(rewardAmount, users, events);
+  const events = await getEvents(startBlock, endBlock, owners);
+
+  console.log("events found:", events.length);
+
+  return await processRewardEvent(rewardAmount, users, events, {
+    startBlock,
+    endBlock,
+  });
 };
 
-
-calculateLpRewards(500).then(res => {
-  console.log(res)
-})
+if (require.main === module) {
+  calculateLpRewards(500).then((res) => {
+    //console.log(res);
+  });
+}

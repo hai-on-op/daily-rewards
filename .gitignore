@@ -9,3 +9,12 @@ node_modules/
 .counter.json
 
 /dist
+
+.legacy.env
+
+merkle-backups
+
+# Telegram bot user storage
+telegram-users.json
+
+/legacy

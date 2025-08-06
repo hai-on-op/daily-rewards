@@ -7,18 +7,28 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "test": "jest"
+    "test": "jest",
+    "test:claimed-amounts": "jest src/services/claimed-amounts/__tests__/",
+    "test-telegram": "ts-node src/test-telegram.ts",
+    "telegram-bot": "ts-node src/modules/on-chain.ts",
+    "telegram-bot:prod": "yarn build && node dist/modules/on-chain.js",
+    "entry": "ts-node src/modules/entry.ts",
+    "entry:prod": "yarn build && node dist/modules/entry.js"
   },
   "dependencies": {
     "@covalenthq/client-sdk": "^2.2.1",
     "@openzeppelin/merkle-tree": "^1.0.7",
+    "alchemy-sdk": "^3.5.8",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.13",
     "@types/node": "^22.5.5",
+    "@types/node-telegram-bot-api": "^0.64.7",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.6.2"

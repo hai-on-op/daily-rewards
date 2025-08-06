@@ -8,7 +8,7 @@ import {
   UserList,
   Rates,
 } from "../../types";
-import { getOrCreateUser } from "../../utils/getOrCreateUser";
+import { getOrCreateUser, getOrCreateUserMutate } from "../../utils/getOrCreateUser";
 import { lpProvider } from "../../utils/chain";
 import { sanityCheckAllUsers } from "../sanity-check/sanityCheck";
 import { getStakingWeightForLPPositions } from "../staking-weights/getStakingWeight";
@@ -18,20 +18,98 @@ import * as fs from "fs";
 import { get } from "http";
 export const CTYPES = config().LP_COLLATERAL_TYPES;
 
+import {
+  getStakingPositions,
+  calculateStakingAtTimestamp,
+  StakingPostion,
+  StakingState,
+} from "../skite-data";
+
+type BoostAmounts = Record<string, number>;
+
+type ProcessorOptions = {
+  startBlock: number;
+  endBlock: number;
+};
+
 export const processRewardEvent = async (
   rewardAmount: number,
   users: UserList,
-  events: LPRewardEvent[]
+  events: LPRewardEvent[],
+  options?: ProcessorOptions
 ): Promise<UserList> => {
+
+  console.log("Processing Rewards Amount", rewardAmount);
+
+  const stakingPositions = await getStakingPositions();
+
+  const {
+    startBlock = config().LP_START_BLOCK,
+    endBlock = config().LP_END_BLOCK,
+  } = options
+    ? options
+    : {
+        startBlock: config().LP_START_BLOCK,
+        endBlock: config().LP_END_BLOCK,
+      };
+
   // Starting and ending of the campaign
-  const startBlock = config().LP_START_BLOCK;
-  const endBlock = config().LP_END_BLOCK;
+  //const startBlock = config().LP_START_BLOCK;
+  //const endBlock = config().LP_END_BLOCK;
   const startTimestamp = (await lpProvider.getBlock(startBlock)).timestamp;
   const endTimestamp = (await lpProvider.getBlock(endBlock)).timestamp;
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
   // Ongoing Total supply of weight
-  let totalStakingWeight = sumAllWeights(users);
+
+  let timestamp = startTimestamp;
+  let cachedBoostAmounts: BoostAmounts | null = null;
+  let lastStakingTimestamp = 0;
+
+  const calculateUserLPBoosts = (users: UserList): BoostAmounts => {
+    // Only recalculate if staking state has changed
+    if (cachedBoostAmounts && lastStakingTimestamp === timestamp) {
+      return cachedBoostAmounts;
+    }
+
+    const stakingState = calculateStakingAtTimestamp(
+      stakingPositions,
+      timestamp
+    );
+
+    const totalLPLiquidity = Object.values(users).reduce(
+      (acc, user) =>
+        acc +
+        user.lpPositions
+          .map((lpPosition) => lpPosition.liquidity)
+          .reduce((acc, p) => acc + Number(p), 0),
+      0
+    );
+
+    cachedBoostAmounts = Object.entries(stakingState.users).reduce(
+      (pV, cV: Record<string, any>) => {
+        const userDeposited = users[cV[0]] ? users[cV[0]].stakingWeight : 0;
+        const userKiteShare = cV[1].share;
+
+        return {
+          ...pV,
+          [cV[0]]: Math.min(
+            userDeposited
+              ? userKiteShare /
+                  ((userDeposited ? userDeposited : 0) / totalLPLiquidity) +
+                  1
+              : 1,
+            2
+          ),
+        };
+      },
+      {}
+    );
+    lastStakingTimestamp = timestamp;
+    return cachedBoostAmounts;
+  };
+
+  let totalStakingWeight = sumAllWeights(users, calculateUserLPBoosts(users));
   console.log(`Total staking weight: ${totalStakingWeight}`);
   // Ongoing cumulative reward per weight over time
   let rewardPerWeight = 0;
@@ -42,12 +120,16 @@ export const processRewardEvent = async (
     }
   };
   // Ongoing time
-  let timestamp = startTimestamp;
+
   // Ongoing accumulated rate
   const rates: Rates = {};
   for (let i = 0; i < CTYPES.length; i++) {
     const cType = CTYPES[i];
-    const cTypeRate = await getAccumulatedRate(startBlock, cType, config().LP_GEB_SUBGRAPH_URL);
+    const cTypeRate = await getAccumulatedRate(
+      startBlock,
+      cType,
+      config().LP_GEB_SUBGRAPH_URL
+    );
     rates[cType] = cTypeRate;
   }
   // Ongoing uni v3 sqrtPrice
@@ -65,24 +147,30 @@ export const processRewardEvent = async (
   console.log(
     `Distributing ${rewardAmount} at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
-  console.log("Applying all events...");
+  console.log(`Applying all (${events.length}) events... `);
   // Main processing loop processing events in chronologic order that modify the current reward rate distribution for each user.
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
     if (i % 1000 === 0 && i > 0) console.log(`  Processed ${i} events`);
+
+
     // Update the redemption price, only async task in this processing loop
     if (redemptionPriceLastUpdate + 3600 * 24 <= event.timestamp) {
       redemptionPrice = await getRedemptionPriceFromTimestamp(event.timestamp);
       redemptionPriceLastUpdate = event.timestamp;
     }
+
     updateRewardPerWeight(event.timestamp);
     // Increment time
     timestamp = event.timestamp;
     // The way the rewards are credited is different for each event type
+
+
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
-        const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight);
+        const user = getOrCreateUserMutate(event.address ?? "", users);
+        const boostAmounts = calculateUserLPBoosts(users);
+        earn(user, rewardPerWeight, boostAmounts);
         const accumulatedRate = rates[event.cType as string];
         // Convert to real debt after interests and update the debt balance
         const adjustedDeltaDebt = (event.value as number) * accumulatedRate;
@@ -96,8 +184,9 @@ export const processRewardEvent = async (
       }
       case RewardEventType.POOL_POSITION_UPDATE: {
         const updatedPosition = event.value as LpPosition;
-        const [__, user] = getOrCreateUser(event.address ?? "", users);
-        earn(user, rewardPerWeight);
+        const user = getOrCreateUserMutate(event.address ?? "", users);
+        const boostAmounts = calculateUserLPBoosts(users);
+        earn(user, rewardPerWeight, boostAmounts);
         // Detect the special of a simple NFT transfer (not form a mint/burn/modify position)
         for (let u of Object.keys(users)) {
           for (let p in users[u].lpPositions) {
@@ -107,7 +196,7 @@ export const processRewardEvent = async (
             ) {
               console.log("ERC721 transfer");
               // We found the source address of an ERC721 transfer
-              earn(users[u], rewardPerWeight);
+              earn(users[u], rewardPerWeight, calculateUserLPBoosts(users));
               users[u].lpPositions = users[u].lpPositions.filter(
                 (x) => x.tokenId !== updatedPosition.tokenId
               );
@@ -143,9 +232,8 @@ export const processRewardEvent = async (
         break;
       }
       case RewardEventType.POOL_SWAP: {
-        // Pool swap changes the price which affects everyone's staking weight
-        // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
+        const boostAmounts = calculateUserLPBoosts(users);
+        Object.values(users).map((u) => earn(u, rewardPerWeight, boostAmounts));
         sqrtPrice = event.value as number;
         // Then update everyone weight
         Object.values(users).map(
@@ -155,12 +243,12 @@ export const processRewardEvent = async (
         break;
       }
       case RewardEventType.UPDATE_ACCUMULATED_RATE: {
+        const boostAmounts = calculateUserLPBoosts(users);
+        Object.values(users).map((u) => earn(u, rewardPerWeight, boostAmounts));
         // Update accumulated rate increases everyone's debt by the rate multiplier
         const rateMultiplier = event.value as number;
         const cTypeRate = rates[event.cType as string];
         rates[event.cType as string] = cTypeRate + rateMultiplier;
-        // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
         // Update everyone's debt
         Object.values(users).map((u) => (u.debt *= rateMultiplier + 1));
         Object.values(users).map(
@@ -181,21 +269,29 @@ export const processRewardEvent = async (
     //   0
     // )},${users[u].stakingWeight},${totalStakingWeight},${users[u].earned}\n`)
     // Recalculate the sum of weights since the events the weights
-    totalStakingWeight = sumAllWeights(users);
+    totalStakingWeight = sumAllWeights(users, calculateUserLPBoosts(users));
   }
+
+  console.log("Debugging event  ===> Before final crediting of all rewards");
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
-  Object.values(users).map((u) => earn(u, rewardPerWeight));
+  Object.values(users).map((u) => earn(u, rewardPerWeight, calculateUserLPBoosts(users)));
   return users;
 };
 // Credit reward to a user
-const earn = (user: UserAccount, rewardPerWeight: number) => {
+const earn = (user: UserAccount, rewardPerWeight: number, boostAmounts: BoostAmounts) => {
+  const boostAmount = boostAmounts[user.address] ?? 1;
   // Credit to the user his due rewards
   user.earned +=
-    (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight;
+    (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight * boostAmount;
   // Store his cumulative credited rewards for next time
   user.rewardPerWeightStored = rewardPerWeight;
 };
+
 // Simply sum all the stakingWeight of all users
-const sumAllWeights = (users: UserList) =>
-  Object.values(users).reduce((acc, user) => acc + user.stakingWeight, 0);
+const sumAllWeights = (users: UserList, boostAmounts: BoostAmounts) => {
+  return Object.values(users).reduce((acc, user) => {
+    const boostAmount = boostAmounts[user.address] ?? 1;
+    return acc + user.stakingWeight * boostAmount;
+  }, 0);
+};

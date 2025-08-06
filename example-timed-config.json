@@ -1,0 +1,50 @@
+{
+  "periods": [
+    {
+      "fromBlock": 14461892,
+      "toBlock": 18000000,
+      "config": {
+        "KITE": { "HAIVELO": 50, "ALETH": 50, "YV-VELO-ALETH-WETH": 25 }
+      }
+    },
+    {
+      "fromBlock": 18000001,
+      "toBlock": 22000000,
+      "config": {
+        "KITE": {
+          "WETH": 150,
+          "RETH": 120,
+          "WSTETH": 120,
+          "APXETH": 90
+        },
+        "OP": {
+          "WETH": 50,
+          "RETH": 40
+        }
+      }
+    },
+    {
+      "fromBlock": 22000001,
+      "config": {
+        "KITE": {
+          "WETH": 200,
+          "RETH": 160,
+          "WSTETH": 160,
+          "APXETH": 120
+        },
+        "OP": {
+          "WETH": 100,
+          "RETH": 80,
+          "WSTETH": 80
+        },
+        "DINERO": {
+          "TOTEM": 50,
+          "STONES": 30
+        }
+      }
+    }
+  ]
+}
+
+
+

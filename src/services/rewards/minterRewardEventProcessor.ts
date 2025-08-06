@@ -1,47 +1,95 @@
-import { config } from "../../config";
-import { getAccumulatedRate } from "../initial-data/getAccumulatedRate";
+import { config } from '../../config';
+import { getAccumulatedRate } from '../initial-data/getAccumulatedRate';
 import {
   LpPosition,
   RewardEvent,
   RewardEventType,
   UserAccount,
   UserList,
-  Rates,
-} from "../../types";
+  Rates
+} from '../../types';
 import {
   getOrCreateUser,
-  getOrCreateUserMutate,
-} from "../../utils/getOrCreateUser";
-import { minterProvider } from "../../utils/chain";
-import { sanityCheckAllUsers } from "../sanity-check/sanityCheck";
-import { getStakingWeightForDebt } from "../staking-weights/getStakingWeight";
-import { getPoolState } from "../pool-state/getPoolState";
-import { getRedemptionPriceFromTimestamp } from "../redemption-price/getRedemptionPrice";
-import { getBridgedTokensAtBlock } from "../bridge-data/getBridgedTokensAtBlock";
-import { BridgedAmountsDetailed } from "../bridge-data/types";
+  getOrCreateUserMutate
+} from '../../utils/getOrCreateUser';
+import { minterProvider } from '../../utils/chain';
+import { sanityCheckAllUsers } from '../sanity-check/sanityCheck';
+import { getStakingWeightForDebt } from '../staking-weights/getStakingWeight';
+import { getPoolState } from '../pool-state/getPoolState';
+import { getRedemptionPriceFromTimestamp } from '../redemption-price/getRedemptionPrice';
+import { getBridgedTokensAtBlock } from '../bridge-data/getBridgedTokensAtBlock';
+import { BridgedAmountsDetailed } from '../bridge-data/types';
 
 export const CTYPES = config().COLLATERAL_TYPES;
+
+type BoostAmounts = Record<string, number>;
+
+type ProcessorOptions = {
+  startBlock: number;
+  endBlock: number;
+};
 
 export const processRewardEvent = async (
   bridgedData: BridgedAmountsDetailed,
   users: UserList,
   events: RewardEvent[],
   rewardAmount: number,
-  withBridge: boolean
+  withBridge: boolean,
+  options?: ProcessorOptions
 ): Promise<UserList> => {
   let usersList = users;
 
+  const {
+    startBlock = config().MINTER_START_BLOCK,
+    endBlock = config().MINTER_END_BLOCK
+  } = options
+    ? options
+    : {
+        startBlock: config().MINTER_START_BLOCK,
+        endBlock: config().MINTER_END_BLOCK
+      };
+
   // Starting and ending of the campaign
-  const startBlock = config().MINTER_START_BLOCK;
-  const endBlock = config().MINTER_END_BLOCK;
   const startTimestamp = (await minterProvider.getBlock(startBlock)).timestamp;
   const endTimestamp = (await minterProvider.getBlock(endBlock)).timestamp;
 
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
 
+  // Ongoing time
+  let timestamp = startTimestamp;
+  let cachedBoostAmounts: BoostAmounts | null = null;
+  let lastBoostTimestamp = 0;
+
+  const calculateUserMinterBoosts = (users: UserList): BoostAmounts => {
+    // Only recalculate if boost state has changed
+    if (cachedBoostAmounts && lastBoostTimestamp === timestamp) {
+      return cachedBoostAmounts;
+    }
+
+    const totalDebt = Object.values(users).reduce(
+      (acc, user) => acc + user.debt,
+      0
+    );
+
+    cachedBoostAmounts = Object.entries(users).reduce((pV, [address, user]) => {
+      const userDebt = user.debt;
+      const userDebtShare = totalDebt > 0 ? userDebt / totalDebt : 0;
+
+      return {
+        ...pV,
+        [address]: Math.min(userDebt > 0 ? userDebtShare + 1 : 1, 2)
+      };
+    }, {});
+    lastBoostTimestamp = timestamp;
+    return cachedBoostAmounts;
+  };
+
   // Ongoing Total supply of weight
-  let totalStakingWeight = sumAllWeights(users);
+  let totalStakingWeight = sumAllWeights(
+    users,
+    calculateUserMinterBoosts(users)
+  );
 
   // Ongoing cumulative reward per weight over time
   let rewardPerWeight = 0;
@@ -53,14 +101,15 @@ export const processRewardEvent = async (
     }
   };
 
-  // Ongoing time
-  let timestamp = startTimestamp;
-
   // Ongoing accumulated rate
   const rates: Rates = {};
   for (let i = 0; i < CTYPES.length; i++) {
     const cType = CTYPES[i];
-    const cTypeRate = await getAccumulatedRate(startBlock, cType, config().MINTER_GEB_SUBGRAPH_URL);
+    const cTypeRate = await getAccumulatedRate(
+      startBlock,
+      cType,
+      config().MINTER_GEB_SUBGRAPH_URL
+    );
     rates[cType] = cTypeRate;
   }
 
@@ -70,12 +119,13 @@ export const processRewardEvent = async (
   console.log(
     `Distributing ${rewardAmount}  at a reward rate of ${rewardRate}/sec between ${startTimestamp} and ${endTimestamp}`
   );
-  console.log("Applying all events...");
+  console.log('Applying all events...');
   // Main processing loop processing events in chronologic order that modify the current reward rate distribution for each user.
 
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
 
+    console.log('event ===>', event);
 
     if (i % 1000 === 0 && i > 0) console.log(`  Processed ${i} events`);
 
@@ -89,9 +139,9 @@ export const processRewardEvent = async (
     // The way the rewards are credited is different for each event type
     switch (event.type) {
       case RewardEventType.DELTA_DEBT: {
-        const user = getOrCreateUserMutate(event.address ?? "", users);
-
-        earn(user, rewardPerWeight);
+        const user = getOrCreateUserMutate(event.address ?? '', users);
+        const boostAmounts = calculateUserMinterBoosts(users);
+        earn(user, rewardPerWeight, boostAmounts);
 
         user.totalBridgedTokens = getBridgedTokensAtBlock(
           bridgedData,
@@ -102,8 +152,7 @@ export const processRewardEvent = async (
 
         const accumulatedRate = rates[event.cType as string];
 
-      //  console.log("event", event, user, rates, accumulatedRate)
-
+        //  console.log("event", event, user, rates, accumulatedRate)
 
         // Convert to real debt after interests and update the debt balance
         const adjustedDeltaDebt = (event.value as number) * accumulatedRate;
@@ -133,7 +182,7 @@ export const processRewardEvent = async (
 
         // setting user totalBridgedTokens
         Object.values(users).forEach(
-          async (u) =>
+          async u =>
             (u.totalBridgedTokens = getBridgedTokensAtBlock(
               bridgedData,
               String(u.address),
@@ -142,13 +191,14 @@ export const processRewardEvent = async (
             ))
         );
 
+        const boostAmounts = calculateUserMinterBoosts(users);
         // First credit all users
-        Object.values(users).map((u) => earn(u, rewardPerWeight));
+        Object.values(users).map(u => earn(u, rewardPerWeight, boostAmounts));
 
         // Update everyone's debt
-        Object.values(users).map((u) => (u.debt *= rateMultiplier + 1));
+        Object.values(users).map(u => (u.debt *= rateMultiplier + 1));
 
-        Object.values(users).map((u) => {
+        Object.values(users).map(u => {
           // calculating userEffectiveBridgedTokens
           const userEffectiveBridgedTokens = u.totalBridgedTokens; //- u.usedBridgedTokens;
 
@@ -162,7 +212,7 @@ export const processRewardEvent = async (
         break;
       }
       default:
-        throw Error("Unknown event");
+        throw Error('Unknown event');
     }
 
     sanityCheckAllUsers(users, event);
@@ -176,29 +226,39 @@ export const processRewardEvent = async (
     // )},${users[u].stakingWeight},${totalStakingWeight},${users[u].earned}\n`)
 
     // Recalculate the sum of weights since the events the weights
-
-    totalStakingWeight = sumAllWeights(users);
+    totalStakingWeight = sumAllWeights(users, calculateUserMinterBoosts(users));
   }
 
+  console.log('Debugging event  ===> Before final crediting of all rewards');
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
-  Object.values(users).map((u) => earn(u, rewardPerWeight));
+  Object.values(users).map(u =>
+    earn(u, rewardPerWeight, calculateUserMinterBoosts(users))
+  );
 
   return users;
 };
 
 // Credit reward to a user
-const earn = (user: UserAccount, rewardPerWeight: number) => {
+const earn = (
+  user: UserAccount,
+  rewardPerWeight: number,
+  boostAmounts: BoostAmounts
+) => {
+  const boostAmount = boostAmounts[user.address] ?? 1;
   // Credit to the user his due rewards
   user.earned +=
-    (rewardPerWeight - user.rewardPerWeightStored) * user.stakingWeight;
-
+    (rewardPerWeight - user.rewardPerWeightStored) *
+    user.stakingWeight *
+    boostAmount;
   // Store his cumulative credited rewards for next time
   user.rewardPerWeightStored = rewardPerWeight;
 };
 
 // Simply sum all the stakingWeight of all users
-const sumAllWeights = (users: UserList) =>
-  Object.values(users).reduce((acc, user) => {
-    return acc + user.stakingWeight;
+const sumAllWeights = (users: UserList, boostAmounts: BoostAmounts) => {
+  return Object.values(users).reduce((acc, user) => {
+    const boostAmount = boostAmounts[user.address] ?? 1;
+    return acc + user.stakingWeight * boostAmount;
   }, 0);
+};

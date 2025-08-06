@@ -1,60 +1,112 @@
 export const REWARD_DISTRIBUTOR_ABI = [
   {
     inputs: [
-      {
-        internalType: "uint256",
-        name: "targetDuration",
-        type: "uint256",
-      },
+      { internalType: "uint256", name: "_epochDuration", type: "uint256" },
+      { internalType: "uint256", name: "_bufferDuration", type: "uint256" },
+      { internalType: "address", name: "_rootSetter", type: "address" },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
   },
+  { inputs: [], name: "AlreadyAuthorized", type: "error" },
+  { inputs: [], name: "EnforcedPause", type: "error" },
+  { inputs: [], name: "ExpectedPause", type: "error" },
+  { inputs: [], name: "NotAuthorized", type: "error" },
   {
     inputs: [
-      {
-        internalType: "address",
-        name: "owner",
-        type: "address",
-      },
+      { internalType: "uint256", name: "_x", type: "uint256" },
+      { internalType: "uint256", name: "_y", type: "uint256" },
     ],
-    name: "OwnableInvalidOwner",
+    name: "NotGreaterThan",
+    type: "error",
+  },
+  { inputs: [], name: "RewardDistributor_AlreadyClaimed", type: "error" },
+  {
+    inputs: [],
+    name: "RewardDistributor_ArrayLengthsMustMatch",
     type: "error",
   },
   {
+    inputs: [],
+    name: "RewardDistributor_InitialEpochAlreadyStarted",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "RewardDistributor_InitialEpochNotStarted",
+    type: "error",
+  },
+  { inputs: [], name: "RewardDistributor_InvalidAmount", type: "error" },
+  { inputs: [], name: "RewardDistributor_InvalidMerkleProof", type: "error" },
+  { inputs: [], name: "RewardDistributor_InvalidMerkleRoot", type: "error" },
+  { inputs: [], name: "RewardDistributor_InvalidTokenAddress", type: "error" },
+  { inputs: [], name: "RewardDistributor_NotRootSetter", type: "error" },
+  {
+    inputs: [],
+    name: "RewardDistributor_TooSoonEpochNotElapsed",
+    type: "error",
+  },
+  { inputs: [], name: "RewardDistributor_TransferFailed", type: "error" },
+  { inputs: [], name: "Unauthorized", type: "error" },
+  { inputs: [], name: "UnrecognizedCType", type: "error" },
+  { inputs: [], name: "UnrecognizedParam", type: "error" },
+  {
+    anonymous: false,
     inputs: [
       {
+        indexed: false,
+        internalType: "address",
+        name: "_account",
+        type: "address",
+      },
+    ],
+    name: "AddAuthorization",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "_param",
+        type: "bytes32",
+      },
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "_cType",
+        type: "bytes32",
+      },
+      { indexed: false, internalType: "bytes", name: "_data", type: "bytes" },
+    ],
+    name: "ModifyParameters",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
         internalType: "address",
         name: "account",
         type: "address",
       },
     ],
-    name: "OwnableUnauthorizedAccount",
-    type: "error",
+    name: "Paused",
+    type: "event",
   },
   {
     anonymous: false,
     inputs: [
       {
         indexed: false,
-        internalType: "address[]",
-        name: "tokens",
-        type: "address[]",
-      },
-      {
-        indexed: false,
-        internalType: "bytes32[]",
-        name: "roots",
-        type: "bytes32[]",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "counter",
-        type: "uint256",
+        internalType: "address",
+        name: "_account",
+        type: "address",
       },
     ],
-    name: "MerkleRootsUpdated",
+    name: "RemoveAuthorization",
     type: "event",
   },
   {
@@ -63,93 +115,123 @@ export const REWARD_DISTRIBUTOR_ABI = [
       {
         indexed: true,
         internalType: "address",
-        name: "previousOwner",
+        name: "_rescueReceiver",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "newOwner",
-        type: "address",
-      },
-    ],
-    name: "OwnershipTransferred",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "newDuration",
-        type: "uint256",
-      },
-    ],
-    name: "RewardDurationUpdated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "oldSetter",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "newSetter",
-        type: "address",
-      },
-    ],
-    name: "RewardSetterUpdated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "token",
+        name: "_rewardToken",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "amount",
+        name: "_wad",
         type: "uint256",
       },
     ],
-    name: "RewardsClaimed",
+    name: "RewardDistributorEmergencyWithdrawal",
     type: "event",
   },
   {
+    anonymous: false,
     inputs: [
       {
+        indexed: true,
         internalType: "address",
-        name: "token",
+        name: "_rewardToken",
         type: "address",
       },
       {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
+        indexed: false,
+        internalType: "bytes32",
+        name: "_merkleRoot",
+        type: "bytes32",
       },
       {
-        internalType: "bytes32[]",
-        name: "merkleProof",
-        type: "bytes32[]",
+        indexed: false,
+        internalType: "uint256",
+        name: "_epochCounter",
+        type: "uint256",
       },
+    ],
+    name: "RewardDistributorMerkleRootUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_account",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_rewardToken",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_wad",
+        type: "uint256",
+      },
+    ],
+    name: "RewardDistributorRewardClaimed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+    ],
+    name: "Unpaused",
+    type: "event",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_account", type: "address" }],
+    name: "addAuthorization",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_account", type: "address" }],
+    name: "authorizedAccounts",
+    outputs: [{ internalType: "bool", name: "_authorized", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "authorizedAccounts",
+    outputs: [
+      { internalType: "address[]", name: "_accounts", type: "address[]" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "bufferDuration",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_token", type: "address" },
+      { internalType: "uint256", name: "_wad", type: "uint256" },
+      { internalType: "bytes32[]", name: "_merkleProof", type: "bytes32[]" },
     ],
     name: "claim",
     outputs: [],
@@ -157,102 +239,64 @@ export const REWARD_DISTRIBUTOR_ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "duration",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+    inputs: [
+      { internalType: "address", name: "_rescueReceiver", type: "address" },
+      { internalType: "address", name: "_token", type: "address" },
+      { internalType: "uint256", name: "_wad", type: "uint256" },
     ],
+    name: "emergencyWithdraw",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "epochCounter",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "epochDuration",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+      { internalType: "bytes32", name: "_root", type: "bytes32" },
+      { internalType: "address", name: "_account", type: "address" },
     ],
     name: "isClaimed",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
+    outputs: [{ internalType: "bool", name: "_hasClaimed", type: "bool" }],
     stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [],
-    name: "lastSettedMerkleRoot",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "merkleRootCounter",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
+    inputs: [{ internalType: "address", name: "_token", type: "address" }],
     name: "merkleRoots",
-    outputs: [
-      {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
-    ],
+    outputs: [{ internalType: "bytes32", name: "_root", type: "bytes32" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "address[]",
-        name: "tokens",
-        type: "address[]",
-      },
-      {
-        internalType: "uint256[]",
-        name: "amounts",
-        type: "uint256[]",
-      },
+      { internalType: "bytes32", name: "_param", type: "bytes32" },
+      { internalType: "bytes", name: "_data", type: "bytes" },
+    ],
+    name: "modifyParameters",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address[]", name: "_tokens", type: "address[]" },
+      { internalType: "uint256[]", name: "_wads", type: "uint256[]" },
       {
         internalType: "bytes32[][]",
-        name: "merkleProofs",
+        name: "_merkleProofs",
         type: "bytes32[][]",
       },
     ],
@@ -263,106 +307,57 @@ export const REWARD_DISTRIBUTOR_ABI = [
   },
   {
     inputs: [],
-    name: "owner",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "recoverERC20",
+    name: "pause",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [],
-    name: "renounceOwnership",
+    name: "paused",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_account", type: "address" }],
+    name: "removeAuthorization",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [],
-    name: "rewardSetter",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
+    name: "rootSetter",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "newDuration",
-        type: "uint256",
-      },
-    ],
-    name: "setDuration",
+    inputs: [],
+    name: "startInitialEpoch",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "startTimestamp",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "unpause",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "address",
-        name: "newRewardSetter",
-        type: "address",
-      },
-    ],
-    name: "setRewardSetter",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "newOwner",
-        type: "address",
-      },
-    ],
-    name: "transferOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address[]",
-        name: "tokens",
-        type: "address[]",
-      },
-      {
-        internalType: "bytes32[]",
-        name: "roots",
-        type: "bytes32[]",
-      },
+      { internalType: "address[]", name: "_tokens", type: "address[]" },
+      { internalType: "bytes32[]", name: "_merkleRoots", type: "bytes32[]" },
     ],
     name: "updateMerkleRoots",
     outputs: [],
