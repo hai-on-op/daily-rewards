@@ -29,12 +29,12 @@ export type HaiveloCollateralEvent = {
  *
  * @returns {string} The GraphQL query string.
  */
-export const buildHaiveloCollateralQuery = (): string => {
+export const buildHaiveloCollateralQuery = (collateralId: string): string => {
   return `
     {
       modifySAFECollateralizations(
         where: {
-          collateralType_: { id: "HAIVELO" },
+          collateralType_: { id: "${collateralId}" },
         },
         orderBy: createdAt,
         first: 1000,
@@ -67,11 +67,14 @@ export const buildHaiveloCollateralQuery = (): string => {
  * @param {string} query - The GraphQL query string.
  * @returns {Promise<any[]>} A promise that resolves to an array of HAIVELO collateral data.
  */
-export const fetchHaiveloCollateral = async (query: string): Promise<any[]> => {
+export const fetchHaiveloCollateral = async (
+  query: string,
+  subgraphUrl?: string
+): Promise<any[]> => {
   return await subgraphQueryPaginated(
     query,
     "modifySAFECollateralizations",
-    config().HAIVELO_SUBGRAPH_URL
+    subgraphUrl || config().HAIVELO_SUBGRAPH_URL
   );
 };
 
@@ -119,16 +122,33 @@ export const processHaiveloCollateral = (
  *
  * @returns {Promise<RawHaiveloCollateral[]>} A promise that resolves to an array of raw HAIVELO collateral data.
  */
-export const getRawHaiveloCollateralData = async (): Promise<
-  HaiveloCollateralEvent[]
-> => {
-  // Build the query
-  const query = buildHaiveloCollateralQuery();
+export const getRawHaiveloCollateralDataV1 = async (): Promise<HaiveloCollateralEvent[]> => {
+  const cfg = config();
+  const query = buildHaiveloCollateralQuery(cfg.HAIVELO_V1_COLLATERAL_ID);
+  const raw = await fetchHaiveloCollateral(query, cfg.HAIVELO_V1_SUBGRAPH_URL);
+  return raw as HaiveloCollateralEvent[];
+};
 
-  // Fetch collateral data
-  const rawCollateralData = await fetchHaiveloCollateral(query);
+export const getRawHaiveloCollateralDataV2 = async (): Promise<HaiveloCollateralEvent[]> => {
+  const cfg = config();
+  const query = buildHaiveloCollateralQuery(cfg.HAIVELO_V2_COLLATERAL_ID);
+  const raw = await fetchHaiveloCollateral(query, cfg.HAIVELO_V2_SUBGRAPH_URL);
+  return raw as HaiveloCollateralEvent[];
+};
 
-  return rawCollateralData as HaiveloCollateralEvent[];
+export type VersionedHaiveloEvent = HaiveloCollateralEvent & { __version: 'v1' | 'v2' };
+
+export const getRawHaiveloCollateralDataUnified = async (): Promise<VersionedHaiveloEvent[]> => {
+  const [v1, v2] = await Promise.all([
+    getRawHaiveloCollateralDataV1().catch(() => []),
+    getRawHaiveloCollateralDataV2().catch(() => []),
+  ]);
+
+  const taggedV1: VersionedHaiveloEvent[] = (v1 || []).map(e => ({ ...e, __version: 'v1' }));
+  const taggedV2: VersionedHaiveloEvent[] = (v2 || []).map(e => ({ ...e, __version: 'v2' }));
+
+  // Merge unsorted; callers can sort/filter by block or createdAt
+  return [...taggedV1, ...taggedV2];
 };
 
 /**
@@ -137,14 +157,27 @@ export const getRawHaiveloCollateralData = async (): Promise<
  * @returns {Promise<UserList>} A promise that resolves to mapping of users to their HAIVELO collateral.
  */
 export const getInitialHaiveloState = async (): Promise<UserList> => {
-  // Build the query
-  const query = buildHaiveloCollateralQuery();
+  const cfg = config();
+  const queryV1 = buildHaiveloCollateralQuery(cfg.HAIVELO_V1_COLLATERAL_ID);
+  const queryV2 = buildHaiveloCollateralQuery(cfg.HAIVELO_V2_COLLATERAL_ID);
+  const [rawV1, rawV2] = await Promise.all([
+    fetchHaiveloCollateral(queryV1, cfg.HAIVELO_V1_SUBGRAPH_URL).catch(() => []),
+    fetchHaiveloCollateral(queryV2, cfg.HAIVELO_V2_SUBGRAPH_URL).catch(() => []),
+  ]);
 
-  // Fetch collateral data
-  const rawCollateralData = await fetchHaiveloCollateral(query);
+  const userCollateralV1 = processHaiveloCollateral(rawV1 as HaiveloCollateralEvent[]);
+  const userCollateralV2 = processHaiveloCollateral(rawV2 as HaiveloCollateralEvent[]);
 
-  // Process collateral data
-  const userCollateral = processHaiveloCollateral(rawCollateralData);
+  // Combine user maps by summing collateral and stakingWeight
+  const combined: UserList = { ...userCollateralV1 };
+  Object.entries(userCollateralV2).forEach(([address, user]) => {
+    if (combined[address]) {
+      combined[address].collateral += user.collateral;
+      combined[address].stakingWeight = combined[address].collateral;
+    } else {
+      combined[address] = user;
+    }
+  });
 
-  return userCollateral;
+  return combined;
 };

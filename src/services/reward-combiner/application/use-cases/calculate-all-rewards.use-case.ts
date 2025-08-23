@@ -85,6 +85,12 @@ export class CalculateAllRewardsUseCase implements RewardCalculationService {
     const haiVeloDailyRewards: RewardsMap[] = [];
 
     for (const period of periods) {
+      const cfg = config();
+      const schedule = (cfg.HAIVELO_REWARD_SPLIT_SCHEDULE || []) as Array<{ fromBlock: number; toBlock: number; v1: number; v2: number }>;
+      const active = schedule.find(s => period.startBlock >= s.fromBlock && period.endBlock <= s.toBlock);
+      const split = active ? { v1: active.v1, v2: active.v2 } : (cfg.HAIVELO_REWARD_SPLIT?.default ?? { v1: 1, v2: 0 });
+
+      // Pass full amount; the module now internally applies split. We preserve API.
       const rewards = await this.rewardCalculationRepository.calculateHaiveloRewards(
         period.rewardAmount,
         { startBlock: period.startBlock, endBlock: period.endBlock }
