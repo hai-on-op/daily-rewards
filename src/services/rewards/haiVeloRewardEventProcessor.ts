@@ -18,11 +18,21 @@ type ProcessorOptions = {
   endBlock: number;
 };
 
+type BoostConfig = { bias: number; cap: number };
+
+type HaiVeloProcessorParams = {
+  version: 'v1' | 'v2';
+  boostConfig?: BoostConfig; // default from config
+  denominatorMode?: 'combined' | 'perVersion'; // default from config
+  denominatorUsers?: UserList; // optional combined users snapshot for denominator calculations
+};
+
 export const processRewardEvents = async (
   rewardAmount: number,
   events: HaiveloCollateralEvent[],
   users: UserList,
-  options?: ProcessorOptions
+  options?: ProcessorOptions,
+  params?: HaiVeloProcessorParams
 ): Promise<UserList> => {
   const stakingPositions = await getStakingPositions();
 
@@ -48,27 +58,40 @@ export const processRewardEvents = async (
       timestamp
     );
 
-    const totalCollatera = Object.values(users).reduce(
+    const denominatorSource: UserList | undefined =
+      (params?.denominatorMode || (config().HAIVELO_BOOST_DENOMINATOR_MODE as 'combined' | 'perVersion')) === 'combined'
+        ? params?.denominatorUsers || users
+        : users;
+
+    const totalCollatera = Object.values(denominatorSource).reduce(
       (acc, user) => acc + user.collateral,
       0
     );
 
     return Object.entries(stakingState.users).reduce(
       (pV, cV: Record<string, any>) => {
-        const userDeposited = users[cV[0]] ? users[cV[0]].collateral : 0;
+        const userDeposited = denominatorSource[cV[0]] ? denominatorSource[cV[0]].collateral : 0;
 
         const userKiteShare = cV[1].share;
 
+        const rawBoost = Math.min(
+          userDeposited
+            ? userKiteShare /
+                ((userDeposited ? userDeposited : 0) / totalCollatera) +
+                1
+            : 1,
+          2
+        );
+
+        const bias = params?.boostConfig?.bias ?? (params?.version === 'v2' ? (config().HAIVELO_BOOST_CONFIG?.v2?.bias ?? 1) : (config().HAIVELO_BOOST_CONFIG?.v1?.bias ?? 1));
+        const cap = params?.boostConfig?.cap ?? (params?.version === 'v2' ? (config().HAIVELO_BOOST_CONFIG?.v2?.cap ?? 2) : (config().HAIVELO_BOOST_CONFIG?.v1?.cap ?? 2));
+
+        const biasedBoost = 1 + bias * (rawBoost - 1);
+        const finalBoost = Math.min(biasedBoost, cap);
+
         return {
           ...pV,
-          [cV[0]]: Math.min(
-            userDeposited
-              ? userKiteShare /
-                  ((userDeposited ? userDeposited : 0) / totalCollatera) +
-                  1
-              : 1,
-            2
-          )
+          [cV[0]]: finalBoost
         };
       },
       {}

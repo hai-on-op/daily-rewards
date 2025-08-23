@@ -101,10 +101,17 @@ export const processRewardEvent = async (
     }
   };
 
-  // Ongoing accumulated rate
+  // Ongoing accumulated rate (fetch only for collateral types present in events)
   const rates: Rates = {};
-  for (let i = 0; i < CTYPES.length; i++) {
-    const cType = CTYPES[i];
+  const eventCTypes = Array.from(
+    new Set(
+      events
+        .map(e => e.cType)
+        .filter((x): x is string => typeof x === 'string' && x.length > 0)
+    )
+  );
+  for (let i = 0; i < eventCTypes.length; i++) {
+    const cType = eventCTypes[i];
     const cTypeRate = await getAccumulatedRate(
       startBlock,
       cType,

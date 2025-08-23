@@ -81,6 +81,9 @@ export const config = () => {
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
     STKITE_SUBGRAPH_URL: envs.STKITE_SUBGRAPH_URL,
     HAIVELO_SUBGRAPH_URL: envs.HAIVELO_SUBGRAPH_URL,
+    // HaiVELO v1/v2 subgraphs (optional granular control)
+    HAIVELO_V1_SUBGRAPH_URL: envs.HAIVELO_V1_SUBGRAPH_URL || envs.HAIVELO_SUBGRAPH_URL,
+    HAIVELO_V2_SUBGRAPH_URL: envs.HAIVELO_V2_SUBGRAPH_URL || envs.HAIVELO_SUBGRAPH_URL,
 
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),
@@ -129,6 +132,11 @@ export const config = () => {
     HAIVELO_END_BLOCK: Number(envs.HAIVELO_END_BLOCK)
       ? Number(envs.HAIVELO_END_BLOCK)
       : Number(envs.END_BLOCK),
+    // Optional per-version block controls
+    HAIVELO_V1_START_BLOCK: Number(envs.HAIVELO_V1_START_BLOCK) || undefined,
+    HAIVELO_V1_END_BLOCK: Number(envs.HAIVELO_V1_END_BLOCK) || undefined,
+    HAIVELO_V2_START_BLOCK: Number(envs.HAIVELO_V2_START_BLOCK) || undefined,
+    HAIVELO_V2_END_BLOCK: Number(envs.HAIVELO_V2_END_BLOCK) || undefined,
 
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
     REWARD_TOKEN: envs.REWARD_TOKEN,
@@ -140,6 +148,35 @@ export const config = () => {
     PLACEHOLDER_COLLATERAL_TYPES: ['HAIVELO'] as TokenType[],
     LP_COLLATERAL_TYPES: ['OP', 'WETH', 'WSTETH'] as TokenType[],
     EXCLUSION_LIST_FILE: path.join(__dirname, '..', '..', 'exclusion-list.csv'),
+
+    // HaiVELO split and boost controls
+    HAIVELO_REWARD_SPLIT: (() => {
+      try {
+        return envs.HAIVELO_REWARD_SPLIT ? JSON.parse(envs.HAIVELO_REWARD_SPLIT) : { default: { v1: 1, v2: 0 } };
+      } catch (e) {
+        console.error('Invalid HAIVELO_REWARD_SPLIT JSON');
+        return { default: { v1: 1, v2: 0 } };
+      }
+    })(),
+    HAIVELO_REWARD_SPLIT_SCHEDULE: (() => {
+      try {
+        return envs.HAIVELO_REWARD_SPLIT_SCHEDULE ? JSON.parse(envs.HAIVELO_REWARD_SPLIT_SCHEDULE) : [];
+      } catch (e) {
+        console.error('Invalid HAIVELO_REWARD_SPLIT_SCHEDULE JSON');
+        return [];
+      }
+    })(),
+    HAIVELO_BOOST_CONFIG: (() => {
+      try {
+        return envs.HAIVELO_BOOST_CONFIG ? JSON.parse(envs.HAIVELO_BOOST_CONFIG) : { v1: { bias: 1, cap: 2 }, v2: { bias: 1, cap: 2 } };
+      } catch (e) {
+        console.error('Invalid HAIVELO_BOOST_CONFIG JSON');
+        return { v1: { bias: 1, cap: 2 }, v2: { bias: 1, cap: 2 } };
+      }
+    })(),
+    HAIVELO_BOOST_DENOMINATOR_MODE: envs.HAIVELO_BOOST_DENOMINATOR_MODE || 'perVersion',
+    HAIVELO_V1_COLLATERAL_ID: envs.HAIVELO_V1_COLLATERAL_ID || 'HAIVELO',
+    HAIVELO_V2_COLLATERAL_ID: envs.HAIVELO_V2_COLLATERAL_ID || 'HAIVELO_V2',
 
     // API Keys
     COVALENT_API_KEY: envs.COVALENT_API_KEY,
