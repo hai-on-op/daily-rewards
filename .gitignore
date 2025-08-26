@@ -18,3 +18,5 @@ merkle-backups
 telegram-users.json
 
 /legacy
+
+/debug-data

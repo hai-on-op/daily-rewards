@@ -12,7 +12,8 @@
     "telegram-bot": "ts-node src/modules/on-chain.ts",
     "telegram-bot:prod": "yarn build && node dist/modules/on-chain.js",
     "entry": "ts-node src/modules/entry.ts",
-    "entry:prod": "yarn build && node dist/modules/entry.js"
+    "entry:prod": "yarn build && node dist/modules/entry.js",
+    "debug-viewer": "cd debug-viewer && VITE_DEBUG_DATA_DIR=../debug-data yarn dev"
   },
   "dependencies": {
     "@covalenthq/client-sdk": "^2.2.1",

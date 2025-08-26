@@ -29,15 +29,24 @@ type ProcessorOptions = {
   endBlock: number;
 };
 
+export type MinterDebugEvent =
+  | { type: 'init'; startTimestamp: number; endTimestamp: number; rewardRate: number }
+  | { type: 'updateRewardPerWeight'; timestamp: number; rewardPerWeight: number; totalStakingWeight: number }
+  | { type: 'userEarn'; address: string; deltaEarned: number; totalEarned: number; rewardPerWeight: number; boost: number; stakingWeight: number; timestamp: number }
+  | { type: 'userWeightChange'; address: string; stakingWeight: number; debt: number; collateral: number; totalBridgedTokens: number; timestamp: number }
+  | { type: 'updateAccumulatedRate'; cType: string; newRate: number; timestamp: number };
+
 export const processRewardEvent = async (
   bridgedData: BridgedAmountsDetailed,
   users: UserList,
   events: RewardEvent[],
   rewardAmount: number,
   withBridge: boolean,
-  options?: ProcessorOptions
-): Promise<UserList> => {
+  options?: ProcessorOptions,
+  debug?: boolean
+): Promise<{ users: UserList; debugEvents?: MinterDebugEvent[] }> => {
   let usersList = users;
+  const debugEvents: MinterDebugEvent[] = [];
 
   const {
     startBlock = config().MINTER_START_BLOCK,
@@ -55,6 +64,7 @@ export const processRewardEvent = async (
 
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);
+  if (debug) debugEvents.push({ type: 'init', startTimestamp, endTimestamp, rewardRate });
 
   // Ongoing time
   let timestamp = startTimestamp;
@@ -99,6 +109,13 @@ export const processRewardEvent = async (
       const deltaTime = evtTime - timestamp;
       rewardPerWeight += (deltaTime * rewardRate) / totalStakingWeight;
     }
+    if (debug)
+      debugEvents.push({
+        type: 'updateRewardPerWeight',
+        timestamp: evtTime,
+        rewardPerWeight,
+        totalStakingWeight
+      });
   };
 
   // Ongoing accumulated rate
@@ -141,7 +158,19 @@ export const processRewardEvent = async (
       case RewardEventType.DELTA_DEBT: {
         const user = getOrCreateUserMutate(event.address ?? '', users);
         const boostAmounts = calculateUserMinterBoosts(users);
+        const beforeEarn = user.earned;
         earn(user, rewardPerWeight, boostAmounts);
+        if (debug)
+          debugEvents.push({
+            type: 'userEarn',
+            address: user.address,
+            deltaEarned: user.earned - beforeEarn,
+            totalEarned: user.earned,
+            rewardPerWeight,
+            boost: boostAmounts[user.address] ?? 1,
+            stakingWeight: user.stakingWeight,
+            timestamp
+          });
 
         user.totalBridgedTokens = getBridgedTokensAtBlock(
           bridgedData,
@@ -171,6 +200,16 @@ export const processRewardEvent = async (
           user.totalBridgedTokens,
           withBridge
         );
+        if (debug)
+          debugEvents.push({
+            type: 'userWeightChange',
+            address: user.address,
+            stakingWeight: user.stakingWeight,
+            debt: user.debt,
+            collateral: user.collateral,
+            totalBridgedTokens: user.totalBridgedTokens,
+            timestamp
+          });
 
         break;
       }
@@ -193,7 +232,21 @@ export const processRewardEvent = async (
 
         const boostAmounts = calculateUserMinterBoosts(users);
         // First credit all users
-        Object.values(users).map(u => earn(u, rewardPerWeight, boostAmounts));
+        Object.values(users).map(u => {
+          const prev = u.earned;
+          earn(u, rewardPerWeight, boostAmounts);
+          if (debug)
+            debugEvents.push({
+              type: 'userEarn',
+              address: u.address,
+              deltaEarned: u.earned - prev,
+              totalEarned: u.earned,
+              rewardPerWeight,
+              boost: boostAmounts[u.address] ?? 1,
+              stakingWeight: u.stakingWeight,
+              timestamp
+            });
+        });
 
         // Update everyone's debt
         Object.values(users).map(u => (u.debt *= rateMultiplier + 1));
@@ -208,6 +261,16 @@ export const processRewardEvent = async (
             userEffectiveBridgedTokens,
             withBridge
           );
+          if (debug)
+            debugEvents.push({
+              type: 'userWeightChange',
+              address: u.address,
+              stakingWeight: u.stakingWeight,
+              debt: u.debt,
+              collateral: u.collateral,
+              totalBridgedTokens: u.totalBridgedTokens,
+              timestamp
+            });
         });
         break;
       }
@@ -232,11 +295,23 @@ export const processRewardEvent = async (
   console.log('Debugging event  ===> Before final crediting of all rewards');
   // Final crediting of all rewards
   updateRewardPerWeight(endTimestamp);
-  Object.values(users).map(u =>
-    earn(u, rewardPerWeight, calculateUserMinterBoosts(users))
-  );
+  Object.values(users).map(u => {
+    const prev = u.earned;
+    earn(u, rewardPerWeight, calculateUserMinterBoosts(users));
+    if (debug)
+      debugEvents.push({
+        type: 'userEarn',
+        address: u.address,
+        deltaEarned: u.earned - prev,
+        totalEarned: u.earned,
+        rewardPerWeight,
+        boost: 1,
+        stakingWeight: u.stakingWeight,
+        timestamp: endTimestamp
+      });
+  });
 
-  return users;
+  return { users, debugEvents: debug ? debugEvents : undefined };
 };
 
 // Credit reward to a user

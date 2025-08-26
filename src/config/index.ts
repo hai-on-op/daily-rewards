@@ -1,6 +1,6 @@
 import path from "path";
 import { config as dotenv } from "dotenv";
-import { RewardConfig, TokenType } from "./types";
+import { MinterRewardWindow, RewardConfig, TokenType } from "./types";
 
 dotenv();
 
@@ -23,6 +23,32 @@ const parseCollateralTypes = (typesStr: string): TokenType[] => {
   }
 };
 
+const parseMinterWindows = (windowsStr: string | undefined): MinterRewardWindow[] => {
+  if (!windowsStr) return [];
+  try {
+    const raw = JSON.parse(windowsStr);
+    if (!Array.isArray(raw)) throw new Error("REWARD_MINTER_WINDOWS must be an array");
+    return raw.map((w) => {
+      const startBlock = Number(w.startBlock);
+      const endBlock = w.endBlock !== undefined && w.endBlock !== null ? Number(w.endBlock) : undefined;
+      const config = w.config;
+      if (!Number.isFinite(startBlock)) {
+        throw new Error("Invalid startBlock in REWARD_MINTER_WINDOWS");
+      }
+      if (endBlock !== undefined && !Number.isFinite(endBlock)) {
+        throw new Error("Invalid endBlock in REWARD_MINTER_WINDOWS");
+      }
+      if (!config || typeof config !== 'object') {
+        throw new Error("Invalid config in REWARD_MINTER_WINDOWS item");
+      }
+      return { startBlock, endBlock, config } as MinterRewardWindow;
+    });
+  } catch (error) {
+    console.error("Error parsing minter windows:", error);
+    throw new Error("Invalid REWARD_MINTER_WINDOWS format");
+  }
+};
+
 export const config = () => {
   const envs = process.env as any;
 
@@ -33,6 +59,7 @@ export const config = () => {
       collateralTypes: parseCollateralTypes(
         envs.REWARD_MINTER_COLLATERAL_TYPES
       ),
+      windows: [],
     },
     lp: {
       config: parseRewardConfig(envs.REWARD_LP_CONFIG),
@@ -44,6 +71,22 @@ export const config = () => {
       config: parseRewardConfig(envs.REWARD_HAIVELO_CONFIG || "{}"),
     },
   };
+
+  // Populate minter windows (multi-window support with backward compatibility)
+  const minterWindows = parseMinterWindows(envs.REWARD_MINTER_WINDOWS);
+  if (minterWindows.length > 0) {
+    rewardConfig.minter.windows = minterWindows;
+  } else {
+    const fallbackStart = Number(envs.MINTER_START_BLOCK) ? Number(envs.MINTER_START_BLOCK) : Number(envs.START_BLOCK);
+    const fallbackEnd = Number(envs.MINTER_END_BLOCK) ? Number(envs.MINTER_END_BLOCK) : Number(envs.END_BLOCK);
+    rewardConfig.minter.windows = [
+      {
+        startBlock: fallbackStart,
+        endBlock: fallbackEnd,
+        config: rewardConfig.minter.config,
+      },
+    ];
+  }
 
   return {
     // Subgraph URLs
@@ -122,6 +165,18 @@ export const config = () => {
 
     // Reward Configurations
     rewards: rewardConfig,
+
+    // Debugging
+    DEBUG_REWARDS:
+      String(envs.DEBUG_REWARDS).toLowerCase() === 'true' ||
+      String(envs.DEBUG_REWARDS) === '1' ||
+      String(envs.DEBUG).toLowerCase() === 'true' ||
+      String(envs.DEBUG) === '1',
+    DEBUG_OUTPUT_DIR: envs.DEBUG_OUTPUT_DIR
+      ? path.isAbsolute(envs.DEBUG_OUTPUT_DIR)
+        ? envs.DEBUG_OUTPUT_DIR
+        : path.join(__dirname, '..', '..', envs.DEBUG_OUTPUT_DIR)
+      : path.join(__dirname, '..', '..', 'debug-data'),
 
     // Cloudflare Configuration
     CLOUDFLARE_ACCOUNT_ID: envs.CLOUDFLARE_ACCOUNT_ID,

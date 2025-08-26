@@ -17,6 +17,12 @@ export interface MinterRewardConfig {
   };
 }
 
+export interface MinterRewardWindow {
+  startBlock: number;
+  endBlock?: number;
+  config: MinterRewardConfig;
+}
+
 export interface LpRewardConfig {
   [source: string]: number;
 }
@@ -29,6 +35,7 @@ export interface RewardConfig {
   minter: {
     config: MinterRewardConfig;
     collateralTypes: TokenType[];
+    windows: MinterRewardWindow[];
   };
   lp: {
     config: LpRewardConfig;

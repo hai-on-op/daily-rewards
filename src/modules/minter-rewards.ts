@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { BridgedAmountsDetailed } from '../services/bridge-data/types';
 import { getEvents } from '../services/get-events/minterGetEvents';
 import { getInitialState } from '../services/initial-data/getInitialState';
@@ -17,76 +19,116 @@ export const calculateMinterRewards = async (
   console.log('minterSetupData', minterSetupData);
   console.log('--------------------------------');
 
-  const owners = await getSafeOwnerMapping(config().MINTER_END_BLOCK);
-  console.log('owners', owners);
-  console.log('--------------------------------');
-
-  const rewardTokens = Object.keys(minterSetupData.config);
-
   type FinalResult = Record<string, Record<string, UserList>>;
+  const finalResult: FinalResult = {};
 
-  let finalResult: FinalResult = {};
-  for (let i = 0; i < rewardTokens.length; i++) {
-    const rewardToken = rewardTokens[i];
-    const collateralTypes = Object.keys(minterSetupData.config[rewardToken]);
+  // Iterate through each configured window
+  for (let w = 0; w < minterSetupData.windows.length; w++) {
+    const window = minterSetupData.windows[w];
+    const effectiveEndBlock = window.endBlock ?? toBlock;
+    const owners = await getSafeOwnerMapping(effectiveEndBlock);
 
-    for (let j = 0; j < collateralTypes.length; j++) {
-      const cType = collateralTypes[j];
+    const rewardTokens = Object.keys(window.config);
 
-      const startBlock = config().MINTER_START_BLOCK;
-      const endBlock = config().MINTER_END_BLOCK;
-      const dailyRewardAmount = minterSetupData.config[rewardToken][cType];
-      const totalBlocks = endBlock - startBlock;
-      const secsInDay = 86400;
-      const opBlockTime = 2;
-      const blocksInDay = Math.floor(secsInDay / opBlockTime);
-      const perBlockRewardAmount = dailyRewardAmount / blocksInDay;
-      const rewardAmount = perBlockRewardAmount * totalBlocks;
+    for (let i = 0; i < rewardTokens.length; i++) {
+      const rewardToken = rewardTokens[i];
+      const collateralTypes = Object.keys(window.config[rewardToken] || {});
 
-      const usersListWithBridge: UserList = {};
+      for (let j = 0; j < collateralTypes.length; j++) {
+        const cType = collateralTypes[j];
 
-      const users: UserList = await getInitialState(
-        config().MINTER_START_BLOCK,
-        config().MINTER_END_BLOCK,
-        owners,
-        {
-          type: 'MINTER_REWARDS',
-          withBridge: false
-        },
-        config().MINTER_GEB_SUBGRAPH_URL,
-        cType
-      );
+        const startBlock = window.startBlock;
+        const endBlock = effectiveEndBlock;
+        const dailyRewardAmount = window.config[rewardToken][cType] ?? 0;
+        const totalBlocks = endBlock - startBlock;
+        const secsInDay = 86400;
+        const opBlockTime = 2;
+        const blocksInDay = Math.floor(secsInDay / opBlockTime);
+        const perBlockRewardAmount = blocksInDay > 0 ? dailyRewardAmount / blocksInDay : 0;
+        const rewardAmount = perBlockRewardAmount * totalBlocks;
 
-      console.log('users', users);
-      console.log('--------------------------------');
+        const usersListWithBridge: UserList = {};
 
-      Object.values(users).forEach(async user => {
-        usersListWithBridge[user.address] = {
-          ...user,
-          totalBridgedTokens: 0
-        };
-      });
+        const users: UserList = await getInitialState(
+          startBlock,
+          endBlock,
+          owners,
+          {
+            type: 'MINTER_REWARDS',
+            withBridge: false
+          },
+          config().MINTER_GEB_SUBGRAPH_URL,
+          cType
+        );
 
-      const events = await getEvents(
-        config().MINTER_START_BLOCK,
-        config().MINTER_END_BLOCK,
-        owners,
-        cType
-      );
+        Object.values(users).forEach(async user => {
+          usersListWithBridge[user.address] = {
+            ...user,
+            totalBridgedTokens: 0
+          };
+        });
 
-      let usersListWithRewards = await processRewardEvent(
-        [],
-        usersListWithBridge,
-        events,
-        rewardAmount,
-        false
-      );
+        const events = await getEvents(startBlock, endBlock, owners, cType);
 
-      if (!finalResult[rewardToken]) {
-        finalResult[rewardToken] = {};
+        const result = await processRewardEvent(
+          [],
+          usersListWithBridge,
+          events,
+          rewardAmount,
+          false,
+          { startBlock, endBlock },
+          config().DEBUG_REWARDS
+        );
+
+        const usersListWithRewards = result.users;
+
+        if (config().DEBUG_REWARDS && result.debugEvents) {
+          const dir = path.join(
+            config().DEBUG_OUTPUT_DIR,
+            'minter',
+            `window-${w}`,
+            rewardToken,
+            cType
+          );
+          fs.mkdirSync(dir, { recursive: true });
+          const meta = {
+            window: { startBlock, endBlock },
+            rewardToken,
+            collateralType: cType,
+            dailyRewardAmount,
+            totalBlocks,
+            rewardAmount
+          };
+          fs.writeFileSync(
+            path.join(dir, 'debug.json'),
+            JSON.stringify({ meta, events: result.debugEvents }, null, 2)
+          );
+        }
+
+        if (!finalResult[rewardToken]) {
+          finalResult[rewardToken] = {};
+        }
+
+        // Merge results across windows per rewardToken/cType
+        const existing = finalResult[rewardToken][cType] || {};
+        const merged: UserList = { ...existing } as UserList;
+        Object.entries(usersListWithRewards).forEach(([address, value]) => {
+          if (!merged[address]) {
+            merged[address] = { ...value } as any;
+          } else {
+            merged[address] = {
+              ...merged[address],
+              earned: (merged[address].earned || 0) + (value.earned || 0),
+              debt: value.debt, // latest state not used downstream, earned is aggregated
+              collateral: value.collateral,
+              stakingWeight: value.stakingWeight,
+              totalBridgedTokens: value.totalBridgedTokens
+            } as any;
+          }
+        });
+
+        finalResult[rewardToken][cType] = merged;
       }
-
-      finalResult[rewardToken][cType] = usersListWithRewards;
     }
   }
 

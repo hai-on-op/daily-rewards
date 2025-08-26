@@ -1,0 +1,22 @@
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+
+.layout { display: grid; grid-template-columns: 300px 1fr; height: 100%; }
+.sidebar { border-right: 1px solid #e5e7eb; padding: 12px; overflow: auto; }
+.content { padding: 12px; overflow: auto; }
+.error { color: #dc2626; }
+
+.tree ul { list-style: none; padding-left: 16px; margin: 4px 0; }
+.tree li { margin: 2px 0; }
+.tree button { background: none; border: none; padding: 2px 4px; cursor: pointer; }
+.tree .selected { background: #eef2ff; border-radius: 4px; }
+
+.panels { display: grid; gap: 12px; }
+section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #fff; }
+
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+
