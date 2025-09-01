@@ -33,7 +33,7 @@ export async function fetchStakingUsers(): Promise<StakingUser[]> {
   `;
 
   try {
-    const data = await subgraphQuery(query, config().STAKING_SUBGRAPH_URL);
+    const data = await subgraphQuery(query, config().STKITE_SUBGRAPH_URL);
     
     if (!data || !data.stakingUsers) {
       console.error("No staking data returned from subgraph");

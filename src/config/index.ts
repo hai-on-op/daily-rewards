@@ -149,6 +149,18 @@ export const config = () => {
       ? Number(envs.HAIVELO_END_BLOCK)
       : Number(envs.END_BLOCK),
 
+    // haiVELO collateral type ids to aggregate (e.g., ["HAIVELO","HAIVELO_V2"]) 
+    HAIVELO_COLLATERAL_IDS: (() => {
+      try {
+        return envs.HAIVELO_COLLATERAL_IDS
+          ? (JSON.parse(envs.HAIVELO_COLLATERAL_IDS) as string[])
+          : ["HAIVELO"]; // default to v1 only if not provided
+      } catch (e) {
+        console.error("Error parsing HAIVELO_COLLATERAL_IDS; falling back to ['HAIVELO']", e);
+        return ["HAIVELO"]; 
+      }
+    })(),
+
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
     REWARD_TOKEN: envs.REWARD_TOKEN,
 

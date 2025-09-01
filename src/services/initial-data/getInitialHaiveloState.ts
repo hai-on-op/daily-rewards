@@ -29,12 +29,14 @@ export type HaiveloCollateralEvent = {
  *
  * @returns {string} The GraphQL query string.
  */
-export const buildHaiveloCollateralQuery = (): string => {
+export const buildHaiveloCollateralQuery = (collateralIds: string[]): string => {
+  // GraphQL filter for id_in needs quoted ids
+  const idsList = collateralIds.map((id) => `"${id}"`).join(", ");
   return `
     {
       modifySAFECollateralizations(
         where: {
-          collateralType_: { id: "HAIVELO" },
+          collateralType_: { id_in: [${idsList}] },
         },
         orderBy: createdAt,
         first: 1000,
@@ -122,8 +124,8 @@ export const processHaiveloCollateral = (
 export const getRawHaiveloCollateralData = async (): Promise<
   HaiveloCollateralEvent[]
 > => {
-  // Build the query
-  const query = buildHaiveloCollateralQuery();
+  // Build the query with all configured haiVELO collateral ids (v1+v2)
+  const query = buildHaiveloCollateralQuery(config().HAIVELO_COLLATERAL_IDS);
 
   // Fetch collateral data
   const rawCollateralData = await fetchHaiveloCollateral(query);
@@ -137,8 +139,8 @@ export const getRawHaiveloCollateralData = async (): Promise<
  * @returns {Promise<UserList>} A promise that resolves to mapping of users to their HAIVELO collateral.
  */
 export const getInitialHaiveloState = async (): Promise<UserList> => {
-  // Build the query
-  const query = buildHaiveloCollateralQuery();
+  // Build the query with all configured haiVELO collateral ids (v1+v2)
+  const query = buildHaiveloCollateralQuery(config().HAIVELO_COLLATERAL_IDS);
 
   // Fetch collateral data
   const rawCollateralData = await fetchHaiveloCollateral(query);
