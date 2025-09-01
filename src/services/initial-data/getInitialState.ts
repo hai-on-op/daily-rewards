@@ -110,7 +110,7 @@ export const getInitialState = async (
   owners: Map<string, string>,
   stakingConfig: StakingWeightConfig,
   gebSubgraph?: string,
-  cType?: string
+  cType?: string | string[]
 ): Promise<UserList> => {
   console.log('geb subgrpah', gebSubgraph);
 
@@ -156,11 +156,11 @@ export const getInitialState = async (
     //   cType
     // );
 
+    const cTypeArray = Array.isArray(cType) ? cType : (cType ? [cType] : []);
     const debts = await getInitialSafesDebt(
       startBlock,
       owners,
-      [cType] as string[],
-      // config().COLLATERAL_TYPES,
+      cTypeArray,
       gebSubgraphUrl,
       cType
     );

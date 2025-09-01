@@ -7,7 +7,7 @@ export const getEvents = async (
   startBlock: number,
   endBlock: number,
   owners: Map<string, string>,
-  cType: string
+  cType: string | string[]
 ) => {
   console.log(`Fetch events ...`);
 
@@ -77,7 +77,7 @@ const getSafeModificationEvents = async (
   start: number,
   end: number,
   ownerMapping: Map<string, string>,
-  cType: string
+  cType: string | string[]
 ): Promise<RewardEvent[]> => {
   // We several kind of modifications
 
@@ -94,8 +94,12 @@ const getSafeModificationEvents = async (
   };
 
   // Main event to modify a safe
+  const cFilter = Array.isArray(cType)
+    ? `collateralType_in: [${cType.map((id) => `"${id}"`).join(', ')}]`
+    : `collateralType: "${cType}"`;
+
   const safeModificationQuery = `{
-      modifySAFECollateralizations(where: {createdAtBlock_gte: ${start}, collateralType: "${cType}", createdAtBlock_lte: ${end}, deltaDebt_not: 0}, first: 1000, skip: [[skip]]) {
+      modifySAFECollateralizations(where: {createdAtBlock_gte: ${start}, ${cFilter}, createdAtBlock_lte: ${end}, deltaDebt_not: 0}, first: 1000, skip: [[skip]]) {
         id
         deltaDebt
         deltaCollateral
@@ -117,7 +121,7 @@ const getSafeModificationEvents = async (
 
   // Event used in liquidation
   const confiscateSAFECollateralAndDebtsQuery = `{
-    confiscateSAFECollateralAndDebts(where: {createdAtBlock_gte: ${start}, collateralType: "${cType}", createdAtBlock_lte: ${end}, deltaDebt_not: 0}, first: 1000, skip: [[skip]]) {
+    confiscateSAFECollateralAndDebts(where: {createdAtBlock_gte: ${start}, ${cFilter}, createdAtBlock_lte: ${end}, deltaDebt_not: 0}, first: 1000, skip: [[skip]]) {
       id
       deltaDebt
       deltaCollateral
@@ -139,7 +143,7 @@ const getSafeModificationEvents = async (
 
   // Event transferring debt, rarely used
   const transferSAFECollateralAndDebtsQuery = `{
-    transferSAFECollateralAndDebts(where: {createdAtBlock_gte: ${start}, collateralType: "${cType}", createdAtBlock_lte: ${end}, deltaDebt_not: 0}, first: 1000, skip: [[skip]]) {
+    transferSAFECollateralAndDebts(where: {createdAtBlock_gte: ${start}, ${cFilter}, createdAtBlock_lte: ${end}, deltaDebt_not: 0}, first: 1000, skip: [[skip]]) {
       id
       deltaDebt
       deltaCollateral
@@ -222,10 +226,13 @@ const getSafeModificationEvents = async (
 const getUpdateAccumulatedRateEvent = async (
   start: number,
   end: number,
-  cType: string
+  cType: string | string[]
 ): Promise<RewardEvent[]> => {
+  const rateFilter = Array.isArray(cType)
+    ? `collateralType_in: [${cType.map((id) => `"${id}"`).join(', ')}]`
+    : `collateralType: "${cType}"`;
   const query = `{
-            updateAccumulatedRates(orderBy: accumulatedRate, orderDirection: desc where: {createdAtBlock_gte: ${start}, collateralType: "${cType}", createdAtBlock_lte: ${end}}, first: 1000, skip: [[skip]]) {
+            updateAccumulatedRates(orderBy: accumulatedRate, orderDirection: desc where: {createdAtBlock_gte: ${start}, ${rateFilter}, createdAtBlock_lte: ${end}}, first: 1000, skip: [[skip]]) {
               id
               rateMultiplier
               createdAt

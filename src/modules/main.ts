@@ -267,14 +267,14 @@ export const main = async (entryCounter: number = 0) => {
     .reduce((pV, cV) => ({ ...pV, ...cV }), {});
 
   // Generate merkle trees and update them on-chain
-  await updateMerkleRoots(merkleTries);
+//  await updateMerkleRoots(merkleTries);
 
   // Save merkle trees as backup files
   await saveMerkleTreesAsFiles(merkleTries, entryCounter);
 
   // Upload Merkle tree to CloudFlare
 
-  Object.entries(merkleTries).forEach(async ([token, tree]) => {
+ /* Object.entries(merkleTries).forEach(async ([token, tree]) => {
     try {
       await uploadMerkleTree({
         config: {
@@ -288,8 +288,8 @@ export const main = async (entryCounter: number = 0) => {
       console.log(`Merkle tree for ${token} uploaded successfully`);
     } catch (err) {
       console.error(err);
-    }
-  });
+    } 
+  });*/
 };
 
 // main().catch(console.error);

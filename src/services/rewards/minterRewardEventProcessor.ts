@@ -129,6 +129,22 @@ export const processRewardEvent = async (
     );
     rates[cType] = cTypeRate;
   }
+  // Special-case: If HAIVELO is configured, also preload rates for each underlying haiVELO id (v1+v2)
+  if (CTYPES.includes('HAIVELO')) {
+    const haiIds = (config() as any).HAIVELO_COLLATERAL_IDS as string[];
+    if (Array.isArray(haiIds)) {
+      for (const id of haiIds) {
+        if (rates[id] === undefined) {
+          const r = await getAccumulatedRate(
+            startBlock,
+            id,
+            config().MINTER_GEB_SUBGRAPH_URL
+          );
+          rates[id] = r;
+        }
+      }
+    }
+  }
 
   let redemptionPriceLastUpdate = 0;
   // ===== Main processing loop ======

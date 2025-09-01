@@ -49,6 +49,9 @@ export const calculateMinterRewards = async (
 
         const usersListWithBridge: UserList = {};
 
+        const cTypeFilter: string | string[] =
+          cType === 'HAIVELO' ? config().HAIVELO_COLLATERAL_IDS : cType;
+
         const users: UserList = await getInitialState(
           startBlock,
           endBlock,
@@ -58,7 +61,7 @@ export const calculateMinterRewards = async (
             withBridge: false
           },
           config().MINTER_GEB_SUBGRAPH_URL,
-          cType
+          cTypeFilter
         );
 
         Object.values(users).forEach(async user => {
@@ -68,7 +71,7 @@ export const calculateMinterRewards = async (
           };
         });
 
-        const events = await getEvents(startBlock, endBlock, owners, cType);
+        const events = await getEvents(startBlock, endBlock, owners, cTypeFilter);
 
         const result = await processRewardEvent(
           [],

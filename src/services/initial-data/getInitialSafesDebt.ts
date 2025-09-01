@@ -31,9 +31,15 @@ export interface ProcessedDebt {
  */
 export const buildSafesDebtQuery = (
   startBlock: number,
-  cType?: string
+  cType?: string | string[]
 ): string => {
-  const collateralFilter = cType ? `, collateralType: "${cType}"` : '';
+  let collateralFilter = '';
+  if (Array.isArray(cType)) {
+    const ids = cType.map((id) => `"${id}"`).join(', ');
+    collateralFilter = `, collateralType_in: [${ids}]`;
+  } else if (cType) {
+    collateralFilter = `, collateralType: "${cType}"`;
+  }
   return `
     {
       safes(
@@ -124,7 +130,7 @@ export const getInitialSafesDebt = async (
   ownerMapping: Map<string, string>,
   collateralTypes: string[],
   subgraphUrl: string,
-  cType?: string
+  cType?: string | string[]
 ): Promise<ProcessedDebt[]> => {
   // Build the query
   const query = buildSafesDebtQuery(startBlock, cType);

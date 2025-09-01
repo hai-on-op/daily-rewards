@@ -66,7 +66,7 @@ const entry = async () => {
         details: { currentStatus: 'unpaused' }
       });
 
-      const tx = await rewardDistributor.pause();
+     /* const tx = await rewardDistributor.pause();
       console.log('Reward Distributor Paused!');
 
       const receipt = await tx.wait();
@@ -78,7 +78,7 @@ const entry = async () => {
         txHash: tx.hash,
         blockNumber: receipt?.blockNumber,
         details: { newStatus: 'paused' }
-      });
+      });*/
     } catch (error) {
       // Notify pause failure
       await notifyTransaction({
