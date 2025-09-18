@@ -23,6 +23,20 @@ const parseCollateralTypes = (typesStr: string): TokenType[] => {
   }
 };
 
+const parseStringArray = (
+  typesStr: string | undefined,
+  fallback: string[]
+): string[] => {
+  try {
+    if (!typesStr) return fallback;
+    const types = JSON.parse(typesStr);
+    return Array.isArray(types) ? (types as string[]) : fallback;
+  } catch (error) {
+    console.error("Error parsing string array:", error);
+    return fallback;
+  }
+};
+
 const parseMinterWindows = (windowsStr: string | undefined): MinterRewardWindow[] => {
   if (!windowsStr) return [];
   try {
@@ -100,6 +114,10 @@ export const config = () => {
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
     STKITE_SUBGRAPH_URL: envs.STKITE_SUBGRAPH_URL,
     HAIVELO_SUBGRAPH_URL: envs.HAIVELO_SUBGRAPH_URL,
+    HAIVELO_COLLATERAL_TYPE_IDS: parseStringArray(
+      envs.HAIVELO_COLLATERAL_TYPE_IDS,
+      ["HAIVELO", "HAIVELOV2"]
+    ),
 
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),

@@ -1,10 +1,8 @@
 import { UserList } from "../types";
 import {
-  getInitialHaiveloState,
   getRawHaiveloCollateralData,
   processHaiveloCollateral,
 } from "../services/initial-data/getInitialHaiveloState";
-import { ethers } from "ethers";
 
 import { processRewardEvents } from "../services/rewards/haiVeloRewardEventProcessor";
 import { config } from "../config";
@@ -21,13 +19,13 @@ export const calculateHaiveloRewards = async (
   const REWARD_AMOUNT = rewardAmount;
 
   const {
-    startBlock = config().LP_START_BLOCK,
-    endBlock = config().LP_END_BLOCK,
+    startBlock = config().HAIVELO_START_BLOCK,
+    endBlock = config().HAIVELO_END_BLOCK,
   } = options
     ? options
     : {
-        startBlock: config().LP_START_BLOCK,
-        endBlock: config().LP_END_BLOCK,
+        startBlock: config().HAIVELO_START_BLOCK,
+        endBlock: config().HAIVELO_END_BLOCK,
       };
 
   const haiVeloEvents = await getRawHaiveloCollateralData();
