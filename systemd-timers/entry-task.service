@@ -8,13 +8,19 @@ User=root
 Group=root
 WorkingDirectory=/var/www/daily-rewards
 EnvironmentFile=/var/www/daily-rewards/.env
+
+# Run entry task directly via ts-node
 ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/entry.ts
+
 StandardOutput=append:/var/log/entry-task.log
 StandardError=append:/var/log/entry-task.log
-TimeoutStartSec=300
+TimeoutStartSec=7200
 
 # Retry configuration
 Restart=on-failure
-RestartSec=30
-StartLimitBurst=5
+RestartSec=60
+StartLimitBurst=3
 StartLimitIntervalSec=600
+
+[Install]
+WantedBy=multi-user.target

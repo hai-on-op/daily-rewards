@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { BridgedAmountsDetailed } from '../services/bridge-data/types';
 import { getEvents } from '../services/get-events/minterGetEvents';
 import { getInitialState } from '../services/initial-data/getInitialState';
@@ -6,7 +8,6 @@ import { UserList } from '../types';
 import { processRewardEvent } from '../services/rewards/minterRewardEventProcessor';
 import { config } from '../config';
 import { minterProvider } from '../utils/chain';
-import { splitBlockRangeIntoPeriods, BlockPeriod } from '../utils/minter-config-resolver';
 import { MinterRewardConfig } from '../config/types';
 
 export const calculateMinterRewards = async (
@@ -19,252 +20,116 @@ export const calculateMinterRewards = async (
   console.log('minterSetupData', minterSetupData);
   console.log('--------------------------------');
 
-  // Check if time-based configuration is available
-  if (minterSetupData.timedConfig) {
-    console.log('Using time-based minter configuration');
-    return await calculateTimedMinterRewards(fromBlock, toBlock, minterSetupData.timedConfig);
-  } else {
-    console.log('Using legacy minter configuration');
-    return await calculateLegacyMinterRewards(fromBlock, toBlock, minterSetupData.config);
-  }
-};
-
-/**
- * Calculate rewards using the new time-based configuration
- */
-const calculateTimedMinterRewards = async (
-  fromBlock: number,
-  toBlock: number,
-  timedConfig: any
-) => {
-  const periods = splitBlockRangeIntoPeriods(timedConfig, fromBlock, toBlock);
-  
-  if (periods.length === 0) {
-    throw new Error(`No configuration found for block range ${fromBlock} to ${toBlock}`);
-  }
-
-  console.log(`Processing ${periods.length} time periods for blocks ${fromBlock} to ${toBlock}`);
-
-  const owners = await getSafeOwnerMapping(toBlock);
-  console.log('owners', owners);
-  console.log('--------------------------------');
-
   type FinalResult = Record<string, Record<string, UserList>>;
-  let finalResult: FinalResult = {};
+  const finalResult: FinalResult = {};
 
-  // Process each time period
-  for (const period of periods) {
-    console.log(`Processing period: blocks ${period.fromBlock} to ${period.toBlock}`);
-    
-    const periodResult = await calculatePeriodRewards(
-      period.fromBlock,
-      period.toBlock,
-      period.config,
-      owners
-    );
+  // Iterate through each configured window
+  for (let w = 0; w < minterSetupData.windows.length; w++) {
+    const window = minterSetupData.windows[w];
+    const effectiveEndBlock = window.endBlock ?? toBlock;
+    const owners = await getSafeOwnerMapping(effectiveEndBlock);
 
-    // Merge period results into final result
-    mergePeriodResults(finalResult, periodResult);
-  }
+    const rewardTokens = Object.keys(window.config);
 
-  return finalResult;
-};
+    for (let i = 0; i < rewardTokens.length; i++) {
+      const rewardToken = rewardTokens[i];
+      const collateralTypes = Object.keys(window.config[rewardToken] || {});
 
-/**
- * Calculate rewards for a single time period
- */
-const calculatePeriodRewards = async (
-  fromBlock: number,
-  toBlock: number,
-  periodConfig: MinterRewardConfig,
-  owners: any
-): Promise<Record<string, Record<string, UserList>>> => {
-  const rewardTokens = Object.keys(periodConfig);
-  type PeriodResult = Record<string, Record<string, UserList>>;
-  let periodResult: PeriodResult = {};
+      for (let j = 0; j < collateralTypes.length; j++) {
+        const cType = collateralTypes[j];
 
-  for (let i = 0; i < rewardTokens.length; i++) {
-    const rewardToken = rewardTokens[i];
-    const collateralTypes = Object.keys(periodConfig[rewardToken]);
+        const startBlock = window.startBlock;
+        const endBlock = effectiveEndBlock;
+        const dailyRewardAmount = window.config[rewardToken][cType] ?? 0;
+        const totalBlocks = endBlock - startBlock;
+        const secsInDay = 86400;
+        const opBlockTime = 2;
+        const blocksInDay = Math.floor(secsInDay / opBlockTime);
+        const perBlockRewardAmount = blocksInDay > 0 ? dailyRewardAmount / blocksInDay : 0;
+        const rewardAmount = perBlockRewardAmount * totalBlocks;
 
-    for (let j = 0; j < collateralTypes.length; j++) {
-      const cType = collateralTypes[j];
+        const usersListWithBridge: UserList = {};
 
-      const dailyRewardAmount = periodConfig[rewardToken][cType];
-      const totalBlocks = toBlock - fromBlock + 1;
-      const secsInDay = 86400;
-      const opBlockTime = 2;
-      const blocksInDay = Math.floor(secsInDay / opBlockTime);
-      const perBlockRewardAmount = dailyRewardAmount / blocksInDay;
-      const rewardAmount = perBlockRewardAmount * totalBlocks;
+        const users: UserList = await getInitialState(
+          startBlock,
+          endBlock,
+          owners,
+          {
+            type: 'MINTER_REWARDS',
+            withBridge: false
+          },
+          config().MINTER_GEB_SUBGRAPH_URL,
+          cType
+        );
 
-      const usersListWithBridge: UserList = {};
-
-      const users: UserList = await getInitialState(
-        fromBlock,
-        toBlock,
-        owners,
-        {
-          type: 'MINTER_REWARDS',
-          withBridge: false
-        },
-        config().MINTER_GEB_SUBGRAPH_URL,
-        cType
-      );
-
-      console.log(`Period users for ${rewardToken}/${cType}:`, users);
-      console.log('--------------------------------');
-
-      Object.values(users).forEach(async user => {
-        usersListWithBridge[user.address] = {
-          ...user,
-          totalBridgedTokens: 0
-        };
-      });
-
-      const events = await getEvents(
-        fromBlock,
-        toBlock,
-        owners,
-        cType
-      );
-
-      let usersListWithRewards = await processRewardEvent(
-        [],
-        usersListWithBridge,
-        events,
-        rewardAmount,
-        false
-      );
-
-      if (!periodResult[rewardToken]) {
-        periodResult[rewardToken] = {};
-      }
-
-      periodResult[rewardToken][cType] = usersListWithRewards;
-    }
-  }
-
-  return periodResult;
-};
-
-/**
- * Merge rewards from multiple periods
- */
-const mergePeriodResults = (
-  finalResult: Record<string, Record<string, UserList>>,
-  periodResult: Record<string, Record<string, UserList>>
-) => {
-  for (const rewardToken of Object.keys(periodResult)) {
-    if (!finalResult[rewardToken]) {
-      finalResult[rewardToken] = {};
-    }
-
-    for (const cType of Object.keys(periodResult[rewardToken])) {
-      if (!finalResult[rewardToken][cType]) {
-        finalResult[rewardToken][cType] = {};
-      }
-
-      // Merge user rewards
-      const periodUsers = periodResult[rewardToken][cType];
-      for (const userAddress of Object.keys(periodUsers)) {
-        const periodUser = periodUsers[userAddress];
-        
-        if (finalResult[rewardToken][cType][userAddress]) {
-          // User exists, add rewards
-          const existingUser = finalResult[rewardToken][cType][userAddress];
-          finalResult[rewardToken][cType][userAddress] = {
-            ...existingUser,
-            earned: existingUser.earned + periodUser.earned,
-            totalBridgedTokens: existingUser.totalBridgedTokens + periodUser.totalBridgedTokens
+        Object.values(users).forEach(async user => {
+          usersListWithBridge[user.address] = {
+            ...user,
+            totalBridgedTokens: 0
           };
-        } else {
-          // New user, add directly
-          finalResult[rewardToken][cType][userAddress] = { ...periodUser };
+        });
+
+        const events = await getEvents(startBlock, endBlock, owners, cType);
+
+        const result = await processRewardEvent(
+          [],
+          usersListWithBridge,
+          events,
+          rewardAmount,
+          false,
+          { startBlock, endBlock },
+          config().DEBUG_REWARDS
+        );
+
+        const usersListWithRewards = result.users;
+
+        if (config().DEBUG_REWARDS && result.debugEvents) {
+          const dir = path.join(
+            config().DEBUG_OUTPUT_DIR,
+            'minter',
+            `window-${w}`,
+            rewardToken,
+            cType
+          );
+          fs.mkdirSync(dir, { recursive: true });
+          const meta = {
+            window: { startBlock, endBlock },
+            rewardToken,
+            collateralType: cType,
+            dailyRewardAmount,
+            totalBlocks,
+            rewardAmount
+          };
+          fs.writeFileSync(
+            path.join(dir, 'debug.json'),
+            JSON.stringify({ meta, events: result.debugEvents }, null, 2)
+          );
         }
+
+        if (!finalResult[rewardToken]) {
+          finalResult[rewardToken] = {};
+        }
+
+        // Merge results across windows per rewardToken/cType
+        const existing = finalResult[rewardToken][cType] || {};
+        const merged: UserList = { ...existing } as UserList;
+        Object.entries(usersListWithRewards).forEach(([address, value]) => {
+          if (!merged[address]) {
+            merged[address] = { ...value } as any;
+          } else {
+            merged[address] = {
+              ...merged[address],
+              earned: (merged[address].earned || 0) + (value.earned || 0),
+              debt: value.debt, // latest state not used downstream, earned is aggregated
+              collateral: value.collateral,
+              stakingWeight: value.stakingWeight,
+              totalBridgedTokens: value.totalBridgedTokens
+            } as any;
+          }
+        });
+
+        finalResult[rewardToken][cType] = merged;
       }
-    }
-  }
-};
-
-/**
- * Calculate rewards using the legacy configuration (backward compatibility)
- */
-const calculateLegacyMinterRewards = async (
-  fromBlock: number,
-  toBlock: number,
-  legacyConfig: MinterRewardConfig
-) => {
-  const owners = await getSafeOwnerMapping(config().MINTER_END_BLOCK);
-  console.log('owners', owners);
-  console.log('--------------------------------');
-
-  const rewardTokens = Object.keys(legacyConfig);
-
-  type FinalResult = Record<string, Record<string, UserList>>;
-
-  let finalResult: FinalResult = {};
-  for (let i = 0; i < rewardTokens.length; i++) {
-    const rewardToken = rewardTokens[i];
-    const collateralTypes = Object.keys(legacyConfig[rewardToken]);
-
-    for (let j = 0; j < collateralTypes.length; j++) {
-      const cType = collateralTypes[j];
-
-      const startBlock = config().MINTER_START_BLOCK;
-      const endBlock = config().MINTER_END_BLOCK;
-      const dailyRewardAmount = legacyConfig[rewardToken][cType];
-      const totalBlocks = endBlock - startBlock;
-      const secsInDay = 86400;
-      const opBlockTime = 2;
-      const blocksInDay = Math.floor(secsInDay / opBlockTime);
-      const perBlockRewardAmount = dailyRewardAmount / blocksInDay;
-      const rewardAmount = perBlockRewardAmount * totalBlocks;
-
-      const usersListWithBridge: UserList = {};
-
-      const users: UserList = await getInitialState(
-        config().MINTER_START_BLOCK,
-        config().MINTER_END_BLOCK,
-        owners,
-        {
-          type: 'MINTER_REWARDS',
-          withBridge: false
-        },
-        config().MINTER_GEB_SUBGRAPH_URL,
-        cType
-      );
-
-      console.log('users', users);
-      console.log('--------------------------------');
-
-      Object.values(users).forEach(async user => {
-        usersListWithBridge[user.address] = {
-          ...user,
-          totalBridgedTokens: 0
-        };
-      });
-
-      const events = await getEvents(
-        config().MINTER_START_BLOCK,
-        config().MINTER_END_BLOCK,
-        owners,
-        cType
-      );
-
-      let usersListWithRewards = await processRewardEvent(
-        [],
-        usersListWithBridge,
-        events,
-        rewardAmount,
-        false
-      );
-
-      if (!finalResult[rewardToken]) {
-        finalResult[rewardToken] = {};
-      }
-
-      finalResult[rewardToken][cType] = usersListWithRewards;
     }
   }
 
@@ -301,7 +166,7 @@ const calculateLegacyMinterRewards = async (
 
 /**
  * 
- * 
+ *
 
   Legacy Bridge Code
 

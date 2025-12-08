@@ -30,11 +30,13 @@ export type HaiveloCollateralEvent = {
  * @returns {string} The GraphQL query string.
  */
 export const buildHaiveloCollateralQuery = (): string => {
+  const ids = config().HAIVELO_COLLATERAL_TYPE_IDS;
+  const idsList = ids.map(id => `"${id}"`).join(", ");
   return `
     {
       modifySAFECollateralizations(
         where: {
-          collateralType_: { id: "HAIVELO" },
+          collateralType_: { id_in: [${idsList}] },
         },
         orderBy: createdAt,
         first: 1000,

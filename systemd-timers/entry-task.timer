@@ -1,20 +1,9 @@
-o see these additional updates run: apt list --upgradable
-  GNU nano 6.2                                         entry-task.timer
 [Unit]
-Description=Daily Rewards Entry Task
-
+Description=Daily Rewards Entry Task Timer
 
 [Timer]
-OnCalendar=*:30
+OnCalendar=*-*-* 18:00:00
 Persistent=true
 
 [Install]
 WantedBy=timers.target
-
-
-
-
-
-
-
-

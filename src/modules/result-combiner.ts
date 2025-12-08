@@ -262,43 +262,32 @@ async function calculateCurrentLpRewards(): Promise<RewardObject> {
 async function calculateCurrentMinterRewards(): Promise<RewardObject> {
   const minterRewards: RewardObject = {};
 
-  const data = config().rewards.minter.config;
-
   const rewards = await calculateMinterRewards(
     config().MINTER_START_BLOCK,
     config().MINTER_END_BLOCK
   );
 
-  const output: Record<string, number> = {};
-
-  for (const [rewardToken, amount] of Object.entries(
-    config().rewards.minter.config
-  )) {
-    const entries = Object.entries(rewards[rewardToken]);
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i];
-      const [token, userData] = entry;
+  // Derive all reward tokens from computed rewards
+  const rewardTokens = Object.keys(rewards);
+  for (let i = 0; i < rewardTokens.length; i++) {
+    const rewardToken = rewardTokens[i];
+    const output: Record<string, number> = {};
+    const entries = Object.entries(rewards[rewardToken] || {});
+    for (let j = 0; j < entries.length; j++) {
+      const [, userData] = entries[j];
       const userDataEntries = Object.entries(userData);
-      for (let j = 0; j < userDataEntries.length; j++) {
-        const userDataEntry = userDataEntries[j];
-        const [address, value] = userDataEntry;
+      for (let k = 0; k < userDataEntries.length; k++) {
+        const [address, value] = userDataEntries[k];
         const earned = value.earned;
-        if (output[address]) {
-          output[address] += earned;
-        } else {
-          output[address] = earned;
-        }
+        output[address] = (output[address] || 0) + earned;
       }
     }
-  }
 
-  minterRewards['KITE'] = Object.entries(output)
-    .map(([address, earned]) => ({
-      address,
-      earned
-    }))
-    .filter(({ earned }) => earned > 0)
-    .sort((a, b) => b.earned - a.earned);
+    minterRewards[rewardToken] = Object.entries(output)
+      .map(([address, earned]) => ({ address, earned }))
+      .filter(({ earned }) => earned > 0)
+      .sort((a, b) => b.earned - a.earned);
+  }
 
   return minterRewards;
 }
