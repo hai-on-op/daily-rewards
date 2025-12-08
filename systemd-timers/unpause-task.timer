@@ -1,9 +1,8 @@
 [Unit]
-Description=Daily Rewards Unpause Task
-
+Description=Daily Rewards Unpause Task Timer
 
 [Timer]
-OnCalendar=*:40
+OnCalendar=*-*-* 20:00:00
 Persistent=true
 
 [Install]

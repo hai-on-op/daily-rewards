@@ -1,141 +1,42 @@
-# Daily Rewards Systemd Timers
+# Systemd Timer Files
 
-This directory contains systemd timer and service files for automating the Daily Rewards tasks. The system consists of two main components:
+This directory contains systemd timer and service files for scheduling the Daily Rewards tasks.
 
-1. Entry Task - Runs at minute 30 of every hour (e.g., 00:30, 01:30, 02:30, etc.)
-2. Unpause Task - Runs at minute 40 of every hour (e.g., 00:40, 01:40, 02:40, etc.)
+For complete setup instructions, see the main [README.md](../README.md) in the project root.
 
-## Prerequisites
+## Files
 
-- Systemd-based Linux distribution
-- Node.js installed
-- The Daily Rewards application deployed at `/var/www/daily-rewards`
-- Proper environment file (`.env`) in the application directory
+| File | Description |
+|------|-------------|
+| `entry-task.service` | Service unit for the entry task (runs via PM2) |
+| `entry-task.timer` | Timer unit that triggers entry-task.service daily at 6:00 PM |
+| `unpause-task.service` | Service unit for the unpause task |
+| `unpause-task.timer` | Timer unit that triggers unpause-task.service daily at 8:00 PM |
 
-## Customizing Timer Schedules
+## Quick Installation
 
-Before installation, you may want to adjust the default timing schedules. The timers are configured in the `.timer` files:
-
-1. Edit `entry-task.timer` to modify the Entry Task schedule:
 ```bash
+# Copy files to systemd directory
+sudo cp *.timer *.service /etc/systemd/system/
+
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Enable and start timers
+sudo systemctl enable entry-task.timer unpause-task.timer
+sudo systemctl start entry-task.timer unpause-task.timer
+```
+
+## Customizing Schedules
+
+Edit the timer files before copying to `/etc/systemd/system/`:
+
+```bash
+# Edit entry task schedule (default: 18:00 / 6 PM)
 nano entry-task.timer
-```
-The default schedule is set to run at minute 30 of every hour:
-```ini
-[Timer]
-OnCalendar=*:30
-```
 
-2. Edit `unpause-task.timer` to modify the Unpause Task schedule:
-```bash
+# Edit unpause task schedule (default: 20:00 / 8 PM)
 nano unpause-task.timer
 ```
-The default schedule is set to run at minute 40 of every hour:
-```ini
-[Timer]
-OnCalendar=*:40
-```
 
-You can modify the `OnCalendar` value using systemd time format. Some examples:
-- `*:30` - At minute 30 of every hour (e.g., 00:30, 01:30, etc.)
-- `hourly` - At the start of every hour
-- `daily` - Once per day
-- `weekly` - Once per week
-- `00:00` - At midnight
-- `12:00` - At noon
-- `Mon *-*-* 12:00:00` - Every Monday at noon
-- `*:0/30` - Every 30 minutes (e.g., 00:00, 00:30, 01:00, etc.)
-
-## Installation
-
-1. Copy the timer and service files to the systemd directory:
-
-```bash
-sudo cp *.timer *.service /etc/systemd/system/
-```
-
-2. Reload the systemd daemon to recognize the new files:
-
-```bash
-sudo systemctl daemon-reload
-```
-
-3. Enable and start the timers:
-
-```bash
-sudo systemctl enable entry-task.timer
-sudo systemctl enable unpause-task.timer
-sudo systemctl start entry-task.timer
-sudo systemctl start unpause-task.timer
-```
-
-## Timer Configuration
-
-### Entry Task
-- Runs every 30 minutes (e.g., 00:30, 01:30, 02:30, etc.)
-- Executes `./src/modules/entry.ts`
-- Runs as root user
-- Logs output to `/var/log/entry-task.log`
-
-### Unpause Task
-- Runs every 40 minutes (e.g., 00:40, 01:40, 02:40, etc.)
-- Executes `./src/modules/unpause.ts`
-- Runs as www-data user
-- Logs output to `/var/log/unpause-task.log`
-
-## Service Management
-
-### Check Timer Status
-```bash
-sudo systemctl status entry-task.timer
-sudo systemctl status unpause-task.timer
-```
-
-### Check Service Status
-```bash
-sudo systemctl status entry-task.service
-sudo systemctl status unpause-task.service
-```
-
-### View Logs
-```bash
-sudo journalctl -u entry-task.service
-sudo journalctl -u unpause-task.service
-```
-
-### Stop Timers
-```bash
-sudo systemctl stop entry-task.timer
-sudo systemctl stop unpause-task.timer
-```
-
-### Disable Timers
-```bash
-sudo systemctl disable entry-task.timer
-sudo systemctl disable unpause-task.timer
-```
-
-## Troubleshooting
-
-1. Check if the timers are active:
-```bash
-systemctl list-timers
-```
-
-2. Verify the service files are properly loaded:
-```bash
-systemctl list-unit-files | grep daily-rewards
-```
-
-3. Check the logs for any errors:
-```bash
-tail -f /var/log/entry-task.log
-tail -f /var/log/unpause-task.log
-```
-
-## Notes
-
-- Both services have retry configurations in case of failures
-- Services will retry up to 5 times within a 10-minute window
-- Each service has a timeout of 5 minutes (300 seconds)
-- The unpause task is configured to run after the entry task completes 
+See the main README for OnCalendar format examples.
