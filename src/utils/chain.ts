@@ -14,6 +14,10 @@ export const haiveloProvider = new providers.StaticJsonRpcProvider(
   config().HAIVELO_RPC_URL
 );
 
+export const lpStakingProvider = new providers.StaticJsonRpcProvider(
+  config().LP_STAKING_RPC_URL
+);
+
 export const blockToTimestamp = async (block: number) => {
   return (await provider.getBlock(block)).timestamp;
 };

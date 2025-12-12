@@ -1,25 +1,25 @@
-import { combineResults } from './result-combiner';
-import { ethers } from 'ethers';
-import { StandardMerkleTree } from '@openzeppelin/merkle-tree';
-import * as fs from 'fs';
-import * as path from 'path';
+import { combineResults } from "./result-combiner";
+import { ethers } from "ethers";
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import * as fs from "fs";
+import * as path from "path";
 
-import { uploadMerkleTree } from './upload-merkle-tree';
-import { config } from '../config';
-import { subgraphQuery } from '../services/subgraph/utils';
+import { uploadMerkleTree } from "./upload-merkle-tree";
+import { config } from "../config";
+import { subgraphQuery } from "../services/subgraph/utils";
 import {
   notifyTransaction,
   notifyMerkleUpdate,
-  TransactionNotification
-} from './telegram-bot';
+  TransactionNotification,
+} from "./telegram-bot";
 
-import { REWARD_DISTRIBUTOR_ABI } from '../abis/REWARD_DISTRIBUTOR_ABI';
+import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
 
 async function getClaimedAmounts(
   token: string,
   users: string[]
 ): Promise<Map<string, string>> {
-  users.map(u => {
+  users.map((u) => {
     console.log(u, token);
     return u?.toLowerCase();
   });
@@ -28,7 +28,7 @@ async function getClaimedAmounts(
     {
       tokenClaims(where: {
         token: "${token.toLowerCase()}"
-        user_in: ${JSON.stringify(users.map(u => u?.toLowerCase()))}
+        user_in: ${JSON.stringify(users.map((u) => u?.toLowerCase()))}
       }) {
         user {
           id
@@ -49,7 +49,7 @@ async function getClaimedAmounts(
     return new Map(
       response.tokenClaims.map((claim: any) => [
         claim.user.id.toLowerCase(),
-        claim.totalAmount
+        claim.totalAmount,
       ])
     );
   } catch (error) {
@@ -83,7 +83,7 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
     KITE: cfg.KITE_ADDRESS,
     OP: cfg.OP_ADDRESS,
     DINERO: cfg.DINERO_ADDRESS,
-    HAI: cfg.HAI_ADDRESS
+    HAI: cfg.HAI_ADDRESS,
   };
 
   // Build arrays for the contract call
@@ -100,51 +100,51 @@ async function updateMerkleRoots(merkleTries: { [token: string]: any }) {
   }
 
   try {
-    console.log('Updating merkle roots...');
+    console.log("Updating merkle roots...");
 
     // Notify transaction initiation
     await notifyTransaction({
-      type: 'initiate',
-      operation: 'Update Merkle Roots',
+      type: "initiate",
+      operation: "Update Merkle Roots",
       details: {
         tokens: Object.keys(merkleTries),
         tokenAddresses,
-        tokenCount: tokenAddresses.length
-      }
+        tokenCount: tokenAddresses.length,
+      },
     });
 
     const tx = await rewardDistributor.updateMerkleRoots(tokenAddresses, roots);
-    console.log('Transaction hash:', tx.hash);
+    console.log("Transaction hash:", tx.hash);
 
     const receipt = await tx.wait();
-    console.log('Transaction confirmed in block:', receipt?.blockNumber);
+    console.log("Transaction confirmed in block:", receipt?.blockNumber);
 
     // Notify transaction success
     await notifyTransaction({
-      type: 'success',
-      operation: 'Update Merkle Roots',
+      type: "success",
+      operation: "Update Merkle Roots",
       txHash: tx.hash,
       blockNumber: receipt?.blockNumber,
       details: {
         tokens: Object.keys(merkleTries),
-        gasUsed: receipt?.gasUsed?.toString()
-      }
+        gasUsed: receipt?.gasUsed?.toString(),
+      },
     });
     //
     // Send merkle update notification
     await notifyMerkleUpdate(Object.keys(merkleTries), roots);
   } catch (error) {
-    console.error('Error updating merkle roots:', error);
+    console.error("Error updating merkle roots:", error);
 
     // Notify transaction failure
     await notifyTransaction({
-      type: 'failure',
-      operation: 'Update Merkle Roots',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      type: "failure",
+      operation: "Update Merkle Roots",
+      error: error instanceof Error ? error.message : "Unknown error",
       details: {
         tokens: Object.keys(merkleTries),
-        tokenAddresses
-      }
+        tokenAddresses,
+      },
     });
 
     throw error;
@@ -156,11 +156,11 @@ async function saveMerkleTreesAsFiles(
   entryCounter: number
 ) {
   const currentDate = new Date();
-  const dateString = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-  const timestamp = currentDate.toISOString().replace(/[:.]/g, '-'); // Full timestamp for uniqueness
+  const dateString = currentDate.toISOString().split("T")[0]; // YYYY-MM-DD format
+  const timestamp = currentDate.toISOString().replace(/[:.]/g, "-"); // Full timestamp for uniqueness
 
   // Create backup directory if it doesn't exist
-  const backupDir = path.join(process.cwd(), 'merkle-backups');
+  const backupDir = path.join(process.cwd(), "merkle-backups");
   if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
   }
@@ -179,7 +179,7 @@ async function saveMerkleTreesAsFiles(
         entryCounter,
         date: currentDate.toISOString(),
         root: tree.root,
-        tree: tree.dump()
+        tree: tree.dump(),
       };
 
       fs.writeFileSync(filepath, JSON.stringify(treeData, null, 2));
@@ -191,7 +191,7 @@ async function saveMerkleTreesAsFiles(
 }
 
 export const main = async (entryCounter: number = 0) => {
-  console.log('executing main');
+  console.log("executing main");
 
   const results = await combineResults();
 
@@ -199,16 +199,16 @@ export const main = async (entryCounter: number = 0) => {
   const adjustedResults = Object.entries(results)
     .map(([token, userRewards]) => {
       return {
-        [token]: userRewards.map(reward => {
+        [token]: userRewards.map((reward) => {
           console.log(reward.earned);
 
           return {
             address: reward.address,
             earned: ethers.utils
               .parseEther(reward.earned.toFixed(18))
-              .toString()
+              .toString(),
           };
-        })
+        }),
       };
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
@@ -225,18 +225,18 @@ export const main = async (entryCounter: number = 0) => {
       KITE: config().KITE_ADDRESS,
       OP: config().OP_ADDRESS,
       DINERO: config().DINERO_ADDRESS,
-      HAI: config().HAI_ADDRESS
+      HAI: config().HAI_ADDRESS,
     };
 
     const claimedAmounts = await getClaimedAmounts(
       tokenAddressMap[token.toUpperCase() as keyof typeof tokenAddressMap],
-      rewards.map(r => r.address)
+      rewards.map((r) => r.address)
     );
 
     // Subtract claimed amounts from earned amounts
     finalResults[token] = rewards
-      .map(reward => {
-        const claimed = claimedAmounts.get(reward.address.toLowerCase()) || '0';
+      .map((reward) => {
+        const claimed = claimedAmounts.get(reward.address.toLowerCase()) || "0";
         const remaining = ethers.BigNumber.from(reward.earned).sub(
           ethers.BigNumber.from(claimed)
         );
@@ -245,22 +245,22 @@ export const main = async (entryCounter: number = 0) => {
         );
         return {
           address: reward.address,
-          earned: isDusty ? '0' : remaining.toString()
+          earned: isDusty ? "0" : remaining.toString(),
         };
       })
-      .filter(reward => reward.earned !== '0');
+      .filter((reward) => reward.earned !== "0");
 
     console.log(`Found ${claimedAmounts.size} previous claims for ${token}`);
   }
 
-  console.log('doing merkle tries!!!', finalResults);
+  console.log("doing merkle tries!!!", finalResults);
 
   // Generating merkle tree
   const merkleTries = Object.entries(finalResults)
     .map(([token, rewards]) => {
       const tree = StandardMerkleTree.of(
         rewards.map(({ address, earned }) => [address, earned]),
-        ['address', 'uint256']
+        ["address", "uint256"]
       );
       return { [token]: tree };
     })
@@ -280,10 +280,10 @@ export const main = async (entryCounter: number = 0) => {
         config: {
           accountId: config().CLOUDFLARE_ACCOUNT_ID,
           namespaceId: config().CLOUDFLARE_NAMESPACE_ID,
-          apiToken: config().CLOUDFLARE_API_TOKEN
+          apiToken: config().CLOUDFLARE_API_TOKEN,
         },
         treeId: token,
-        merkleTree: JSON.stringify(tree.dump())
+        merkleTree: JSON.stringify(tree.dump()),
       });
       console.log(`Merkle tree for ${token} uploaded successfully`);
     } catch (err) {

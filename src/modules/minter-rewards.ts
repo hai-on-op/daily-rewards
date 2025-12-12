@@ -11,7 +11,7 @@ import { minterProvider } from '../utils/chain';
 
 export const calculateMinterRewards = async (
   fromBlock: number,
-  toBlock: number
+  toBlock?: number
 ) => {
   const minterSetupData = config().rewards.minter;
 
@@ -19,13 +19,24 @@ export const calculateMinterRewards = async (
   console.log('minterSetupData', minterSetupData);
   console.log('--------------------------------');
 
+  // Fetch latest block from RPC if toBlock is not provided
+  let latestBlock: number | undefined;
+  const getLatestBlock = async (): Promise<number> => {
+    if (latestBlock === undefined) {
+      latestBlock = await minterProvider.getBlockNumber();
+      console.log(`Fetched latest block from RPC: ${latestBlock}`);
+    }
+    return latestBlock;
+  };
+
   type FinalResult = Record<string, Record<string, UserList>>;
   const finalResult: FinalResult = {};
 
   // Iterate through each configured window
   for (let w = 0; w < minterSetupData.windows.length; w++) {
     const window = minterSetupData.windows[w];
-    const effectiveEndBlock = window.endBlock ?? toBlock;
+    // Use window.endBlock if set, otherwise toBlock if provided, otherwise fetch latest from RPC
+    const effectiveEndBlock = window.endBlock ?? toBlock ?? await getLatestBlock();
     const owners = await getSafeOwnerMapping(effectiveEndBlock);
 
     const rewardTokens = Object.keys(window.config);

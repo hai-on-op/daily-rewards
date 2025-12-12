@@ -1,6 +1,6 @@
 import path from "path";
 import { config as dotenv } from "dotenv";
-import { MinterRewardWindow, RewardConfig, TokenType } from "./types";
+import { LpStakingRewardWindow, LpStakingType, MinterRewardWindow, RewardConfig, TokenType } from "./types";
 
 dotenv();
 
@@ -63,6 +63,43 @@ const parseMinterWindows = (windowsStr: string | undefined): MinterRewardWindow[
   }
 };
 
+const parseLpStakingWindows = (windowsStr: string | undefined): LpStakingRewardWindow[] => {
+  if (!windowsStr) return [];
+  try {
+    const raw = JSON.parse(windowsStr);
+    if (!Array.isArray(raw)) throw new Error("REWARD_LP_STAKING_WINDOWS must be an array");
+    return raw.map((w) => {
+      const startBlock = Number(w.startBlock);
+      const endBlock = w.endBlock !== undefined && w.endBlock !== null ? Number(w.endBlock) : undefined;
+      const config = w.config;
+      if (!Number.isFinite(startBlock)) {
+        throw new Error("Invalid startBlock in REWARD_LP_STAKING_WINDOWS");
+      }
+      if (endBlock !== undefined && !Number.isFinite(endBlock)) {
+        throw new Error("Invalid endBlock in REWARD_LP_STAKING_WINDOWS");
+      }
+      if (!config || typeof config !== 'object') {
+        throw new Error("Invalid config in REWARD_LP_STAKING_WINDOWS item");
+      }
+      return { startBlock, endBlock, config } as LpStakingRewardWindow;
+    });
+  } catch (error) {
+    console.error("Error parsing LP staking windows:", error);
+    throw new Error("Invalid REWARD_LP_STAKING_WINDOWS format");
+  }
+};
+
+const parseLpStakingTypes = (typesStr: string | undefined): LpStakingType[] => {
+  if (!typesStr) return ['HAI_BOLD_CURVE', 'HAI_VELO_VELO'];
+  try {
+    const types = JSON.parse(typesStr);
+    return types as LpStakingType[];
+  } catch (error) {
+    console.error("Error parsing LP staking types:", error);
+    return ['HAI_BOLD_CURVE', 'HAI_VELO_VELO'];
+  }
+};
+
 export const config = () => {
   const envs = process.env as any;
 
@@ -84,20 +121,47 @@ export const config = () => {
       historicConfig: parseRewardConfig(envs.REWARD_HAIVELO_HISTORIC_CONFIG),
       config: parseRewardConfig(envs.REWARD_HAIVELO_CONFIG || "{}"),
     },
+    lpStaking: {
+      config: parseRewardConfig(envs.REWARD_LP_STAKING_CONFIG || "{}"),
+      stakingTypes: parseLpStakingTypes(envs.REWARD_LP_STAKING_TYPES),
+      windows: [],
+    },
   };
 
   // Populate minter windows (multi-window support with backward compatibility)
+  // Note: endBlock is left undefined if not explicitly set - the calculation module
+  // will fetch the latest block from RPC when endBlock is undefined
   const minterWindows = parseMinterWindows(envs.REWARD_MINTER_WINDOWS);
   if (minterWindows.length > 0) {
     rewardConfig.minter.windows = minterWindows;
   } else {
     const fallbackStart = Number(envs.MINTER_START_BLOCK) ? Number(envs.MINTER_START_BLOCK) : Number(envs.START_BLOCK);
-    const fallbackEnd = Number(envs.MINTER_END_BLOCK) ? Number(envs.MINTER_END_BLOCK) : Number(envs.END_BLOCK);
+    // Only set endBlock if explicitly configured, otherwise leave undefined for latest block fetch
+    const fallbackEnd = Number(envs.MINTER_END_BLOCK) ? Number(envs.MINTER_END_BLOCK) : undefined;
     rewardConfig.minter.windows = [
       {
         startBlock: fallbackStart,
         endBlock: fallbackEnd,
         config: rewardConfig.minter.config,
+      },
+    ];
+  }
+
+  // Populate LP staking windows (multi-window support with backward compatibility)
+  // Note: endBlock is left undefined if not explicitly set - the calculation module
+  // will fetch the latest block from RPC when endBlock is undefined
+  const lpStakingWindows = parseLpStakingWindows(envs.REWARD_LP_STAKING_WINDOWS);
+  if (lpStakingWindows.length > 0) {
+    rewardConfig.lpStaking.windows = lpStakingWindows;
+  } else if (Object.keys(rewardConfig.lpStaking.config).length > 0) {
+    const fallbackStart = Number(envs.LP_STAKING_START_BLOCK) ? Number(envs.LP_STAKING_START_BLOCK) : Number(envs.START_BLOCK);
+    // Only set endBlock if explicitly configured, otherwise leave undefined for latest block fetch
+    const fallbackEnd = Number(envs.LP_STAKING_END_BLOCK) ? Number(envs.LP_STAKING_END_BLOCK) : undefined;
+    rewardConfig.lpStaking.windows = [
+      {
+        startBlock: fallbackStart,
+        endBlock: fallbackEnd,
+        config: rewardConfig.lpStaking.config,
       },
     ];
   }
@@ -114,6 +178,9 @@ export const config = () => {
     UNISWAP_SUBGRAPH_URL: envs.UNISWAP_SUBGRAPH_URL,
     STKITE_SUBGRAPH_URL: envs.STKITE_SUBGRAPH_URL,
     HAIVELO_SUBGRAPH_URL: envs.HAIVELO_SUBGRAPH_URL,
+    LP_STAKING_SUBGRAPH_URL: envs.LP_STAKING_SUBGRAPH_URL
+      ? envs.LP_STAKING_SUBGRAPH_URL
+      : envs.GEB_SUBGRAPH_URL,
     HAIVELO_COLLATERAL_TYPE_IDS: parseStringArray(
       envs.HAIVELO_COLLATERAL_TYPE_IDS,
       ["HAIVELO", "HAIVELOV2"]
@@ -134,6 +201,7 @@ export const config = () => {
     LP_RPC_URL: envs.LP_RPC_URL ? envs.LP_RPC_URL : envs.RPC_URL,
     MINTER_RPC_URL: envs.MINTER_RPC_URL ? envs.MINTER_RPC_URL : envs.RPC_URL,
     HAIVELO_RPC_URL: envs.HAIVELO_RPC_URL ? envs.HAIVELO_RPC_URL : envs.RPC_URL,
+    LP_STAKING_RPC_URL: envs.LP_STAKING_RPC_URL ? envs.LP_STAKING_RPC_URL : envs.RPC_URL,
     CHAIN_ID: envs.CHAIN_ID || "optimism-mainnet",
 
     // Blocks and Rewards
@@ -153,9 +221,8 @@ export const config = () => {
     MINTER_START_BLOCK: Number(envs.MINTER_START_BLOCK)
       ? Number(envs.MINTER_START_BLOCK)
       : Number(envs.START_BLOCK),
-    MINTER_END_BLOCK: Number(envs.MINTER_END_BLOCK)
-      ? Number(envs.MINTER_END_BLOCK)
-      : Number(envs.END_BLOCK),
+    // MINTER_END_BLOCK: undefined means "use latest block from RPC"
+    MINTER_END_BLOCK: Number(envs.MINTER_END_BLOCK) || undefined,
 
     HAIVELO_HISTORIC_START_BLOCK: Number(envs.LP_HISTORIC_START_BLOCK)
       ? Number(envs.LP_HISTORIC_START_BLOCK)
@@ -166,6 +233,12 @@ export const config = () => {
     HAIVELO_END_BLOCK: Number(envs.HAIVELO_END_BLOCK)
       ? Number(envs.HAIVELO_END_BLOCK)
       : Number(envs.END_BLOCK),
+
+    LP_STAKING_START_BLOCK: Number(envs.LP_STAKING_START_BLOCK)
+      ? Number(envs.LP_STAKING_START_BLOCK)
+      : Number(envs.START_BLOCK),
+    // LP_STAKING_END_BLOCK: undefined means "use latest block from RPC"
+    LP_STAKING_END_BLOCK: Number(envs.LP_STAKING_END_BLOCK) || undefined,
 
     REWARD_AMOUNT: Number(envs.REWARD_AMOUNT),
     REWARD_TOKEN: envs.REWARD_TOKEN,

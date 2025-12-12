@@ -50,17 +50,16 @@ export const processRewardEvent = async (
 
   const {
     startBlock = config().MINTER_START_BLOCK,
-    endBlock = config().MINTER_END_BLOCK
-  } = options
-    ? options
-    : {
-        startBlock: config().MINTER_START_BLOCK,
-        endBlock: config().MINTER_END_BLOCK
-      };
+    endBlock: optionsEndBlock
+  } = options ?? {};
+
+  // Use provided endBlock, or fetch latest from RPC if not set
+  const resolvedStartBlock = startBlock ?? config().MINTER_START_BLOCK;
+  const resolvedEndBlock = optionsEndBlock ?? config().MINTER_END_BLOCK ?? await minterProvider.getBlockNumber();
 
   // Starting and ending of the campaign
-  const startTimestamp = (await minterProvider.getBlock(startBlock)).timestamp;
-  const endTimestamp = (await minterProvider.getBlock(endBlock)).timestamp;
+  const startTimestamp = (await minterProvider.getBlock(resolvedStartBlock)).timestamp;
+  const endTimestamp = (await minterProvider.getBlock(resolvedEndBlock)).timestamp;
 
   // Constant amount of reward distributed per second
   const rewardRate = rewardAmount / (endTimestamp - startTimestamp);

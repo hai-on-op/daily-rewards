@@ -7,6 +7,7 @@ import { UserList } from '../types';
 import { calculateHaiveloRewards } from './haivelo-rewards';
 import { calculateLpRewards } from './lp-rewards';
 import { calculateMinterRewards } from './minter-rewards';
+import { calculateLpStakingRewards } from './lp-staking-rewards';
 
 type FinalResult = Record<string, Record<string, UserList>>;
 
@@ -257,14 +258,17 @@ async function calculateCurrentLpRewards(): Promise<RewardObject> {
 }
 
 /**
- * Calculates current LP rewards
+ * Calculates current minter rewards
+ * Note: toBlock is optional - if not set in config, the module will fetch latest block from RPC
  */
 async function calculateCurrentMinterRewards(): Promise<RewardObject> {
   const minterRewards: RewardObject = {};
 
+  // Don't pass endBlock if it's 0 or NaN - let the module fetch latest from RPC
+  const endBlock = config().MINTER_END_BLOCK;
   const rewards = await calculateMinterRewards(
     config().MINTER_START_BLOCK,
-    config().MINTER_END_BLOCK
+    endBlock && !isNaN(endBlock) ? endBlock : undefined
   );
 
   // Derive all reward tokens from computed rewards
@@ -292,6 +296,50 @@ async function calculateCurrentMinterRewards(): Promise<RewardObject> {
   return minterRewards;
 }
 
+/**
+ * Calculates current LP staking rewards (HaiBoldCurveLPStaking and HaiVeloVeloLPStaking)
+ * Note: toBlock is optional - if not set in config, the module will fetch latest block from RPC
+ */
+async function calculateCurrentLpStakingRewards(): Promise<RewardObject> {
+  const lpStakingRewards: RewardObject = {};
+
+  // Check if LP staking rewards are configured
+  if (config().rewards.lpStaking.windows.length === 0) {
+    return lpStakingRewards;
+  }
+
+  // Don't pass endBlock if it's 0 or NaN - let the module fetch latest from RPC
+  const endBlock = config().LP_STAKING_END_BLOCK;
+  const rewards = await calculateLpStakingRewards(
+    config().LP_STAKING_START_BLOCK,
+    endBlock && !isNaN(endBlock) ? endBlock : undefined
+  );
+
+  // Aggregate rewards across staking types per reward token
+  const rewardTokens = Object.keys(rewards);
+  for (let i = 0; i < rewardTokens.length; i++) {
+    const rewardToken = rewardTokens[i];
+    const output: Record<string, number> = {};
+    const entries = Object.entries(rewards[rewardToken] || {});
+    for (let j = 0; j < entries.length; j++) {
+      const [, userData] = entries[j];
+      const userDataEntries = Object.entries(userData);
+      for (let k = 0; k < userDataEntries.length; k++) {
+        const [address, value] = userDataEntries[k];
+        const earned = value.earned;
+        output[address] = (output[address] || 0) + earned;
+      }
+    }
+
+    lpStakingRewards[rewardToken] = Object.entries(output)
+      .map(([address, earned]) => ({ address, earned }))
+      .filter(({ earned }) => earned > 0)
+      .sort((a, b) => b.earned - a.earned);
+  }
+
+  return lpStakingRewards;
+}
+
 // export const combineResults = async (): Promise<RewardsMap> => {
 export const combineResults = async () => {
   const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
@@ -314,7 +362,8 @@ export const combineResults = async () => {
     haiVeloHistoricalRewards,
     haiVeloDailyRewards,
     lpHistoricalRewards,
-    minterRewards
+    minterRewards,
+    lpStakingRewards
     //currentLpRewards,
   ] = await Promise.all([
     earliestTransferBlock > 0
@@ -325,7 +374,8 @@ export const combineResults = async () => {
       : {},
     calculateHaiVeloDailyRewards(processedTransfers),
     calculateLpHistoricalRewards(),
-    calculateCurrentMinterRewards()
+    calculateCurrentMinterRewards(),
+    calculateCurrentLpStakingRewards()
     //calculateCurrentLpRewards(),
   ]);
 
@@ -335,7 +385,8 @@ export const combineResults = async () => {
     // // //currentLpRewards, // Current LP rewards are removed since we want to redirect them to the Velo rewards
     haiVeloHistoricalRewards,
     ...haiVeloDailyRewards,
-    minterRewards
+    minterRewards,
+    lpStakingRewards
   ];
 
   const combinedRewards = combineRewards(allRewardMaps);
@@ -349,7 +400,7 @@ export const combineResultsProd = async (): Promise<RewardsMap> => {
   const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
 
   // Fetch and process transfers
-  const processedTransfers = await getProcessedTransfers();
+ /* const processedTransfers = await getProcessedTransfers();
   console.log(
     `Processed ${processedTransfers.length} transfers:`,
     processedTransfers
@@ -359,38 +410,41 @@ export const combineResultsProd = async (): Promise<RewardsMap> => {
   const earliestTransferBlock =
     processedTransfers.length > 0
       ? Math.min(...processedTransfers.map(t => t.blockNumber))
-      : 0;
+      : 0;*/
 
   // Calculate all reward types
   const [
-    haiVeloHistoricalRewards,
-    haiVeloDailyRewards,
-    lpHistoricalRewards,
-    minterRewards
+   // haiVeloHistoricalRewards,
+   // haiVeloDailyRewards,
+   // lpHistoricalRewards,
+   // minterRewards,
+    lpStakingRewards
     //currentLpRewards,
   ] = await Promise.all([
-    earliestTransferBlock > 0
-      ? calculateHaiVeloHistoricalRewards(
-          earliestTransferBlock,
-          REWARD_DEPOSIT_ِEPOCH_BLOCK
-        )
-      : {},
-    calculateHaiVeloDailyRewards(processedTransfers),
-    calculateLpHistoricalRewards(),
-    calculateMinterRewards(
-      config().MINTER_START_BLOCK,
-      config().MINTER_END_BLOCK
-    )
+   // earliestTransferBlock > 0
+   //   ? calculateHaiVeloHistoricalRewards(
+   //       earliestTransferBlock,
+   //       REWARD_DEPOSIT_ِEPOCH_BLOCK
+   //     )
+   //   : {},
+   // calculateHaiVeloDailyRewards(processedTransfers),
+   // calculateLpHistoricalRewards(),
+   // calculateMinterRewards(
+   //   config().MINTER_START_BLOCK,
+   //   config().MINTER_END_BLOCK
+    //),
+    calculateCurrentLpStakingRewards()
     //calculateCurrentLpRewards(),
   ]);
 
   // Combine all rewards
   const allRewardMaps = [
-    lpHistoricalRewards,
-    //currentLpRewards, // Current LP rewards are removed since we want to redirect them to the Velo rewards
-    haiVeloHistoricalRewards,
-    ...haiVeloDailyRewards,
-    minterRewards
+  //  lpHistoricalRewards,
+  //  //currentLpRewards, // Current LP rewards are removed since we want to redirect them to the Velo rewards
+  //  haiVeloHistoricalRewards,
+  //  ...haiVeloDailyRewards,
+  //  minterRewards,
+    lpStakingRewards
   ];
 
   const combinedRewards = combineRewards(allRewardMaps);
