@@ -20,3 +20,5 @@ telegram-users.json
 /legacy
 
 /debug-data
+
+.env.development

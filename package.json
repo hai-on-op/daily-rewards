@@ -11,8 +11,12 @@
     "test-telegram": "ts-node src/test-telegram.ts",
     "telegram-bot": "ts-node src/modules/on-chain.ts",
     "telegram-bot:prod": "yarn build && node dist/modules/on-chain.js",
-    "entry": "ts-node src/modules/entry.ts",
-    "entry:prod": "yarn build && node dist/modules/entry.js",
+    "entry": "ts-node src/modules/orchestrator/cli.ts",
+    "entry:prod": "yarn build && node dist/modules/orchestrator/cli.js",
+    "entry:dev": "FEATURE_MODE=development ts-node src/modules/orchestrator/cli.ts",
+    "entry:dry-run": "FEATURE_MODE=dry-run ts-node src/modules/orchestrator/cli.ts",
+    "entry:legacy": "ts-node src/modules/entry.ts",
+    "entry:legacy:prod": "yarn build && node dist/modules/entry.js",
     "debug-viewer": "cd debug-viewer && VITE_DEBUG_DATA_DIR=../debug-data yarn dev"
   },
   "dependencies": {

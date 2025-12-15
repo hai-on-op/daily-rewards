@@ -9,8 +9,9 @@ Group=root
 WorkingDirectory=/var/www/daily-rewards
 EnvironmentFile=/var/www/daily-rewards/.env
 
-# Run entry task directly via ts-node
-ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/entry.ts
+# Run entry task via the new orchestrator CLI
+# Set FEATURE_MODE=production for all features, or development/dry-run for testing
+ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/orchestrator/cli.ts
 
 StandardOutput=append:/var/log/entry-task.log
 StandardError=append:/var/log/entry-task.log

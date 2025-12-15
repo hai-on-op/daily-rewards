@@ -1,3 +1,20 @@
+/**
+ * @deprecated This module has been replaced by the new orchestrator.
+ * Use `src/modules/orchestrator/cli.ts` instead.
+ * 
+ * This file is kept for reference only.
+ * 
+ * New usage:
+ *   yarn entry           # Production mode (all features)
+ *   yarn entry:dev       # Development mode (minimal operations)
+ *   yarn entry:dry-run   # Dry-run mode (calculate but don't persist)
+ * 
+ * Or with environment variables:
+ *   FEATURE_MODE=production yarn entry
+ *   FEATURE_MODE=development yarn entry
+ *   FEATURE_MODE=dry-run yarn entry
+ */
+
 import { config } from '../config';
 import { main } from './main';
 import { notifyTransaction, getTelegramBot } from './telegram-bot';

@@ -1,3 +1,17 @@
+/**
+ * @deprecated This module has been replaced by the new orchestrator.
+ * Use `src/modules/orchestrator/cli.ts` instead.
+ * 
+ * The functionality has been split into individual processing steps:
+ * - CalculateRewardsStep
+ * - GenerateMerkleTreesStep
+ * - UpdateOnChainStep
+ * - BackupStep
+ * - CloudUploadStep
+ * 
+ * This file is kept for reference only.
+ */
+
 import { combineResults } from "./result-combiner";
 import { ethers } from "ethers";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
