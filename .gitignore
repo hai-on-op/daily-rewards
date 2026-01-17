@@ -22,3 +22,5 @@ telegram-users.json
 /debug-data
 
 .env.development
+
+*.log

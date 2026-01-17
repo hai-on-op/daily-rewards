@@ -181,10 +181,15 @@ export const config = () => {
     LP_STAKING_SUBGRAPH_URL: envs.LP_STAKING_SUBGRAPH_URL
       ? envs.LP_STAKING_SUBGRAPH_URL
       : envs.GEB_SUBGRAPH_URL,
+    // haiVELO-VELO LP Pool Indexer URL
+    HAIVELO_VELO_LP_INDEXER: envs.HAIVELO_VELO_LP_INDEXER,
     HAIVELO_COLLATERAL_TYPE_IDS: parseStringArray(
       envs.HAIVELO_COLLATERAL_TYPE_IDS,
       ["HAIVELO", "HAIVELOV2"]
     ),
+    // haiVELO feature flags (default to true for backward compatibility)
+    HAIVELO_COLLATERAL_ENABLED: envs.HAIVELO_COLLATERAL_ENABLED !== 'false',
+    HAIVELO_LP_STAKING_ENABLED: envs.HAIVELO_LP_STAKING_ENABLED !== 'false',
 
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),
