@@ -308,8 +308,8 @@ export const calculateHaiveloRewards = async (
   // Fall back to original processor if no LP staking events
   console.log("Using original reward processor (no LP staking events)");
   clearSyncEventsCache();
-  
-  const users = await processRewardEvents(
+
+  const { users } = await processRewardEvents(
     REWARD_AMOUNT,
     processingCollateralEvents,
     initialHaiveloUsers,

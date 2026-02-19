@@ -20,6 +20,16 @@ type ProcessorOptions = {
 };
 
 /**
+ * Debug event types for collateral-only reward processing (used by haiVELO and haiAERO)
+ */
+export type CollateralDebugEvent =
+  | { type: 'init'; startTimestamp: number; endTimestamp: number; rewardRate: number; rewardAmount: number; totalUsers: number; totalStakingWeight: number }
+  | { type: 'updateRewardPerWeight'; timestamp: number; rewardPerWeight: number; totalStakingWeight: number; deltaTime: number }
+  | { type: 'userEarn'; address: string; deltaEarned: number; totalEarned: number; rewardPerWeight: number; boost: number; stakingWeight: number; timestamp: number }
+  | { type: 'userCollateralChange'; address: string; collateral: number; deltaCollateral: number; stakingWeight: number; timestamp: number; isNewUser: boolean }
+  | { type: 'finalSnapshot'; timestamp: number; totalRewardsDistributed: number; users: Array<{ address: string; collateral: number; stakingWeight: number; earned: number; boost: number }> };
+
+/**
  * Event source types for combined haiVELO rewards
  * - COLLATERAL: haiVELO collateral deposit/withdraw events
  * - LP_STAKING: LP token stake/withdraw events
@@ -412,14 +422,17 @@ export const processCombinedRewardEvents = async (
 
 /**
  * Original processor for backward compatibility (collateral events only)
+ * When debug=true, returns detailed debug events for visualization alongside users.
  */
 export const processRewardEvents = async (
   rewardAmount: number,
   events: HaiveloCollateralEvent[],
   users: UserList,
-  options?: ProcessorOptions
-): Promise<UserList> => {
+  options?: ProcessorOptions,
+  debug?: boolean
+): Promise<{ users: UserList; debugEvents?: CollateralDebugEvent[] }> => {
   const stakingPositions = await getStakingPositions();
+  const debugEvents: CollateralDebugEvent[] = [];
 
   const {
     startBlock = config().HAIVELO_START_BLOCK,
@@ -475,6 +488,18 @@ export const processRewardEvents = async (
     calculateUserhaiVeloBoosts(users)
   );
 
+  if (debug) {
+    debugEvents.push({
+      type: 'init',
+      startTimestamp,
+      endTimestamp,
+      rewardRate,
+      rewardAmount,
+      totalUsers: Object.keys(users).length,
+      totalStakingWeight
+    });
+  }
+
   let rewardPerWeight = 0; //rewardRate / totalStakingWeight;
 
   let updateRewardPerWeight = (evtTime: number) => {
@@ -482,6 +507,16 @@ export const processRewardEvents = async (
       const deltaTime = evtTime - timestamp;
 
       rewardPerWeight += (deltaTime * rewardRate) / totalStakingWeight;
+
+      if (debug) {
+        debugEvents.push({
+          type: 'updateRewardPerWeight',
+          timestamp: evtTime,
+          rewardPerWeight,
+          totalStakingWeight,
+          deltaTime
+        });
+      }
     }
   };
 
@@ -493,13 +528,33 @@ export const processRewardEvents = async (
 
     timestamp = Number(event.createdAt);
 
+    const isNewUser = !users[event.safe.owner.address];
     const user = getOrCreateUserMutate(event.safe.owner.address, users);
 
-    Object.values(users).map(u =>
-      earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users))
-    );
+    const boostAmounts = calculateUserhaiVeloBoosts(users);
+    Object.values(users).map(u => {
+      if (debug) {
+        const prevEarned = u.earned;
+        earn(u, rewardPerWeight, boostAmounts);
+        if (u.earned !== prevEarned) {
+          debugEvents.push({
+            type: 'userEarn',
+            address: u.address,
+            deltaEarned: u.earned - prevEarned,
+            totalEarned: u.earned,
+            rewardPerWeight,
+            boost: boostAmounts[u.address] ?? 1,
+            stakingWeight: u.stakingWeight,
+            timestamp
+          });
+        }
+      } else {
+        earn(u, rewardPerWeight, boostAmounts);
+      }
+    });
 
-    user.collateral += Number(event.deltaCollateral);
+    const deltaCollateral = Number(event.deltaCollateral);
+    user.collateral += deltaCollateral;
 
     // Ignore Dusty collateral
     if (user.collateral < 0 && user.collateral > -0.4) {
@@ -507,6 +562,18 @@ export const processRewardEvents = async (
     }
 
     user.stakingWeight = user.collateral;
+
+    if (debug) {
+      debugEvents.push({
+        type: 'userCollateralChange',
+        address: user.address,
+        collateral: user.collateral,
+        deltaCollateral,
+        stakingWeight: user.stakingWeight,
+        timestamp,
+        isNewUser
+      });
+    }
 
     const sanityCheckUsers = () => {
       Object.values(users).forEach(user => {
@@ -526,11 +593,48 @@ export const processRewardEvents = async (
 
   updateRewardPerWeight(endTimestamp);
 
-  Object.values(users).map(u =>
-    earn(u, rewardPerWeight, calculateUserhaiVeloBoosts(users))
-  );
+  const finalBoostAmounts = calculateUserhaiVeloBoosts(users);
+  Object.values(users).map(u => {
+    if (debug) {
+      const prevEarned = u.earned;
+      earn(u, rewardPerWeight, finalBoostAmounts);
+      if (u.earned !== prevEarned) {
+        debugEvents.push({
+          type: 'userEarn',
+          address: u.address,
+          deltaEarned: u.earned - prevEarned,
+          totalEarned: u.earned,
+          rewardPerWeight,
+          boost: finalBoostAmounts[u.address] ?? 1,
+          stakingWeight: u.stakingWeight,
+          timestamp: endTimestamp
+        });
+      }
+    } else {
+      earn(u, rewardPerWeight, finalBoostAmounts);
+    }
+  });
 
-  return users;
+  if (debug) {
+    const totalRewardsDistributed = Object.values(users).reduce((acc, u) => acc + u.earned, 0);
+    debugEvents.push({
+      type: 'finalSnapshot',
+      timestamp: endTimestamp,
+      totalRewardsDistributed,
+      users: Object.values(users)
+        .filter(u => u.earned > 0 || u.collateral > 0)
+        .map(u => ({
+          address: u.address,
+          collateral: u.collateral,
+          stakingWeight: u.stakingWeight,
+          earned: u.earned,
+          boost: finalBoostAmounts[u.address] ?? 1
+        }))
+        .sort((a, b) => b.earned - a.earned)
+    });
+  }
+
+  return { users, debugEvents: debug ? debugEvents : undefined };
 };
 
 // Credit reward to a user

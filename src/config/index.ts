@@ -121,6 +121,9 @@ export const config = () => {
       historicConfig: parseRewardConfig(envs.REWARD_HAIVELO_HISTORIC_CONFIG),
       config: parseRewardConfig(envs.REWARD_HAIVELO_CONFIG || "{}"),
     },
+    haiAero: {
+      config: parseRewardConfig(envs.REWARD_HAIAERO_CONFIG || "{}"),
+    },
     lpStaking: {
       config: parseRewardConfig(envs.REWARD_LP_STAKING_CONFIG || "{}"),
       stakingTypes: parseLpStakingTypes(envs.REWARD_LP_STAKING_TYPES),
@@ -190,6 +193,27 @@ export const config = () => {
     // haiVELO feature flags (default to true for backward compatibility)
     HAIVELO_COLLATERAL_ENABLED: envs.HAIVELO_COLLATERAL_ENABLED !== 'false',
     HAIVELO_LP_STAKING_ENABLED: envs.HAIVELO_LP_STAKING_ENABLED !== 'false',
+
+    // haiAERO Configuration
+    HAIAERO_REWARDS_ENABLED: envs.HAIAERO_REWARDS_ENABLED !== 'false',
+    DEBUG_HAIAERO:
+      String(envs.DEBUG_HAIAERO).toLowerCase() === 'true' ||
+      String(envs.DEBUG_HAIAERO) === '1',
+    HAIAERO_SUBGRAPH_URL: envs.HAIAERO_SUBGRAPH_URL
+      ? envs.HAIAERO_SUBGRAPH_URL
+      : envs.HAIVELO_SUBGRAPH_URL,
+    HAIAERO_COLLATERAL_TYPE_IDS: parseStringArray(
+      envs.HAIAERO_COLLATERAL_TYPE_IDS,
+      ["HAIAERO"]
+    ),
+    HAIAERO_START_BLOCK: Number(envs.HAIAERO_START_BLOCK)
+      ? Number(envs.HAIAERO_START_BLOCK)
+      : Number(envs.HAIVELO_START_BLOCK),
+    HAIAERO_END_BLOCK: Number(envs.HAIAERO_END_BLOCK)
+      ? Number(envs.HAIAERO_END_BLOCK)
+      : Number(envs.HAIVELO_END_BLOCK),
+    HAIAERO_DEPOSIT_SENDER_ADDRESS: envs.HAIAERO_DEPOSIT_SENDER_ADDRESS,
+    HAIAERO_DEPOSIT_TOKEN_ADDRESS: envs.HAIAERO_DEPOSIT_TOKEN_ADDRESS,
 
     // Contract Addresses
     UNISWAP_POOL_ADDRESS: envs.UNISWAP_POOL_ADDRESS.toLowerCase(),

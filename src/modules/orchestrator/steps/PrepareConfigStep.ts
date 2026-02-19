@@ -43,6 +43,7 @@ export class PrepareConfigStep implements ProcessingStep {
     process.env.LP_END_BLOCK = String(blockNumbers.lpEndBlock);
     process.env.MINTER_END_BLOCK = String(blockNumbers.minterEndBlock);
     process.env.HAIVELO_END_BLOCK = String(blockNumbers.haiveloEndBlock);
+    process.env.HAIAERO_END_BLOCK = String(blockNumbers.haiveloEndBlock); // Same chain as haiVELO
 
     console.log(`[${this.name}] Block numbers set:`, context.blockNumbers);
 
@@ -67,6 +68,20 @@ export class PrepareConfigStep implements ProcessingStep {
     console.log(
       `[${this.name}] Updated REWARD_HAIVELO_CONFIG:`,
       process.env.REWARD_HAIVELO_CONFIG
+    );
+
+    // Parse and update REWARD_HAIAERO_CONFIG
+    const currentHaiaeroConfig = JSON.parse(
+      process.env.REWARD_HAIAERO_CONFIG || "{}"
+    );
+    const multipliedHaiaeroConfig = multiplyConfigValues(
+      currentHaiaeroConfig,
+      context.effectiveEntryCounter
+    );
+    process.env.REWARD_HAIAERO_CONFIG = JSON.stringify(multipliedHaiaeroConfig);
+    console.log(
+      `[${this.name}] Updated REWARD_HAIAERO_CONFIG:`,
+      process.env.REWARD_HAIAERO_CONFIG
     );
 
     // Notify start of reward processing

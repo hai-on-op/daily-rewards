@@ -61,6 +61,9 @@ export interface RewardConfig {
     historicConfig: LpRewardConfig;
     config: HaiVeloRewardConfig;
   };
+  haiAero: {
+    config: HaiVeloRewardConfig;
+  };
   lpStaking: {
     config: LpStakingRewardConfig;
     stakingTypes: LpStakingType[];

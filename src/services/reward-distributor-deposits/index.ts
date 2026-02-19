@@ -39,15 +39,14 @@ export type TokenTransfer = {
   tokenSymbol: string;
 };
 
-export async function getTokenTransfersToContract(): Promise<TokenTransfer[]> {
-  // Your contract address that receives the tokens
+/**
+ * Fetches ERC20 transfer events from a specific sender to the reward distributor contract.
+ */
+async function getTokenTransfersForSender(
+  senderAddress: string,
+  tokenAddresses: string[]
+): Promise<TokenTransfer[]> {
   const contractAddress = REWARD_DISTRIBUTOR_ADDRESS;
-
-  // The address that sends the tokens
-  const senderAddress = DEPOSIT_SENDER_ADDRESS;
-
-  // All token addresses we want to track
-  const tokenAddresses = [HAI_ADDRESS]; //[KITE_ADDRESS, OP_ADDRESS, DINERO_ADDRESS, HAI_ADDRESS];
 
   // ERC20 Transfer event signature
   // Transfer(address indexed from, address indexed to, uint256 value)
@@ -96,7 +95,7 @@ export async function getTokenTransfersToContract(): Promise<TokenTransfer[]> {
     allTransfers.sort((a, b) => a.blockNumber - b.blockNumber);
 
     console.log(`Found ${allTransfers.length} total transfers across all tokens`);
-    console.log('Transfers by token:', 
+    console.log('Transfers by token:',
       Object.entries(
         allTransfers.reduce((acc: Record<string, number>, t) => {
           acc[t.tokenSymbol] = (acc[t.tokenSymbol] || 0) + 1;
@@ -110,6 +109,21 @@ export async function getTokenTransfersToContract(): Promise<TokenTransfer[]> {
     console.error("Error fetching logs:", error);
     throw error;
   }
+}
+
+export async function getTokenTransfersToContract(): Promise<TokenTransfer[]> {
+  return getTokenTransfersForSender(
+    DEPOSIT_SENDER_ADDRESS,
+    [HAI_ADDRESS]
+  );
+}
+
+export async function getHaiaeroTokenTransfersToContract(): Promise<TokenTransfer[]> {
+  const cfg = appConfig();
+  return getTokenTransfersForSender(
+    cfg.HAIAERO_DEPOSIT_SENDER_ADDRESS,
+    [cfg.HAIAERO_DEPOSIT_TOKEN_ADDRESS]
+  );
 }
 
 // Alternative: Using Alchemy's asset transfers API (easier approach)
