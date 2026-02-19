@@ -3,8 +3,8 @@
 html, body, #root { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
 
 .layout { display: grid; grid-template-columns: 300px 1fr; height: 100%; }
-.sidebar { border-right: 1px solid #e5e7eb; padding: 12px; overflow: auto; }
-.content { padding: 12px; overflow: auto; }
+.sidebar { border-right: 1px solid #e5e7eb; padding: 12px; overflow: auto; background: #fafafa; }
+.content { padding: 12px; overflow: auto; background: #fff; }
 .error { color: #dc2626; }
 
 .tree ul { list-style: none; padding-left: 16px; margin: 4px 0; }
@@ -19,4 +19,216 @@ section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; backgrou
 .table th, .table td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
 .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
+.welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6b7280; }
+.welcome h2 { color: #374151; }
 
+/* ─── Story View Styles ─── */
+
+.story {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.story-header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.story-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #111827;
+}
+
+.story-subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.story-section {
+  margin-bottom: 32px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.story-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  color: #1f2937;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 8px;
+}
+
+.story-prose {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.7;
+  margin: 0 0 16px 0;
+}
+
+.story-prose strong {
+  color: #111827;
+}
+
+/* Stats cards */
+.story-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.stat-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+/* Config rows */
+.story-config {
+  display: grid;
+  gap: 8px;
+}
+
+.config-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.config-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Tables */
+.story-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.story-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.story-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.story-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* Activity log */
+.activity-log {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  border-left: 3px solid transparent;
+}
+
+.activity-item.deposit {
+  background: #f0fdf4;
+  border-left-color: #22c55e;
+}
+
+.activity-item.withdraw {
+  background: #fef2f2;
+  border-left-color: #ef4444;
+}
+
+.activity-item.muted {
+  background: #f9fafb;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.activity-time {
+  color: #9ca3af;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 180px;
+}
+
+.activity-desc {
+  color: #374151;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.badge.new {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Utility classes */
+.mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.positive { color: #16a34a; }
+.negative { color: #dc2626; }

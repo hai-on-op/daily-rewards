@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { buildSeries, getEventTimestamp } from '../utils/analytics';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ReferenceDot } from 'recharts';
+import { formatShortDate, formatDate, formatTokenAmount } from '../utils/format';
 
 export const MechanicsChart: React.FC<{ events: any[] }> = ({ events }) => {
   const { points, derivative } = useMemo(() => buildSeries(events), [events]);
@@ -12,10 +13,13 @@ export const MechanicsChart: React.FC<{ events: any[] }> = ({ events }) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={points} margin={{ left: 16, right: 16, top: 8, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="ts" tickFormatter={(v) => String(v)} />
+            <XAxis dataKey="ts" tickFormatter={(v: number) => formatShortDate(v)} tick={{ fontSize: 11 }} />
             <YAxis yAxisId="l" />
             <YAxis yAxisId="r" orientation="right" />
-            <Tooltip />
+            <Tooltip
+              labelFormatter={(v: number) => formatDate(v)}
+              formatter={(value: number, name: string) => [formatTokenAmount(value), name]}
+            />
             <Legend />
             <Line yAxisId="l" type="monotone" dataKey="rewardPerWeight" stroke="#1d4ed8" dot={false} name="Reward/Weight" />
             <Line yAxisId="r" type="monotone" dataKey="totalStakingWeight" stroke="#059669" dot={false} name="Total Weight" />
@@ -28,5 +32,3 @@ export const MechanicsChart: React.FC<{ events: any[] }> = ({ events }) => {
     </div>
   );
 };
-
-

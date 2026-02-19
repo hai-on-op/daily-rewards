@@ -1,10 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { formatDate, formatShortDate, shortAddr, formatTokenAmount } from '../utils/format';
 
 type Event = any;
 
 export const EventsView: React.FC<{ events: Event[] }> = ({ events }) => {
-  const [filter, setFilter] = useState<'all' | 'init' | 'updateRewardPerWeight' | 'userEarn' | 'userWeightChange'>('all');
+  const [filter, setFilter] = useState<string>('all');
+
+  // Derive available event types from data
+  const eventTypes = useMemo(() => {
+    const types = new Set<string>();
+    events.forEach(e => types.add(e.type));
+    return Array.from(types).sort();
+  }, [events]);
 
   const filtered = useMemo(() => {
     return filter === 'all' ? events : events.filter((e) => e.type === filter);
@@ -37,12 +45,11 @@ export const EventsView: React.FC<{ events: Event[] }> = ({ events }) => {
     <div>
       <div className="controls">
         <strong>Events</strong>
-        <select value={filter} onChange={(e) => { setPage(0); setFilter(e.target.value as any); }}>
-          <option value="all">All</option>
-          <option value="init">init</option>
-          <option value="updateRewardPerWeight">updateRewardPerWeight</option>
-          <option value="userEarn">userEarn</option>
-          <option value="userWeightChange">userWeightChange</option>
+        <select value={filter} onChange={(e) => { setPage(0); setFilter(e.target.value); }}>
+          <option value="all">All ({events.length})</option>
+          {eventTypes.map(t => (
+            <option key={t} value={t}>{t} ({events.filter(e => e.type === t).length})</option>
+          ))}
         </select>
         <span>Showing {pageItems.length} of {filtered.length}</span>
         <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>Prev</button>
@@ -53,10 +60,13 @@ export const EventsView: React.FC<{ events: Event[] }> = ({ events }) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ left: 16, right: 16, top: 8, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="ts" tickFormatter={(v) => String(v)} />
+            <XAxis dataKey="ts" tickFormatter={(v: number) => formatShortDate(v)} tick={{ fontSize: 11 }} />
             <YAxis yAxisId="l" />
             <YAxis yAxisId="r" orientation="right" />
-            <Tooltip />
+            <Tooltip
+              labelFormatter={(v: number) => formatDate(v)}
+              formatter={(value: number, name: string) => [formatTokenAmount(value), name]}
+            />
             <Legend />
             <Line yAxisId="l" type="monotone" dataKey="rewardPerWeight" stroke="#3b82f6" dot={false} name="Reward/Weight" />
             <Line yAxisId="r" type="monotone" dataKey="totalStakingWeight" stroke="#22c55e" dot={false} name="Total Weight" />
@@ -70,7 +80,7 @@ export const EventsView: React.FC<{ events: Event[] }> = ({ events }) => {
           <tr>
             <th>#</th>
             <th>Type</th>
-            <th>Timestamp</th>
+            <th>Time</th>
             <th>Address</th>
             <th>Delta Earned</th>
             <th>Total Earned</th>
@@ -79,22 +89,23 @@ export const EventsView: React.FC<{ events: Event[] }> = ({ events }) => {
           </tr>
         </thead>
         <tbody>
-          {pageItems.map((e, i) => (
-            <tr key={i}>
-              <td>{page * pageSize + i + 1}</td>
-              <td>{e.type}</td>
-              <td>{e.timestamp ?? e.startTimestamp ?? ''}</td>
-              <td>{e.address ?? ''}</td>
-              <td>{e.deltaEarned ?? ''}</td>
-              <td>{e.totalEarned ?? ''}</td>
-              <td>{e.rewardPerWeight ?? ''}</td>
-              <td>{e.totalStakingWeight ?? ''}</td>
-            </tr>
-          ))}
+          {pageItems.map((e, i) => {
+            const ts = e.timestamp ?? e.startTimestamp ?? 0;
+            return (
+              <tr key={i}>
+                <td>{page * pageSize + i + 1}</td>
+                <td>{e.type}</td>
+                <td>{ts ? formatDate(ts) : ''}</td>
+                <td className="mono">{e.address ? shortAddr(e.address) : ''}</td>
+                <td>{e.deltaEarned != null ? formatTokenAmount(e.deltaEarned) : ''}</td>
+                <td>{e.totalEarned != null ? formatTokenAmount(e.totalEarned) : ''}</td>
+                <td>{e.rewardPerWeight != null ? formatTokenAmount(e.rewardPerWeight) : ''}</td>
+                <td>{e.totalStakingWeight != null ? formatTokenAmount(e.totalStakingWeight) : ''}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 };
-
-

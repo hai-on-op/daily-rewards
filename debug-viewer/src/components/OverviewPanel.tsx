@@ -14,7 +14,7 @@ export const OverviewPanel: React.FC<{ meta: any; events: any[] }> = ({ meta, ev
         <KV k="Total Events" v={kpis.totalEvents} />
         <KV k="Unique Addresses" v={kpis.uniqueAddresses} />
         <KV k="Σ deltaEarned" v={fmt(kpis.totalDeltaEarned)} />
-        <KV k="Δ vs meta" v={fmt(kpis.deltaVsMeta)} highlight={kpis.deltaVsMeta && Math.abs(kpis.deltaVsMeta) > 1e-6} />
+        <KV k="Δ vs meta" v={fmt(kpis.deltaVsMeta)} highlight={typeof kpis.deltaVsMeta === 'number' && Math.abs(kpis.deltaVsMeta) > 1e-6} />
       </div>
       <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>
         Events by type: {Object.entries(kpis.countByType).map(([t, c]) => `${t}: ${c}`).join('  |  ')}

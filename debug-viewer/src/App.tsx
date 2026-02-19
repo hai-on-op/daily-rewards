@@ -8,6 +8,7 @@ import { TimelineScrubber } from './components/TimelineScrubber';
 import { MechanicsChart } from './components/MechanicsChart';
 import { AddressDrilldown } from './components/AddressDrilldown';
 import { AnomaliesPanel } from './components/AnomaliesPanel';
+import { HaiaeroStoryView, isHaiaeroData } from './components/HaiaeroStoryView';
 
 type TreeNode = {
   type: 'dir' | 'file';
@@ -45,6 +46,7 @@ export const App: React.FC = () => {
 
   const meta = useMemo(() => (fileData && typeof fileData === 'object' ? fileData.meta : null), [fileData]);
   const events = useMemo(() => (fileData && typeof fileData === 'object' ? fileData.events : null), [fileData]);
+  const showStoryView = useMemo(() => isHaiaeroData(fileData, selectedPath || ''), [fileData, selectedPath]);
 
   return (
     <div className="layout">
@@ -60,46 +62,51 @@ export const App: React.FC = () => {
       </aside>
       <main className="content">
         {fileData ? (
-          <div className="panels">
-            {meta && (
-              <>
+          showStoryView ? (
+            <HaiaeroStoryView data={fileData} filePath={selectedPath || ''} />
+          ) : (
+            <div className="panels">
+              {meta && (
+                <>
+                  <section>
+                    <OverviewPanel meta={meta} events={events || []} />
+                  </section>
+                  <section>
+                    <TimelineScrubber events={events || []} />
+                  </section>
+                  <section>
+                    <MechanicsChart events={events || []} />
+                  </section>
+                  <section>
+                    <AddressDrilldown events={events || []} />
+                  </section>
+                  <section>
+                    <AnomaliesPanel meta={meta} events={events || []} />
+                  </section>
+                  <section>
+                    <MetaPanel meta={meta} />
+                  </section>
+                </>
+              )}
+              {events && Array.isArray(events) ? (
                 <section>
-                  <OverviewPanel meta={meta} events={events || []} />
+                  <EventsView events={events} />
                 </section>
-                <section>
-                  <TimelineScrubber events={events || []} />
-                </section>
-                <section>
-                  <MechanicsChart events={events || []} />
-                </section>
-                <section>
-                  <AddressDrilldown events={events || []} />
-                </section>
-                <section>
-                  <AnomaliesPanel meta={meta} events={events || []} />
-                </section>
-                <section>
-                  <MetaPanel meta={meta} />
-                </section>
-              </>
-            )}
-            {events && Array.isArray(events) ? (
+              ) : null}
               <section>
-                <EventsView events={events} />
+                <JSONViewer data={fileData} />
               </section>
-            ) : null}
-            <section>
-              <JSONViewer data={fileData} />
-            </section>
-          </div>
+            </div>
+          )
         ) : selectedPath ? (
           <div>Loading file...</div>
         ) : (
-          <div>Select a file to view</div>
+          <div className="welcome">
+            <h2>Reward Debug Viewer</h2>
+            <p>Select a file from the sidebar to explore reward distribution data.</p>
+          </div>
         )}
       </main>
     </div>
   );
 };
-
-

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { extractAddressSeries, listAddresses } from '../utils/analytics';
 import { ComposedChart, Line, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { formatShortDate, formatDate, shortAddr, formatTokenAmount } from '../utils/format';
 
 export const AddressDrilldown: React.FC<{ events: any[] }> = ({ events }) => {
   const addresses = useMemo(() => listAddresses(events), [events]);
@@ -14,7 +15,7 @@ export const AddressDrilldown: React.FC<{ events: any[] }> = ({ events }) => {
       <div className="controls">
         <select value={address} onChange={(e) => setAddress(e.target.value)}>
           {addresses.map((a) => (
-            <option key={a} value={a}>{a}</option>
+            <option key={a} value={a}>{shortAddr(a)} ({a})</option>
           ))}
         </select>
       </div>
@@ -27,13 +28,16 @@ export const AddressDrilldown: React.FC<{ events: any[] }> = ({ events }) => {
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={series} margin={{ left: 16, right: 16, top: 8, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="ts" tickFormatter={(v) => String(v)} />
+            <XAxis dataKey="ts" tickFormatter={(v: number) => formatShortDate(v)} tick={{ fontSize: 11 }} />
             <YAxis yAxisId="l" />
             <YAxis yAxisId="r" orientation="right" />
-            <Tooltip />
+            <Tooltip
+              labelFormatter={(v: number) => formatDate(v)}
+              formatter={(value: number, name: string) => [formatTokenAmount(value), name]}
+            />
             <Legend />
             <Line yAxisId="l" type="monotone" dataKey="stakingWeight" stroke="#10b981" dot={false} name="Stake" />
-            <Bar yAxisId="r" dataKey="deltaEarned" fill="#ef4444" name="Δ Earned" opacity={0.7} />
+            <Bar yAxisId="r" dataKey="deltaEarned" fill="#ef4444" name="Earned" opacity={0.7} />
             {showCumulative && (
               <Line yAxisId="r" type="monotone" dataKey="totalEarned" stroke="#7c3aed" dot={false} strokeWidth={2} name="Cumulative Earned" connectNulls />
             )}
@@ -43,5 +47,3 @@ export const AddressDrilldown: React.FC<{ events: any[] }> = ({ events }) => {
     </div>
   );
 };
-
-

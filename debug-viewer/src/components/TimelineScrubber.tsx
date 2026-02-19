@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { computeSnapshotAt, getEventTimestamp } from '../utils/analytics';
+import { formatDate, shortAddr, formatTokenAmount } from '../utils/format';
 
 export const TimelineScrubber: React.FC<{
   events: any[];
@@ -16,13 +17,13 @@ export const TimelineScrubber: React.FC<{
       <h3 style={{ marginTop: 0 }}>Timeline</h3>
       <div className="controls">
         <input type="range" min={minTs} max={maxTs} value={ts} onChange={(e) => setTs(Number(e.target.value))} style={{ width: 300 }} />
-        <span>ts={ts}</span>
+        <span>{formatDate(ts)}</span>
         <button onClick={() => setTs(minTs)} disabled={!timestamps.length}>Start</button>
         <button onClick={() => setTs(maxTs)} disabled={!timestamps.length}>End</button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
-        <KV k="Reward/Weight" v={snap.rewardPerWeight} />
-        <KV k="Total Weight" v={snap.totalStakingWeight} />
+        <KV k="Reward/Weight" v={formatTokenAmount(snap.rewardPerWeight)} />
+        <KV k="Total Weight" v={formatTokenAmount(snap.totalStakingWeight)} />
         <KV k="Active Addresses" v={snap.addressCount} />
       </div>
       <div style={{ marginTop: 8 }}>
@@ -40,10 +41,10 @@ export const TimelineScrubber: React.FC<{
             <tbody>
               {snap.allWeights.map((t) => (
                 <tr key={t.address}>
-                  <td>{t.address}</td>
-                  <td>{fmt(t.stakingWeight)}</td>
-                  <td>{fmt(t.boost)}</td>
-                  <td>{fmt(t.totalEarned)}</td>
+                  <td className="mono">{shortAddr(t.address)}</td>
+                  <td>{formatTokenAmount(t.stakingWeight)}</td>
+                  <td>{t.boost != null ? `${Number(t.boost).toFixed(2)}x` : '-'}</td>
+                  <td>{formatTokenAmount(t.totalEarned)}</td>
                 </tr>
               ))}
             </tbody>
@@ -57,14 +58,6 @@ export const TimelineScrubber: React.FC<{
 const KV: React.FC<{ k: React.ReactNode; v: any }> = ({ k, v }) => (
   <div style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8 }}>
     <div style={{ fontSize: 12, color: '#6b7280' }}>{k}</div>
-    <div style={{ fontWeight: 600 }}>{fmt(v)}</div>
+    <div style={{ fontWeight: 600 }}>{String(v ?? '-')}</div>
   </div>
 );
-
-function fmt(v: any) {
-  if (v == null) return '-';
-  if (typeof v === 'number') return Number(v.toFixed(6));
-  return String(v);
-}
-
-
