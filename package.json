@@ -17,7 +17,9 @@
     "entry:dry-run": "FEATURE_MODE=dry-run ts-node src/modules/orchestrator/cli.ts",
     "entry:legacy": "ts-node src/modules/entry.ts",
     "entry:legacy:prod": "yarn build && node dist/modules/entry.js",
-    "debug-viewer": "cd debug-viewer && VITE_DEBUG_DATA_DIR=../debug-data yarn dev"
+    "debug-viewer": "cd debug-viewer && VITE_DEBUG_DATA_DIR=../debug-data yarn dev",
+    "verify-positions": "ts-node src/scripts/verify-positions-report.ts",
+    "verify-viewer": "cd verify-viewer && yarn dev"
   },
   "dependencies": {
     "@covalenthq/client-sdk": "^2.2.1",
