@@ -1,6 +1,8 @@
 import { ethers } from "ethers";
 import { config, Config } from "../../config";
 import { REWARD_DISTRIBUTOR_ABI } from "../../abis/REWARD_DISTRIBUTOR_ABI";
+import { EthersContractGateway } from "../../infrastructure/contract/EthersContractGateway";
+import { IContractGateway } from "../../core/interfaces/IContractGateway";
 
 /**
  * Supported token types for reward distribution
@@ -91,6 +93,17 @@ export interface BlockNumbersConfig {
   lpEndBlock: number;
   minterEndBlock: number;
   haiveloEndBlock: number;
+}
+
+/**
+ * Create a ContractGateway instance for the reward distributor
+ */
+export function createContractGateway(cfg: Config = config()): IContractGateway {
+  return new EthersContractGateway(
+    cfg.DISTRIBUTOR_RPC_URL,
+    cfg.REWARD_SETTER_PRIVATE_KEY,
+    cfg.REWARD_DISTRIBUTOR_ADDRESS
+  );
 }
 
 /**

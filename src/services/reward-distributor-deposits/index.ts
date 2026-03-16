@@ -1,5 +1,7 @@
 import { Alchemy, AssetTransfersCategory, Network, Utils } from "alchemy-sdk";
 import { config as appConfig } from "../../config"; // Import the config
+import { AlchemyTransferTracker } from "../../infrastructure/transfers/AlchemyTransferTracker";
+import { ITransferTracker } from "../../core/interfaces/ITransferTracker";
 
 // Load config values
 const {
@@ -171,6 +173,13 @@ export async function getTokenTransfersUsingAssetAPI(): Promise<TokenTransfer[]>
     console.error("Error fetching transfers:", error);
     throw error;
   }
+}
+
+/**
+ * Create an ITransferTracker instance using Alchemy SDK
+ */
+export function createTransferTracker(): ITransferTracker {
+  return new AlchemyTransferTracker(ALCHEMY_API_KEY);
 }
 
 // Usage
