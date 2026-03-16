@@ -81,6 +81,19 @@ export default function UserTable({ users, tokens, onSelectUser }: Props) {
           </tr>
         </thead>
         <tbody>
+          <tr className="totals-row">
+              <td colSpan={2}><strong>Total</strong></td>
+              <td></td>
+              <td></td>
+              {tokens.map((t) => {
+                const total = sorted.reduce((sum, u) => sum + (getDelta(u)[t] || 0), 0);
+                return (
+                  <td key={t} className={`mono right ${total > 0 ? 'positive' : total < 0 ? 'negative' : ''}`}>
+                    <strong>{total !== 0 ? ((total > 0 ? '+' : '') + formatTokenAmount(total)) : '-'}</strong>
+                  </td>
+                );
+              })}
+            </tr>
           {sorted.map((user) => {
             const delta = getDelta(user);
             const hasPositiveDelta = Object.values(delta).some((d) => d > 0);

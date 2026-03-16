@@ -290,6 +290,18 @@ body {
   background: rgba(239, 68, 68, 0.1);
 }
 
+.totals-row {
+  background: rgba(99, 102, 241, 0.08);
+  border-top: 2px solid var(--accent);
+  position: sticky;
+  top: 0;
+}
+
+.totals-row td {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
 /* Status dot */
 .status-dot {
   display: inline-block;
