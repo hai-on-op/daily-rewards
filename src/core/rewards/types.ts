@@ -34,17 +34,36 @@ export interface MinterEvent extends StrategyEvent {
   logIndex?: number;
 }
 
-// --- LP (future) ---
+// --- LP ---
+
+export interface LpPosition {
+  tokenId: number;
+  lowerTick: number;
+  upperTick: number;
+  liquidity: number;
+}
 
 export interface LpUserState {
   address: string;
   debt: number;
-  lpPositions: Array<{
-    lowerTick: number;
-    upperTick: number;
-    liquidity: number;
-    tokenId: number;
-  }>;
+  lpPositions: LpPosition[];
+}
+
+export type LpEventType =
+  | "DELTA_DEBT"
+  | "POOL_POSITION_UPDATE"
+  | "POOL_SWAP"
+  | "UPDATE_ACCUMULATED_RATE";
+
+export interface LpEvent extends StrategyEvent {
+  eventType: LpEventType;
+  address?: string;
+  deltaDebt?: number;
+  cType?: string;
+  position?: LpPosition;
+  sqrtPrice?: number | string;
+  rateMultiplier?: number;
+  logIndex?: number;
 }
 
 // --- HaiVelo ---

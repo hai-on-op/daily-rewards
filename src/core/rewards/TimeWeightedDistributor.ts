@@ -107,6 +107,18 @@ export class TimeWeightedDistributor {
         }
       }
 
+      // Credit additional users BEFORE state change (e.g., previous NFT owner
+      // in LP position transfers needs to earn at current weight before removal)
+      if (strategy.getAdditionalCredits) {
+        const additionalAddresses = strategy.getAdditionalCredits(event, users);
+        for (const extraAddr of additionalAddresses) {
+          const extraState = users.get(extraAddr);
+          if (extraState) {
+            creditUser(extraAddr, extraState, boosts);
+          }
+        }
+      }
+
       // Apply the actual state change
       strategy.applyEvent(event, users);
 

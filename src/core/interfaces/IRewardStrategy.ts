@@ -28,6 +28,16 @@ export interface RewardStrategy<
   ): void;
 
   /**
+   * Return additional user addresses that should be credited BEFORE applyEvent
+   * modifies their state. Used for NFT transfers where the previous owner
+   * needs to earn rewards at their current weight before the position is removed.
+   */
+  getAdditionalCredits?(
+    event: TEvent,
+    users: Map<string, TUserState>
+  ): string[];
+
+  /**
    * Whether this event should credit all users before applying, or only the
    * affected user. Default behavior (if not implemented): credit all users.
    *
