@@ -17,3 +17,8 @@ export {
   StorageConfig,
   CollateralConfig,
 } from "./IConfigLoader";
+export {
+  RewardStrategy,
+  BlockRange,
+  StrategyEvent,
+} from "./IRewardStrategy";
