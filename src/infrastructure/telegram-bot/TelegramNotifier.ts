@@ -1,7 +1,9 @@
-import TelegramBot from 'node-telegram-bot-api';
-import * as fs from 'fs';
-import { config } from '../config';
-import { INotifier, TransactionNotification } from '../core/interfaces/INotifier';
+import TelegramBot from "node-telegram-bot-api";
+import * as fs from "fs";
+import {
+  INotifier,
+  TransactionNotification,
+} from "../../core/interfaces/INotifier";
 
 interface TelegramUser {
   chatId: number;
@@ -11,27 +13,19 @@ interface TelegramUser {
   joinedAt: string;
 }
 
-class TelegramNotificationBot implements INotifier {
+export class TelegramNotifier implements INotifier {
   private bot: TelegramBot;
   private users: Map<number, TelegramUser> = new Map();
   private storageFile: string;
   private isPolling: boolean;
 
-  constructor(enablePolling: boolean = false) {
-    const cfg = config();
-    
-    if (!cfg.TELEGRAM_BOT_TOKEN) {
-      throw new Error('TELEGRAM_BOT_TOKEN is required');
-    }
-
-    // Only enable polling if explicitly requested (for the main bot service)
+  constructor(token: string, storageFile: string, enablePolling: boolean = false) {
     this.isPolling = enablePolling;
-    this.bot = new TelegramBot(cfg.TELEGRAM_BOT_TOKEN, { polling: enablePolling });
-    this.storageFile = cfg.TELEGRAM_CHAT_STORAGE_FILE;
-    
+    this.bot = new TelegramBot(token, { polling: enablePolling });
+    this.storageFile = storageFile;
+
     this.loadUsers();
-    
-    // Only setup commands if polling is enabled
+
     if (enablePolling) {
       this.setupCommands();
     }
@@ -40,13 +34,13 @@ class TelegramNotificationBot implements INotifier {
   private loadUsers(): void {
     try {
       if (fs.existsSync(this.storageFile)) {
-        const data = fs.readFileSync(this.storageFile, 'utf8');
+        const data = fs.readFileSync(this.storageFile, "utf8");
         const usersArray: TelegramUser[] = JSON.parse(data);
-        this.users = new Map(usersArray.map(user => [user.chatId, user]));
+        this.users = new Map(usersArray.map((user) => [user.chatId, user]));
         console.log(`Loaded ${this.users.size} Telegram users`);
       }
     } catch (error) {
-      console.error('Error loading Telegram users:', error);
+      console.error("Error loading Telegram users:", error);
     }
   }
 
@@ -55,15 +49,12 @@ class TelegramNotificationBot implements INotifier {
       const usersArray = Array.from(this.users.values());
       fs.writeFileSync(this.storageFile, JSON.stringify(usersArray, null, 2));
     } catch (error) {
-      console.error('Error saving Telegram users:', error);
+      console.error("Error saving Telegram users:", error);
     }
   }
 
   private setupCommands(): void {
-    if (!this.isPolling) {
-      console.log('Bot commands not setup - polling disabled');
-      return;
-    }
+    if (!this.isPolling) return;
 
     this.bot.onText(/\/start/, (msg) => {
       const chatId = msg.chat.id;
@@ -72,7 +63,7 @@ class TelegramNotificationBot implements INotifier {
         username: msg.from?.username,
         firstName: msg.from?.first_name,
         lastName: msg.from?.last_name,
-        joinedAt: new Date().toISOString()
+        joinedAt: new Date().toISOString(),
       };
 
       this.users.set(chatId, user);
@@ -93,7 +84,9 @@ Use /stop to unsubscribe from notifications.
       `;
 
       this.bot.sendMessage(chatId, welcomeMessage);
-      console.log(`New user registered: ${user.username || user.firstName || chatId}`);
+      console.log(
+        `New user registered: ${user.username || user.firstName || chatId}`
+      );
     });
 
     this.bot.onText(/\/status/, (msg) => {
@@ -104,26 +97,35 @@ Use /stop to unsubscribe from notifications.
         const statusMessage = `
 ✅ You are subscribed to notifications!
 
-👤 User: ${user.username || user.firstName || 'Unknown'}
+👤 User: ${user.username || user.firstName || "Unknown"}
 📅 Joined: ${new Date(user.joinedAt).toLocaleDateString()}
 🔔 Status: Active
         `;
         this.bot.sendMessage(chatId, statusMessage);
       } else {
-        this.bot.sendMessage(chatId, '❌ You are not subscribed. Use /start to subscribe.');
+        this.bot.sendMessage(
+          chatId,
+          "❌ You are not subscribed. Use /start to subscribe."
+        );
       }
     });
 
     this.bot.onText(/\/stop/, (msg) => {
       const chatId = msg.chat.id;
-      
+
       if (this.users.has(chatId)) {
         this.users.delete(chatId);
         this.saveUsers();
-        this.bot.sendMessage(chatId, '❌ You have been unsubscribed from notifications.');
+        this.bot.sendMessage(
+          chatId,
+          "❌ You have been unsubscribed from notifications."
+        );
         console.log(`User unsubscribed: ${chatId}`);
       } else {
-        this.bot.sendMessage(chatId, '❌ You are not currently subscribed.');
+        this.bot.sendMessage(
+          chatId,
+          "❌ You are not currently subscribed."
+        );
       }
     });
 
@@ -145,21 +147,21 @@ This bot will notify you about:
       this.bot.sendMessage(chatId, helpMessage);
     });
 
-    console.log('Telegram bot commands setup complete');
+    console.log("Telegram bot commands setup complete");
   }
 
-  public async notifyTransaction(notification: TransactionNotification): Promise<void> {
+  async notifyTransaction(notification: TransactionNotification): Promise<void> {
     if (this.users.size === 0) {
-      console.log('No Telegram users to notify');
+      console.log("No Telegram users to notify");
       return;
     }
 
-    let message = '';
-    let emoji = '';
+    let message = "";
+    let emoji = "";
 
     switch (notification.type) {
-      case 'initiate':
-        emoji = '🚀';
+      case "initiate":
+        emoji = "🚀";
         message = `${emoji} Transaction Initiated\n\n`;
         message += `Operation: ${notification.operation}\n`;
         if (notification.txHash) {
@@ -168,8 +170,8 @@ This bot will notify you about:
         message += `Status: Pending confirmation...`;
         break;
 
-      case 'success':
-        emoji = '✅';
+      case "success":
+        emoji = "✅";
         message = `${emoji} Transaction Confirmed\n\n`;
         message += `Operation: ${notification.operation}\n`;
         if (notification.txHash) {
@@ -181,8 +183,8 @@ This bot will notify you about:
         message += `Status: Successfully confirmed!`;
         break;
 
-      case 'failure':
-        emoji = '❌';
+      case "failure":
+        emoji = "❌";
         message = `${emoji} Transaction Failed\n\n`;
         message += `Operation: ${notification.operation}\n`;
         if (notification.txHash) {
@@ -199,14 +201,17 @@ This bot will notify you about:
       message += `\n\nDetails: ${JSON.stringify(notification.details, null, 2)}`;
     }
 
-    // Send to all registered users
     const promises = Array.from(this.users.keys()).map(async (chatId) => {
       try {
-        await this.bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+        await this.bot.sendMessage(chatId, message, {
+          parse_mode: "Markdown",
+        });
       } catch (error) {
         console.error(`Error sending message to ${chatId}:`, error);
-        // If user blocked the bot or chat doesn't exist, remove them
-        if (error instanceof Error && error.message.includes('chat not found')) {
+        if (
+          error instanceof Error &&
+          error.message.includes("chat not found")
+        ) {
           this.users.delete(chatId);
           this.saveUsers();
         }
@@ -214,24 +219,31 @@ This bot will notify you about:
     });
 
     await Promise.allSettled(promises);
-    console.log(`Notification sent to ${this.users.size} users: ${notification.operation} - ${notification.type}`);
+    console.log(
+      `Notification sent to ${this.users.size} users: ${notification.operation} - ${notification.type}`
+    );
   }
 
-  public async notifyMerkleUpdate(tokens: string[], roots: string[]): Promise<void> {
+  async notifyMerkleUpdate(tokens: string[], roots: string[]): Promise<void> {
     const message = `
 🌳 Merkle Roots Updated!
 
-${tokens.map((token, index) => `${token}: \`${roots[index]}\``).join('\n')}
+${tokens.map((token, index) => `${token}: \`${roots[index]}\``).join("\n")}
 
 New rewards are now available for claiming!
     `;
 
     const promises = Array.from(this.users.keys()).map(async (chatId) => {
       try {
-        await this.bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+        await this.bot.sendMessage(chatId, message, {
+          parse_mode: "Markdown",
+        });
       } catch (error) {
         console.error(`Error sending merkle update to ${chatId}:`, error);
-        if (error instanceof Error && error.message.includes('chat not found')) {
+        if (
+          error instanceof Error &&
+          error.message.includes("chat not found")
+        ) {
           this.users.delete(chatId);
           this.saveUsers();
         }
@@ -239,57 +251,19 @@ New rewards are now available for claiming!
     });
 
     await Promise.allSettled(promises);
-    console.log(`Merkle update notification sent to ${this.users.size} users`);
+    console.log(
+      `Merkle update notification sent to ${this.users.size} users`
+    );
   }
 
-  public getUserCount(): number {
+  getUserCount(): number {
     return this.users.size;
   }
 
-  public stop(): void {
+  stop(): void {
     if (this.isPolling) {
       this.bot.stopPolling();
-      console.log('Telegram bot stopped');
+      console.log("Telegram bot stopped");
     }
   }
 }
-
-// Singleton instances
-let pollingBotInstance: TelegramNotificationBot | null = null;
-let notificationBotInstance: TelegramNotificationBot | null = null;
-
-export const getTelegramBot = (enablePolling: boolean = false): TelegramNotificationBot => {
-  if (enablePolling) {
-    if (!pollingBotInstance) {
-      pollingBotInstance = new TelegramNotificationBot(true);
-    }
-    return pollingBotInstance;
-  } else {
-    if (!notificationBotInstance) {
-      notificationBotInstance = new TelegramNotificationBot(false);
-    }
-    return notificationBotInstance;
-  }
-};
-
-export const notifyTransaction = async (notification: TransactionNotification): Promise<void> => {
-  try {
-    // Use non-polling bot for notifications
-    const bot = getTelegramBot(false);
-    await bot.notifyTransaction(notification);
-  } catch (error) {
-    console.error('Error sending Telegram notification:', error);
-  }
-};
-
-export const notifyMerkleUpdate = async (tokens: string[], roots: string[]): Promise<void> => {
-  try {
-    // Use non-polling bot for notifications
-    const bot = getTelegramBot(false);
-    await bot.notifyMerkleUpdate(tokens, roots);
-  } catch (error) {
-    console.error('Error sending Telegram merkle update:', error);
-  }
-};
-
-export { TransactionNotification }; 

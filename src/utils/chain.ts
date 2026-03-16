@@ -1,23 +1,22 @@
-import { providers } from "ethers";
 import { config } from "../config";
-export const provider = new providers.StaticJsonRpcProvider(config().RPC_URL);
+import { EthersBlockchainProvider } from "../infrastructure/blockchain/EthersBlockchainProvider";
 
-export const lpProvider = new providers.StaticJsonRpcProvider(
-  config().LP_RPC_URL
-);
+const cfg = config();
 
-export const minterProvider = new providers.StaticJsonRpcProvider(
-  config().MINTER_RPC_URL
-);
+const blockchainProvider = new EthersBlockchainProvider({
+  default: cfg.RPC_URL,
+  lp: cfg.LP_RPC_URL,
+  minter: cfg.MINTER_RPC_URL,
+  haivelo: cfg.HAIVELO_RPC_URL,
+  lpStaking: cfg.LP_STAKING_RPC_URL,
+});
 
-export const haiveloProvider = new providers.StaticJsonRpcProvider(
-  config().HAIVELO_RPC_URL
-);
-
-export const lpStakingProvider = new providers.StaticJsonRpcProvider(
-  config().LP_STAKING_RPC_URL
-);
+export const provider = blockchainProvider.getProvider("default");
+export const lpProvider = blockchainProvider.getProvider("lp");
+export const minterProvider = blockchainProvider.getProvider("minter");
+export const haiveloProvider = blockchainProvider.getProvider("haivelo");
+export const lpStakingProvider = blockchainProvider.getProvider("lpStaking");
 
 export const blockToTimestamp = async (block: number) => {
-  return (await provider.getBlock(block)).timestamp;
+  return blockchainProvider.blockToTimestamp(block);
 };
