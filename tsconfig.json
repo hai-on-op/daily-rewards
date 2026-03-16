@@ -115,6 +115,7 @@
     "contract",
     "subgraph",
     "node_modules",
+    "src/legacy",
     "**/*.test.ts" // optionally exclude test files
   ]
 }
