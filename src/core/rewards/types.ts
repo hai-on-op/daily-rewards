@@ -44,9 +44,14 @@ export interface HaiVeloUserState {
   lpStakedRaw: number;
 }
 
-// --- LP Staking (future) ---
+// --- LP Staking ---
 
 export interface LpStakingUserState {
   address: string;
   lpStaked: number;
+}
+
+export interface LpStakingEvent extends StrategyEvent {
+  address: string;
+  deltaAmount: number;
 }
