@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import { config } from '../config';
 import {
   getTokenTransfersToContract,
@@ -7,11 +5,11 @@ import {
   TokenTransfer
 } from '../services/reward-distributor-deposits';
 import { UserList } from '../types';
-import { calculateHaiveloRewards } from './haivelo-rewards';
-import { calculateHaiaeroRewards, HaiaeroDebugData } from './haiaero-rewards';
-import { calculateLpRewards } from './lp-rewards';
-import { calculateMinterRewards } from './minter-rewards';
-import { calculateLpStakingRewards } from './lp-staking-rewards';
+import { calculateHaiveloRewardsV2 as calculateHaiveloRewards } from './haivelo-rewards-v2';
+import { calculateHaiaeroRewardsV2 as calculateHaiaeroRewards } from './haiaero-rewards-v2';
+import { calculateLpRewardsV2 as calculateLpRewards } from './lp-rewards-v2';
+import { calculateMinterRewardsV2 as calculateMinterRewards } from './minter-rewards-v2';
+import { calculateLpStakingRewardsV2 as calculateLpStakingRewards } from './lp-staking-rewards-v2';
 
 type FinalResult = Record<string, Record<string, UserList>>;
 
@@ -237,25 +235,24 @@ async function calculateSingleHaiaeroTransferRewards(
   startBlock: number,
   endBlock: number,
   tokenSymbol: string,
-  debug?: boolean
-): Promise<{ rewards: RewardObject; debugData?: HaiaeroDebugData }> {
-  const { users, debugData } = await calculateHaiaeroRewards(
+  _debug?: boolean
+): Promise<{ rewards: RewardObject }> {
+  const { users } = await calculateHaiaeroRewards(
     rewardsAmount,
-    { startBlock, endBlock },
-    debug
+    { startBlock, endBlock }
   );
 
   const rewards: RewardObject = {
     [tokenSymbol]: Object.entries(users)
       .map(([address, value]) => ({
         address,
-        earned: value.earned
+        earned: (value as any).earned
       }))
       .filter(({ earned }) => earned > 0)
       .sort((a, b) => b.earned - a.earned)
   };
 
-  return { rewards, debugData };
+  return { rewards };
 }
 
 /**
@@ -267,43 +264,32 @@ async function calculateHaiAeroDailyRewards(
 ): Promise<RewardObject[]> {
   if (transfers.length === 0) return [];
 
-  const debug = config().DEBUG_HAIAERO;
   const REWARD_DEPOSIT_EPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
   const haiAeroDailyRewards: RewardObject[] = [];
-  const allDebugData: Array<{
-    epochIndex: number;
-    transfer: ProcessedTransfer;
-    debugData: HaiaeroDebugData;
-  }> = [];
 
   for (let i = 0; i < transfers.length; i++) {
     const currentTransfer = transfers[i];
     const rewardsAmount = currentTransfer.value;
 
-    let result: { rewards: RewardObject; debugData?: HaiaeroDebugData };
+    let result: { rewards: RewardObject };
 
     if (transfers.length === 1) {
-      // Single transfer: calculate full period from epoch before transfer to end block
       const calculationBlock = config().HAIAERO_END_BLOCK;
       result = await calculateSingleHaiaeroTransferRewards(
         (rewardsAmount * (calculationBlock - currentTransfer.blockNumber)) /
           REWARD_DEPOSIT_EPOCH_BLOCK,
         currentTransfer.blockNumber - REWARD_DEPOSIT_EPOCH_BLOCK,
         calculationBlock - REWARD_DEPOSIT_EPOCH_BLOCK,
-        currentTransfer.tokenSymbol,
-        debug
+        currentTransfer.tokenSymbol
       );
     } else if (i === 0) {
-      // First transfer: calculate from epoch before first transfer to first transfer
       result = await calculateSingleHaiaeroTransferRewards(
         rewardsAmount,
         currentTransfer.blockNumber - REWARD_DEPOSIT_EPOCH_BLOCK,
         currentTransfer.blockNumber,
-        currentTransfer.tokenSymbol,
-        debug
+        currentTransfer.tokenSymbol
       );
     } else if (i === transfers.length - 1) {
-      // Last transfer: calculate partial epoch to end block
       const calculationBlock = config().HAIAERO_END_BLOCK;
       const previousTransfer = transfers[i - 1];
 
@@ -316,113 +302,21 @@ async function calculateHaiAeroDailyRewards(
         rewardAmountForLastIncompleteEpoch,
         previousTransfer.blockNumber,
         calculationBlock - REWARD_DEPOSIT_EPOCH_BLOCK,
-        currentTransfer.tokenSymbol,
-        debug
+        currentTransfer.tokenSymbol
       );
     } else {
-      // Middle transfers: calculate from previous transfer to current transfer
       const previousTransfer = transfers[i - 1];
 
       result = await calculateSingleHaiaeroTransferRewards(
         rewardsAmount,
         previousTransfer.blockNumber,
         currentTransfer.blockNumber,
-        currentTransfer.tokenSymbol,
-        debug
+        currentTransfer.tokenSymbol
       );
     }
 
     console.log(`haiAERO ${currentTransfer.tokenSymbol} rewards:`, result.rewards);
     haiAeroDailyRewards.push(result.rewards);
-
-    if (debug && result.debugData) {
-      allDebugData.push({
-        epochIndex: i,
-        transfer: currentTransfer,
-        debugData: result.debugData,
-      });
-    }
-  }
-
-  // Write debug data to disk
-  if (debug && allDebugData.length > 0) {
-    const debugDir = path.join(config().DEBUG_OUTPUT_DIR, 'haiaero');
-
-    // Write per-epoch debug files
-    for (const { epochIndex, transfer, debugData } of allDebugData) {
-      const epochDir = path.join(debugDir, `epoch-${epochIndex}`);
-      fs.mkdirSync(epochDir, { recursive: true });
-
-      const epochDebug = {
-        meta: {
-          epochIndex,
-          transfer: {
-            blockNumber: transfer.blockNumber,
-            value: transfer.value,
-            tokenSymbol: transfer.tokenSymbol,
-          },
-          ...debugData.meta,
-        },
-        initialState: debugData.initialState,
-        collateralEvents: debugData.collateralEvents,
-        events: debugData.events,
-      };
-
-      fs.writeFileSync(
-        path.join(epochDir, 'debug.json'),
-        JSON.stringify(epochDebug, null, 2)
-      );
-    }
-
-    // Write summary file
-    const uniqueUsers = new Set<string>();
-    let totalRewards = 0;
-    for (const { debugData } of allDebugData) {
-      totalRewards += debugData.meta.totalRewardsDistributed;
-      const finalSnapshot = debugData.events.find(
-        (e) => e.type === 'finalSnapshot'
-      );
-      if (finalSnapshot && finalSnapshot.type === 'finalSnapshot') {
-        finalSnapshot.users.forEach((u) => uniqueUsers.add(u.address));
-      }
-    }
-
-    const summary = {
-      generatedAt: new Date().toISOString(),
-      config: {
-        HAIAERO_COLLATERAL_TYPE_IDS: config().HAIAERO_COLLATERAL_TYPE_IDS,
-        HAIAERO_START_BLOCK: config().HAIAERO_START_BLOCK,
-        HAIAERO_END_BLOCK: config().HAIAERO_END_BLOCK,
-        HAIAERO_DEPOSIT_SENDER_ADDRESS: config().HAIAERO_DEPOSIT_SENDER_ADDRESS,
-        HAIAERO_DEPOSIT_TOKEN_ADDRESS: config().HAIAERO_DEPOSIT_TOKEN_ADDRESS,
-      },
-      transfers: transfers.map((t) => ({
-        blockNumber: t.blockNumber,
-        value: t.value,
-        tokenSymbol: t.tokenSymbol,
-      })),
-      epochs: allDebugData.map(({ epochIndex, transfer, debugData }) => ({
-        index: epochIndex,
-        startBlock: debugData.meta.window.startBlock,
-        endBlock: debugData.meta.window.endBlock,
-        rewardAmount: debugData.meta.rewardAmount,
-        transferBlock: transfer.blockNumber,
-        transferValue: transfer.value,
-        usersCount: debugData.meta.totalUsers,
-        totalRewardsDistributed: debugData.meta.totalRewardsDistributed,
-      })),
-      totalRewardsDistributed: totalRewards,
-      uniqueUsers: uniqueUsers.size,
-    };
-
-    fs.mkdirSync(debugDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(debugDir, 'summary.json'),
-      JSON.stringify(summary, null, 2)
-    );
-
-    console.log(`[DEBUG_HAIAERO] Debug data written to ${debugDir}`);
-    console.log(`[DEBUG_HAIAERO] ${allDebugData.length} epoch(s), ${uniqueUsers.size} unique users, ${totalRewards.toFixed(4)} total rewards`);
   }
 
   return haiAeroDailyRewards;
