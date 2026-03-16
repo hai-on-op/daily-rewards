@@ -43,6 +43,10 @@ import {
   buildLpPositionsQuery,
   fetchLpPositions,
 } from "../services/initial-data/getInitialLpPosition";
+import {
+  getStakingPositions,
+  calculateStakingAtTimestamp,
+} from "../services/skite-data";
 
 // ── Constants ──────────────────────────────────────────────────────────
 
@@ -51,6 +55,22 @@ const DUST_THRESHOLD = ethers.BigNumber.from(10).pow(16); // 0.01 tokens
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+interface MinterPosition {
+  totalDebt: number;
+  byCollateral: Record<string, number>;
+}
+
+interface DetailedPositions {
+  minter?: MinterPosition;
+  haivelo?: { collateral: number };
+  haiaero?: { collateral: number };
+  lpStaking?: Record<string, number>;
+  lp?: { liquidity: number };
+  kiteStaked?: number;
+  kiteShare?: number;
+  boosts?: Record<string, number>;
+}
+
 interface RunResult {
   label: string;
   endBlocks: { minter: number; haivelo: number; lpStaking: number };
@@ -58,11 +78,20 @@ interface RunResult {
   rewards: { [token: string]: { address: string; earned: string }[] };
   /** Position state snapshot at endBlock */
   positions: {
-    minter: Map<string, number>;
+    minter: Map<string, MinterPosition>;
     haivelo: Map<string, number>;
     haiaero: Map<string, number>;
     lpStaking: Map<string, Record<string, number>>;
     lp: Map<string, number>;
+    kite: Map<string, { amount: number; share: number }>;
+  };
+  /** Totals for boost computation */
+  totals: {
+    minterDebt: number;
+    haiveloCollateral: number;
+    haiaeroCollateral: number;
+    lpStaking: Record<string, number>;
+    lpLiquidity: number;
   };
 }
 
@@ -72,6 +101,8 @@ interface UserRow {
   run2Rewards: Record<string, string>;
   run1Positions: Record<string, string>;
   run2Positions: Record<string, string>;
+  run1DetailedPositions?: DetailedPositions;
+  run2DetailedPositions?: DetailedPositions;
   run1HasPosition: boolean;
   run2HasPosition: boolean;
 }
@@ -174,7 +205,7 @@ async function subtractClaims(
 
 // ── Position snapshots ─────────────────────────────────────────────────
 
-async function getMinterPositionsAtBlock(block: number): Promise<Map<string, number>> {
+async function getMinterPositionsAtBlock(block: number): Promise<Map<string, MinterPosition>> {
   const cfg = config();
   const query = `
     {
@@ -190,12 +221,18 @@ async function getMinterPositionsAtBlock(block: number): Promise<Map<string, num
     const safes = await subgraphQueryPaginated(query, "safes", cfg.MINTER_GEB_SUBGRAPH_URL);
     const owners = await getSafeOwnerMapping(block);
 
-    const positions = new Map<string, number>();
+    const positions = new Map<string, MinterPosition>();
     for (const safe of safes) {
       const owner = owners.get(safe.safeHandler);
       if (owner) {
         const addr = owner.toLowerCase();
-        positions.set(addr, (positions.get(addr) || 0) + Number(safe.debt));
+        const debt = Number(safe.debt);
+        const cType = safe.collateralType?.id || "UNKNOWN";
+
+        const existing = positions.get(addr) || { totalDebt: 0, byCollateral: {} };
+        existing.totalDebt += debt;
+        existing.byCollateral[cType] = (existing.byCollateral[cType] || 0) + debt;
+        positions.set(addr, existing);
       }
     }
     return positions;
@@ -326,13 +363,59 @@ async function executeRun(
     getLpPositionsAtBlock(endBlocks.haivelo),
   ]);
 
-  console.log(`  Positions: minter=${minter.size} haivelo=${haivelo.size} haiaero=${haiaero.size} lpStaking=${lpStaking.size} lp=${lp.size}`);
+  // 4. Fetch KITE staking state
+  console.log("  Fetching KITE staking state...");
+  const kite = new Map<string, { amount: number; share: number }>();
+  try {
+    const { haiveloProvider } = await import("../utils/chain");
+    const endTimestamp = (await haiveloProvider.getBlock(endBlocks.haivelo)).timestamp;
+    const stakingPositions = await getStakingPositions();
+    const stakingState = calculateStakingAtTimestamp(stakingPositions, endTimestamp);
+
+    for (const [addr, data] of Object.entries(stakingState.users) as [string, any][]) {
+      kite.set(addr.toLowerCase(), {
+        amount: Number(data.amount) / 1e18,
+        share: data.share,
+      });
+    }
+  } catch (err: any) {
+    console.warn(`  Warning: KITE staking state:`, err.message);
+  }
+
+  // 5. Compute totals for boost calculation
+  let totalMinterDebt = 0;
+  for (const [, pos] of minter) totalMinterDebt += pos.totalDebt;
+
+  let totalHaiveloCollateral = 0;
+  for (const [, col] of haivelo) totalHaiveloCollateral += col;
+
+  let totalHaiaeroCollateral = 0;
+  for (const [, col] of haiaero) totalHaiaeroCollateral += col;
+
+  const totalLpStaking: Record<string, number> = {};
+  for (const [, stakes] of lpStaking) {
+    for (const [type, amount] of Object.entries(stakes)) {
+      totalLpStaking[type] = (totalLpStaking[type] || 0) + amount;
+    }
+  }
+
+  let totalLpLiquidity = 0;
+  for (const [, liq] of lp) totalLpLiquidity += liq;
+
+  console.log(`  Positions: minter=${minter.size} haivelo=${haivelo.size} haiaero=${haiaero.size} lpStaking=${lpStaking.size} lp=${lp.size} kite=${kite.size}`);
 
   return {
     label,
     endBlocks,
     rewards,
-    positions: { minter, haivelo, haiaero, lpStaking, lp },
+    positions: { minter, haivelo, haiaero, lpStaking, lp, kite },
+    totals: {
+      minterDebt: totalMinterDebt,
+      haiveloCollateral: totalHaiveloCollateral,
+      haiaeroCollateral: totalHaiaeroCollateral,
+      lpStaking: totalLpStaking,
+      lpLiquidity: totalLpLiquidity,
+    },
   };
 }
 
@@ -340,16 +423,19 @@ async function executeRun(
 
 function positionSummary(
   address: string,
-  positions: RunResult["positions"]
-): { text: Record<string, string>; hasAny: boolean } {
-  const minterDebt = positions.minter.get(address) || 0;
+  positions: RunResult["positions"],
+  totals: RunResult["totals"]
+): { text: Record<string, string>; hasAny: boolean; detailed: DetailedPositions } {
+  const minterPos = positions.minter.get(address);
+  const minterDebt = minterPos?.totalDebt || 0;
   const haiveloCol = positions.haivelo.get(address) || 0;
   const haiaeroCol = positions.haiaero.get(address) || 0;
   const lpStaking = positions.lpStaking.get(address) || {};
   const lpTotal = Object.values(lpStaking).reduce((s, v) => s + v, 0);
-
   const lpLiquidity = positions.lp.get(address) || 0;
+  const kiteData = positions.kite.get(address);
 
+  // Old flat format (backward compat)
   const text: Record<string, string> = {};
   if (minterDebt > 0) text["Minter Debt"] = minterDebt.toFixed(4);
   if (haiveloCol > 0) text["haiVELO Collateral"] = haiveloCol.toFixed(4);
@@ -359,7 +445,53 @@ function positionSummary(
   });
   if (lpLiquidity > 0) text["Uniswap LP"] = lpLiquidity.toString();
 
-  return { text, hasAny: minterDebt > 0 || haiveloCol > 0 || haiaeroCol > 0 || lpTotal > 0 || lpLiquidity > 0 };
+  const hasAny = minterDebt > 0 || haiveloCol > 0 || haiaeroCol > 0 || lpTotal > 0 || lpLiquidity > 0;
+
+  // New detailed format
+  const detailed: DetailedPositions = {};
+
+  if (minterPos && minterDebt > 0) {
+    detailed.minter = minterPos;
+  }
+  if (haiveloCol > 0) detailed.haivelo = { collateral: haiveloCol };
+  if (haiaeroCol > 0) detailed.haiaero = { collateral: haiaeroCol };
+  if (lpTotal > 0) detailed.lpStaking = lpStaking;
+  if (lpLiquidity > 0) detailed.lp = { liquidity: lpLiquidity };
+
+  if (kiteData) {
+    detailed.kiteStaked = kiteData.amount;
+    detailed.kiteShare = kiteData.share;
+  }
+
+  // Compute boosts per strategy
+  const boosts: Record<string, number> = {};
+  const kiteShare = kiteData?.share || 0;
+
+  if (minterDebt > 0 && totals.minterDebt > 0) {
+    const debtShare = minterDebt / totals.minterDebt;
+    boosts.minter = Math.min(debtShare + 1, 2);
+  }
+  if (haiveloCol > 0 && totals.haiveloCollateral > 0 && kiteShare > 0) {
+    boosts.haivelo = Math.min(kiteShare / (haiveloCol / totals.haiveloCollateral) + 1, 2);
+  }
+  if (haiaeroCol > 0 && totals.haiaeroCollateral > 0 && kiteShare > 0) {
+    boosts.haiaero = Math.min(kiteShare / (haiaeroCol / totals.haiaeroCollateral) + 1, 2);
+  }
+  for (const [type, amount] of Object.entries(lpStaking)) {
+    const total = totals.lpStaking[type] || 0;
+    if (amount > 0 && total > 0 && kiteShare > 0) {
+      boosts[`lpStaking_${type}`] = Math.min(kiteShare / (amount / total) + 1, 2);
+    }
+  }
+  if (lpLiquidity > 0 && totals.lpLiquidity > 0 && kiteShare > 0) {
+    boosts.lp = Math.min(kiteShare / (lpLiquidity / totals.lpLiquidity) + 1, 2);
+  }
+
+  if (Object.keys(boosts).length > 0) {
+    detailed.boosts = boosts;
+  }
+
+  return { text, hasAny, detailed };
 }
 
 function rewardSummary(
@@ -440,8 +572,8 @@ async function generateReport(): Promise<void> {
   Array.from(allAddresses).forEach((address) => {
     const r1Rewards = rewardSummary(address, run1.rewards);
     const r2Rewards = rewardSummary(address, run2.rewards);
-    const r1Pos = positionSummary(address, run1.positions);
-    const r2Pos = positionSummary(address, run2.positions);
+    const r1Pos = positionSummary(address, run1.positions, run1.totals);
+    const r2Pos = positionSummary(address, run2.positions, run2.totals);
 
     if (r1Pos.hasAny) run1WithPos++; else if (Object.keys(r1Rewards).length > 0) run1WithoutPos++;
     if (r2Pos.hasAny) run2WithPos++; else if (Object.keys(r2Rewards).length > 0) run2WithoutPos++;
@@ -452,6 +584,8 @@ async function generateReport(): Promise<void> {
       run2Rewards: r2Rewards,
       run1Positions: r1Pos.text,
       run2Positions: r2Pos.text,
+      run1DetailedPositions: r1Pos.detailed,
+      run2DetailedPositions: r2Pos.detailed,
       run1HasPosition: r1Pos.hasAny,
       run2HasPosition: r2Pos.hasAny,
     });

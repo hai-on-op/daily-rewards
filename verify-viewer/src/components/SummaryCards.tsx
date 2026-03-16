@@ -1,7 +1,7 @@
 import React from 'react';
 import { Report } from '../types';
 import { DerivedData } from '../utils/derive';
-import { formatNumber } from '../utils/format';
+import { formatNumber, formatTokenAmount } from '../utils/format';
 
 interface Props {
   report: Report;
@@ -15,22 +15,32 @@ export default function SummaryCards({ report, derived }: Props) {
   const cards = [
     {
       label: 'Total Rewarded Users',
-      value: totalUsers,
+      value: formatNumber(totalUsers, 0),
       alert: false,
     },
     {
       label: 'With Active Position',
-      value: report.summary.run2.withPosition,
+      value: formatNumber(report.summary.run2.withPosition, 0),
       alert: false,
     },
     {
       label: 'Earned Rewards + No Position',
-      value: flagged,
+      value: formatNumber(flagged, 0),
       alert: flagged > 0,
     },
     {
-      label: 'No New Rewards (safe)',
-      value: totalUsers - flagged - report.summary.run2.withPosition,
+      label: 'KITE Staked (total)',
+      value: derived.totalKiteStaked > 0 ? formatTokenAmount(derived.totalKiteStaked) : '-',
+      alert: false,
+    },
+    {
+      label: 'Users with Boost',
+      value: formatNumber(derived.usersWithBoost, 0),
+      alert: false,
+    },
+    {
+      label: 'Avg Boost Multiplier',
+      value: derived.avgBoost > 1 ? derived.avgBoost.toFixed(3) + 'x' : '-',
       alert: false,
     },
   ];
@@ -39,7 +49,7 @@ export default function SummaryCards({ report, derived }: Props) {
     <div className="cards-grid">
       {cards.map((c) => (
         <div key={c.label} className={`stat-card ${c.alert ? 'alert' : ''}`}>
-          <div className="stat-value">{formatNumber(c.value, 0)}</div>
+          <div className="stat-value">{c.value}</div>
           <div className="stat-label">{c.label}</div>
         </div>
       ))}

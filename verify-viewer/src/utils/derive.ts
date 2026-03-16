@@ -6,6 +6,9 @@ export interface DerivedData {
   positionTypeCounts: { name: string; count: number }[];
   allTokens: string[];
   totalRewardsByToken: Record<string, { run1: number; run2: number }>;
+  totalKiteStaked: number;
+  avgBoost: number;
+  usersWithBoost: number;
 }
 
 export function deriveData(report: Report): DerivedData {
@@ -54,12 +57,34 @@ export function deriveData(report: Report): DerivedData {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
+  // Aggregate KITE staking and boost data
+  let totalKiteStaked = 0;
+  let boostSum = 0;
+  let boostCount = 0;
+  let usersWithBoost = 0;
+
+  for (const user of report.users) {
+    const dp = user.run2DetailedPositions || user.run1DetailedPositions;
+    if (dp?.kiteStaked) totalKiteStaked += dp.kiteStaked;
+    if (dp?.boosts) {
+      const boostValues = Object.values(dp.boosts);
+      if (boostValues.length > 0) {
+        usersWithBoost++;
+        boostSum += boostValues.reduce((s, v) => s + v, 0);
+        boostCount += boostValues.length;
+      }
+    }
+  }
+
   return {
     flaggedUsers,
     healthyUsers,
     positionTypeCounts,
     allTokens: Array.from(tokenSet).sort(),
     totalRewardsByToken: tokenTotals,
+    totalKiteStaked,
+    avgBoost: boostCount > 0 ? boostSum / boostCount : 1,
+    usersWithBoost,
   };
 }
 

@@ -12,6 +12,7 @@ import {
 import { UserRecord } from '../types';
 import { shortAddr, formatTokenAmount } from '../utils/format';
 import { userRewardDelta } from '../utils/derive';
+import PositionBreakdown from './PositionBreakdown';
 
 interface Props {
   user: UserRecord;
@@ -32,6 +33,18 @@ export default function UserDetailModal({ user, tokens, onClose }: Props) {
 
   const isFlagged = !user.run1HasPosition || !user.run2HasPosition;
 
+  // Boost comparison chart data
+  const r1Boosts = user.run1DetailedPositions?.boosts || {};
+  const r2Boosts = user.run2DetailedPositions?.boosts || {};
+  const allBoostKeys = Array.from(
+    new Set([...Object.keys(r1Boosts), ...Object.keys(r2Boosts)])
+  );
+  const boostChartData = allBoostKeys.map((k) => ({
+    strategy: k.replace('lpStaking_', 'LP: '),
+    'Run 1': r1Boosts[k] || 1,
+    'Run 2': r2Boosts[k] || 1,
+  }));
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -49,31 +62,19 @@ export default function UserDetailModal({ user, tokens, onClose }: Props) {
         <div className="detail-grid">
           <div className="detail-section">
             <h4>Run 1 Positions</h4>
-            {Object.keys(user.run1Positions).length === 0 ? (
-              <p className="dim">No positions</p>
-            ) : (
-              <ul className="position-list">
-                {Object.entries(user.run1Positions).map(([type, val]) => (
-                  <li key={type}>
-                    <strong>{type}</strong>: {val}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <PositionBreakdown
+              positions={user.run1DetailedPositions}
+              fallbackPositions={user.run1Positions}
+              label="Run 1"
+            />
           </div>
           <div className="detail-section">
             <h4>Run 2 Positions</h4>
-            {Object.keys(user.run2Positions).length === 0 ? (
-              <p className="dim">No positions</p>
-            ) : (
-              <ul className="position-list">
-                {Object.entries(user.run2Positions).map(([type, val]) => (
-                  <li key={type}>
-                    <strong>{type}</strong>: {val}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <PositionBreakdown
+              positions={user.run2DetailedPositions}
+              fallbackPositions={user.run2Positions}
+              label="Run 2"
+            />
           </div>
         </div>
 
@@ -112,9 +113,10 @@ export default function UserDetailModal({ user, tokens, onClose }: Props) {
           </tbody>
         </table>
 
-        {/* Chart */}
+        {/* Rewards chart */}
         {chartData.length > 0 && (
           <div className="detail-chart">
+            <h4>Rewards</h4>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -130,6 +132,31 @@ export default function UserDetailModal({ user, tokens, onClose }: Props) {
                 <Legend />
                 <Bar dataKey="Run 1" fill="#6366f1" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="Run 2" fill="#22d3ee" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Boost comparison chart */}
+        {boostChartData.length > 0 && (
+          <div className="detail-chart">
+            <h4>Boost Multipliers</h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={boostChartData} margin={{ top: 10, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="strategy" tick={{ fill: '#aaa', fontSize: 11 }} />
+                <YAxis domain={[0.8, 2.2]} tick={{ fill: '#aaa', fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{
+                    background: '#1a1a2e',
+                    border: '1px solid #333',
+                    borderRadius: 6,
+                  }}
+                  formatter={(value: number) => value.toFixed(3) + 'x'}
+                />
+                <Legend />
+                <Bar dataKey="Run 1" fill="#a78bfa" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Run 2" fill="#34d399" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

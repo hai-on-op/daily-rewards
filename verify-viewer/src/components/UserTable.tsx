@@ -44,6 +44,11 @@ export default function UserTable({ users, tokens, onSelectUser }: Props) {
         const bFlagged = Object.values(bDelta).some((d) => d > 0) && !b.run1HasPosition && !b.run2HasPosition;
         return ((aFlagged ? 0 : 1) - (bFlagged ? 0 : 1)) * dir;
       }
+      if (sortKey === 'boost') {
+        const aBoost = getMaxBoost(a) || 0;
+        const bBoost = getMaxBoost(b) || 0;
+        return (aBoost - bBoost) * dir;
+      }
       // Sort by token delta
       const aDelta = getDelta(a)[sortKey] || 0;
       const bDelta = getDelta(b)[sortKey] || 0;
@@ -64,6 +69,12 @@ export default function UserTable({ users, tokens, onSelectUser }: Props) {
     return keys.join(', ');
   };
 
+  const getMaxBoost = (user: UserRecord): number | null => {
+    const boosts = user.run2DetailedPositions?.boosts || user.run1DetailedPositions?.boosts;
+    if (!boosts || Object.keys(boosts).length === 0) return null;
+    return Math.max(...Object.values(boosts));
+  };
+
   return (
     <div className="table-wrapper">
       <table className="user-table">
@@ -73,6 +84,7 @@ export default function UserTable({ users, tokens, onSelectUser }: Props) {
             <th onClick={() => handleSort('address')}>Address{sortIcon('address')}</th>
             <th>Run 1 Positions</th>
             <th>Run 2 Positions</th>
+            <th onClick={() => handleSort('boost')}>Boost{sortIcon('boost')}</th>
             {tokens.map((t) => (
               <th key={t} onClick={() => handleSort(t)}>
                 {t} (delta){sortIcon(t)}
@@ -83,6 +95,7 @@ export default function UserTable({ users, tokens, onSelectUser }: Props) {
         <tbody>
           <tr className="totals-row">
               <td colSpan={2}><strong>Total</strong></td>
+              <td></td>
               <td></td>
               <td></td>
               {tokens.map((t) => {
@@ -111,6 +124,14 @@ export default function UserTable({ users, tokens, onSelectUser }: Props) {
                 <td className="mono">{shortAddr(user.address)}</td>
                 <td className="small">{positionSummary(user.run1Positions)}</td>
                 <td className="small">{positionSummary(user.run2Positions)}</td>
+                <td className="mono right">
+                  {(() => {
+                    const boost = getMaxBoost(user);
+                    if (boost === null) return <span className="dim">-</span>;
+                    const color = boost >= 1.8 ? 'positive' : boost >= 1.3 ? '' : 'dim';
+                    return <span className={color}>{boost.toFixed(2)}x</span>;
+                  })()}
+                </td>
                 {tokens.map((t) => {
                   const d = delta[t] || 0;
                   if (d === 0) {
