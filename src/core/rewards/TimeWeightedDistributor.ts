@@ -51,15 +51,19 @@ export class TimeWeightedDistributor {
       }
     };
 
+    const creditUser = (addr: string, state: TUserState, currentBoosts: Map<string, number>) => {
+      const boost = currentBoosts.get(addr) ?? 1;
+      const weight = strategy.getWeight(state);
+      const stored = rewardPerWeightStored.get(addr) ?? 0;
+      const delta = (rewardPerWeight - stored) * weight * boost;
+
+      earned.set(addr, (earned.get(addr) ?? 0) + delta);
+      rewardPerWeightStored.set(addr, rewardPerWeight);
+    };
+
     const creditAllUsers = (currentBoosts: Map<string, number>) => {
       for (const [addr, state] of users) {
-        const boost = currentBoosts.get(addr) ?? 1;
-        const weight = strategy.getWeight(state);
-        const stored = rewardPerWeightStored.get(addr) ?? 0;
-        const delta = (rewardPerWeight - stored) * weight * boost;
-
-        earned.set(addr, (earned.get(addr) ?? 0) + delta);
-        rewardPerWeightStored.set(addr, rewardPerWeight);
+        creditUser(addr, state, currentBoosts);
       }
     };
 
@@ -87,7 +91,21 @@ export class TimeWeightedDistributor {
 
       // Calculate boosts with new user present (0 weight)
       boosts = await strategy.calculateBoosts(users, timestamp);
-      creditAllUsers(boosts);
+
+      // Determine whether to credit all users or just the affected user
+      const creditAll = strategy.shouldCreditAllUsers
+        ? strategy.shouldCreditAllUsers(event)
+        : true;
+
+      if (creditAll) {
+        creditAllUsers(boosts);
+      } else if (addr) {
+        // Single-user credit: only the affected user
+        const state = users.get(addr);
+        if (state) {
+          creditUser(addr, state, boosts);
+        }
+      }
 
       // Apply the actual state change
       strategy.applyEvent(event, users);

@@ -12,15 +12,26 @@ export interface HaiAeroEvent extends StrategyEvent {
   deltaCollateral: number;
 }
 
-// --- Minter (future) ---
+// --- Minter ---
 
 export interface MinterUserState {
   address: string;
   debt: number;
   collateral: number;
   totalBridgedTokens: number;
-  usedBridgedTokens: number;
-  cType: string;
+}
+
+export type MinterEventType = "DELTA_DEBT" | "UPDATE_ACCUMULATED_RATE";
+
+export interface MinterEvent extends StrategyEvent {
+  eventType: MinterEventType;
+  address?: string;
+  deltaDebt?: number;
+  complementaryValue?: number;
+  rateMultiplier?: number;
+  cType?: string;
+  createdAtBlock?: number;
+  logIndex?: number;
 }
 
 // --- LP (future) ---
@@ -36,12 +47,22 @@ export interface LpUserState {
   }>;
 }
 
-// --- HaiVelo (future) ---
+// --- HaiVelo ---
 
 export interface HaiVeloUserState {
   address: string;
   collateral: number;
   lpStakedRaw: number;
+}
+
+export type HaiVeloEventType = "COLLATERAL" | "LP_STAKING" | "PRICE_UPDATE";
+
+export interface HaiVeloEvent extends StrategyEvent {
+  eventType: HaiVeloEventType;
+  address?: string;
+  deltaCollateral?: number;
+  deltaLpAmount?: number;
+  haiVeloPerLp?: number;
 }
 
 // --- LP Staking ---
