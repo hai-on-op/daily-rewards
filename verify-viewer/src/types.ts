@@ -1,8 +1,18 @@
+export interface PoolTotals {
+  minterDebt: number;
+  haiveloCollateral: number;
+  haiaeroCollateral: number;
+  lpStaking: Record<string, number>;
+  lpLiquidity: number;
+}
+
 export interface Report {
   generatedAt: string;
   mode: string;
   runs: RunInfo[];
   summary: Summary;
+  run1Totals?: PoolTotals;
+  run2Totals?: PoolTotals;
   users: UserRecord[];
 }
 
@@ -40,6 +50,9 @@ export interface UserRecord {
   run2Positions: Record<string, string>;
   run1DetailedPositions?: DetailedPositions;
   run2DetailedPositions?: DetailedPositions;
+  /** Per-strategy rewards: strategy → token → earned (raw, before claims) */
+  run1StrategyRewards?: Record<string, Record<string, number>>;
+  run2StrategyRewards?: Record<string, Record<string, number>>;
   run1HasPosition: boolean;
   run2HasPosition: boolean;
 }

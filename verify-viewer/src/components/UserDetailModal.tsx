@@ -9,18 +9,20 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { UserRecord } from '../types';
+import { UserRecord, Report } from '../types';
 import { shortAddr, formatTokenAmount } from '../utils/format';
 import { userRewardDelta } from '../utils/derive';
 import PositionBreakdown from './PositionBreakdown';
+import StrategyBreakdownTable from './StrategyBreakdownTable';
 
 interface Props {
   user: UserRecord;
   tokens: string[];
+  report: Report | null;
   onClose: () => void;
 }
 
-export default function UserDetailModal({ user, tokens, onClose }: Props) {
+export default function UserDetailModal({ user, tokens, report, onClose }: Props) {
   const delta = userRewardDelta(user);
 
   const chartData = tokens
@@ -79,7 +81,9 @@ export default function UserDetailModal({ user, tokens, onClose }: Props) {
         </div>
 
         {/* Rewards table */}
-        <h4>Rewards Comparison</h4>
+        <h4>Rewards Comparison
+          <span className="tooltip-trigger" data-tip="Cumulative claimable rewards after subtracting already-claimed amounts. Run 1 = yesterday's snapshot, Run 2 = today's snapshot. Delta = new rewards earned in the last ~24 hours.">?</span>
+        </h4>
         <table className="detail-table">
           <thead>
             <tr>
@@ -137,10 +141,28 @@ export default function UserDetailModal({ user, tokens, onClose }: Props) {
           </div>
         )}
 
+        {/* Per-strategy reward breakdown */}
+        {(user.run1StrategyRewards || user.run2StrategyRewards) && tokens
+          .filter((t) => user.run1Rewards[t] || user.run2Rewards[t])
+          .map((t) => (
+            <StrategyBreakdownTable
+              key={t}
+              token={t}
+              run1Strategy={user.run1StrategyRewards}
+              run2Strategy={user.run2StrategyRewards}
+              run1Positions={user.run1DetailedPositions}
+              run2Positions={user.run2DetailedPositions}
+              run1Totals={report?.run1Totals}
+              run2Totals={report?.run2Totals}
+            />
+          ))}
+
         {/* Boost comparison chart */}
         {boostChartData.length > 0 && (
           <div className="detail-chart">
-            <h4>Boost Multipliers</h4>
+            <h4>Boost Multipliers
+              <span className="tooltip-trigger" data-tip="Boost multiplier per strategy (1x-2x). Determined by your KITE staking share relative to your position share in each strategy. Higher KITE share = higher boost = more rewards. Formula: min(kite_share / position_share + 1, 2). Minter uses debt share instead of KITE share.">?</span>
+            </h4>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={boostChartData} margin={{ top: 10, right: 10, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />

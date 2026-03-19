@@ -23,7 +23,7 @@ import path from "path";
 import { ethers } from "ethers";
 import { config } from "../config";
 import { subgraphQuery, subgraphQueryPaginated } from "../services/subgraph/utils";
-import { combineResults, RewardsMap } from "../modules/result-combiner";
+import { combineResultsDetailed, RewardsMap, StrategyRewardEntry } from "../modules/result-combiner";
 import { getTokenAddressMap } from "../modules/orchestrator/contractHelpers";
 import { getSafeOwnerMapping } from "../services/initial-data/getSafeOwnerMapping";
 import {
@@ -76,6 +76,8 @@ interface RunResult {
   endBlocks: { minter: number; haivelo: number; lpStaking: number };
   /** Rewards per token per user AFTER subtracting claims, filtering dust */
   rewards: { [token: string]: { address: string; earned: string }[] };
+  /** Per-strategy reward breakdown (before claims subtraction) */
+  strategyBreakdown: StrategyRewardEntry[];
   /** Position state snapshot at endBlock */
   positions: {
     minter: Map<string, MinterPosition>;
@@ -103,6 +105,9 @@ interface UserRow {
   run2Positions: Record<string, string>;
   run1DetailedPositions?: DetailedPositions;
   run2DetailedPositions?: DetailedPositions;
+  /** Per-strategy rewards: strategy → token → earned (raw, before claims) */
+  run1StrategyRewards?: Record<string, Record<string, number>>;
+  run2StrategyRewards?: Record<string, Record<string, number>>;
   run1HasPosition: boolean;
   run2HasPosition: boolean;
 }
@@ -344,9 +349,9 @@ async function executeRun(
   process.env.LP_END_BLOCK = String(endBlocks.haivelo);
   process.env.END_BLOCK = String(endBlocks.haivelo);
 
-  // 1. Calculate rewards
+  // 1. Calculate rewards (with per-strategy breakdown)
   console.log("  Calculating rewards...");
-  const rawRewards = await combineResults();
+  const { combined: rawRewards, byStrategy: strategyBreakdown } = await combineResultsDetailed();
   console.log(`  Raw rewards calculated for tokens: ${Object.keys(rawRewards).join(", ")}`);
 
   // 2. Subtract claimed amounts
@@ -408,6 +413,7 @@ async function executeRun(
     label,
     endBlocks,
     rewards,
+    strategyBreakdown,
     positions: { minter, haivelo, haiaero, lpStaking, lp, kite },
     totals: {
       minterDebt: totalMinterDebt,
@@ -494,6 +500,30 @@ function positionSummary(
   return { text, hasAny, detailed };
 }
 
+/**
+ * Extract per-strategy rewards for a specific address.
+ * Returns: { strategy: { token: earned } }
+ */
+function extractStrategyRewards(
+  address: string,
+  breakdown: StrategyRewardEntry[]
+): Record<string, Record<string, number>> {
+  const result: Record<string, Record<string, number>> = {};
+
+  for (const entry of breakdown) {
+    const userReward = entry.rewards.find(
+      (r) => r.address.toLowerCase() === address
+    );
+    if (userReward && userReward.earned > 0) {
+      if (!result[entry.strategy]) result[entry.strategy] = {};
+      result[entry.strategy][entry.token] =
+        (result[entry.strategy][entry.token] || 0) + userReward.earned;
+    }
+  }
+
+  return result;
+}
+
 function rewardSummary(
   address: string,
   rewards: RunResult["rewards"]
@@ -578,6 +608,10 @@ async function generateReport(): Promise<void> {
     if (r1Pos.hasAny) run1WithPos++; else if (Object.keys(r1Rewards).length > 0) run1WithoutPos++;
     if (r2Pos.hasAny) run2WithPos++; else if (Object.keys(r2Rewards).length > 0) run2WithoutPos++;
 
+    // Extract per-strategy rewards for this address
+    const r1Strategy = extractStrategyRewards(address, run1.strategyBreakdown);
+    const r2Strategy = extractStrategyRewards(address, run2.strategyBreakdown);
+
     rows.push({
       address,
       run1Rewards: r1Rewards,
@@ -586,6 +620,8 @@ async function generateReport(): Promise<void> {
       run2Positions: r2Pos.text,
       run1DetailedPositions: r1Pos.detailed,
       run2DetailedPositions: r2Pos.detailed,
+      run1StrategyRewards: Object.keys(r1Strategy).length > 0 ? r1Strategy : undefined,
+      run2StrategyRewards: Object.keys(r2Strategy).length > 0 ? r2Strategy : undefined,
       run1HasPosition: r1Pos.hasAny,
       run2HasPosition: r2Pos.hasAny,
     });
@@ -695,6 +731,8 @@ async function generateReport(): Promise<void> {
       run1: { withPosition: run1WithPos, withoutPosition: run1WithoutPos },
       run2: { withPosition: run2WithPos, withoutPosition: run2WithoutPos },
     },
+    run1Totals: run1.totals,
+    run2Totals: run2.totals,
     users: rows,
   };
 

@@ -136,6 +136,7 @@ export default function App() {
             <UserDetailModal
               user={selectedUser}
               tokens={derived.allTokens}
+              report={report}
               onClose={() => setSelectedUser(null)}
             />
           )}

@@ -522,7 +522,7 @@ body {
 .position-card {
   border: 1px solid var(--border);
   border-radius: 6px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .position-card-header {
@@ -565,4 +565,71 @@ body {
   font-size: 0.7rem;
   font-weight: 600;
   flex-shrink: 0;
+  cursor: help;
+}
+
+/* Strategy Breakdown Table */
+.strategy-breakdown {
+  margin-top: 1rem;
+}
+
+.strategy-breakdown h4 {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.strategy-table th,
+.strategy-table td {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.strategy-table .totals-row td {
+  border-top: 1px solid var(--border);
+  padding-top: 0.4rem;
+}
+
+/* Tooltip trigger (?) */
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+  font-size: 0.6rem;
+  font-weight: 600;
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+}
+
+.tooltip-trigger:hover {
+  background: rgba(99, 102, 241, 0.3);
+  color: var(--text);
+}
+
+.tooltip-trigger:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-70%);
+  background: #1e1e36;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  width: 260px;
+  z-index: 10000;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }

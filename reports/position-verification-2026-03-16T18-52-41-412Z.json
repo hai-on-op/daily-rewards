@@ -1,0 +1,2890 @@
+{
+  "generatedAt": "2026-03-16T18:52:41.412Z",
+  "mode": "dry-run (no on-chain updates)",
+  "runs": [
+    {
+      "label": "RUN 1: Start → Yesterday",
+      "endBlocks": {
+        "minter": 149000642,
+        "haivelo": 149000642,
+        "lpStaking": 149000642
+      },
+      "tokenRewardCounts": {
+        "OP": 4,
+        "HAI": 37,
+        "KITE": 56
+      }
+    },
+    {
+      "label": "RUN 2: Start → Now",
+      "endBlocks": {
+        "minter": 149043842,
+        "haivelo": 149043842,
+        "lpStaking": 149043842
+      },
+      "tokenRewardCounts": {
+        "OP": 4,
+        "HAI": 38,
+        "KITE": 56
+      }
+    }
+  ],
+  "summary": {
+    "totalRewardedUsers": 73,
+    "run1": {
+      "withPosition": 50,
+      "withoutPosition": 23
+    },
+    "run2": {
+      "withPosition": 50,
+      "withoutPosition": 23
+    }
+  },
+  "users": [
+    {
+      "address": "0x11ea4171a913b441e98aaad300103fc1ecb0afee",
+      "run1Rewards": {
+        "HAI": "0.0188"
+      },
+      "run2Rewards": {
+        "HAI": "0.0188"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x3b15cec2d922ab0ef74688bcc1056461049f89cb",
+      "run1Rewards": {
+        "KITE": "133.9871"
+      },
+      "run2Rewards": {
+        "KITE": "133.9871"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x434820ae498da70e98e21ee8d393aa8ea14d7979",
+      "run1Rewards": {
+        "HAI": "0.9245"
+      },
+      "run2Rewards": {
+        "HAI": "11.0320"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x45ac11fc867c5f89973a1118680d37122691d637",
+      "run1Rewards": {
+        "HAI": "2.8884",
+        "KITE": "0.4882"
+      },
+      "run2Rewards": {
+        "HAI": "2.8884",
+        "KITE": "0.4882"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x49c604e07338ce062efe23570e9732727dc55f6f",
+      "run1Rewards": {
+        "KITE": "18.8173"
+      },
+      "run2Rewards": {
+        "KITE": "18.8173"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x4fa990a6a302660d3c0600ee7b09cd3d57e88e43",
+      "run1Rewards": {
+        "HAI": "6.0744"
+      },
+      "run2Rewards": {
+        "HAI": "6.0744"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x5ceca24c07a9192046b72a9904e800c1f59a35ab",
+      "run1Rewards": {
+        "KITE": "0.1045"
+      },
+      "run2Rewards": {
+        "KITE": "0.1045"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x5deadbccac379a09abe527dae05c6f1c03f4c6d1",
+      "run1Rewards": {
+        "KITE": "3.9291"
+      },
+      "run2Rewards": {
+        "KITE": "3.9291"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x6954ba40d5787041d7d1dbc091e0197c6566e910",
+      "run1Rewards": {
+        "KITE": "0.2095"
+      },
+      "run2Rewards": {
+        "KITE": "0.2095"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x71310bb44deeaf583062ebdcc680b8beae6692a9",
+      "run1Rewards": {
+        "KITE": "2.7444"
+      },
+      "run2Rewards": {
+        "KITE": "2.7445"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x91ecadb8ef5dacc6156ffc036acf6295eab7a545",
+      "run1Rewards": {
+        "KITE": "3150.3745"
+      },
+      "run2Rewards": {
+        "KITE": "3150.3745"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {
+        "kiteStaked": 612.5905287658719,
+        "kiteShare": 0.002715221466873288
+      },
+      "run2DetailedPositions": {
+        "kiteStaked": 612.5905287658719,
+        "kiteShare": 0.0026995378816376345
+      },
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x9cad95adee7fbf9f689969a5be63140be3cb524b",
+      "run1Rewards": {
+        "KITE": "0.0524"
+      },
+      "run2Rewards": {
+        "KITE": "0.0524"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xadd179224b9895bd773e9550d84505e1365427ea",
+      "run1Rewards": {
+        "OP": "47.8778"
+      },
+      "run2Rewards": {
+        "OP": "47.8778"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xb19c904ee22e545b5f950c62dba83086b7745b69",
+      "run1Rewards": {
+        "KITE": "13.5890"
+      },
+      "run2Rewards": {
+        "KITE": "13.5890"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xb3c9143e8fda9a0f927ffd5a9c8bda252d2756d5",
+      "run1Rewards": {
+        "HAI": "0.0153"
+      },
+      "run2Rewards": {
+        "HAI": "0.0153"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xb704dc89474888ab466c9dd7365bd41a12bdaa14",
+      "run1Rewards": {
+        "KITE": "12.1141"
+      },
+      "run2Rewards": {
+        "KITE": "12.1141"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xc5f38fd483d1323162171f6ae215504a90d85b50",
+      "run1Rewards": {
+        "KITE": "3.9489"
+      },
+      "run2Rewards": {
+        "KITE": "3.9489"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xda27d2bdf91a8919b91bdf71f8fd1d2638f9421c",
+      "run1Rewards": {
+        "KITE": "4.5629"
+      },
+      "run2Rewards": {
+        "KITE": "4.5629"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xdbb801267b382208397e9c6d933a2848b4768395",
+      "run1Rewards": {
+        "HAI": "6.3216"
+      },
+      "run2Rewards": {
+        "HAI": "6.3216"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xdd915bee3f0c808968e9e5e890d2cf36c76e8c8a",
+      "run1Rewards": {
+        "HAI": "111.0027",
+        "KITE": "8.6246"
+      },
+      "run2Rewards": {
+        "HAI": "111.0027",
+        "KITE": "8.6246"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xe551388b683bb1e34e27e5a7b00eabe79b080bf7",
+      "run1Rewards": {
+        "OP": "431.1459"
+      },
+      "run2Rewards": {
+        "OP": "431.1459"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xf4c11fc7d31cb58274a77f5a4eefc432fe7e58a4",
+      "run1Rewards": {
+        "KITE": "3.2325"
+      },
+      "run2Rewards": {
+        "KITE": "3.2325"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0xf7531bd99d70e8a9a6ead3158cb0a82a94fa3ae8",
+      "run1Rewards": {
+        "HAI": "0.0132"
+      },
+      "run2Rewards": {
+        "HAI": "0.0132"
+      },
+      "run1Positions": {},
+      "run2Positions": {},
+      "run1DetailedPositions": {},
+      "run2DetailedPositions": {},
+      "run1HasPosition": false,
+      "run2HasPosition": false
+    },
+    {
+      "address": "0x00753db2a35ab20aa4eac18c7aceca27382c13c6",
+      "run1Rewards": {
+        "KITE": "93.7178"
+      },
+      "run2Rewards": {
+        "KITE": "100.8498"
+      },
+      "run1Positions": {
+        "Minter Debt": "9637.1995",
+        "LP Staking (HAI_BOLD_CURVE)": "23753.2543"
+      },
+      "run2Positions": {
+        "Minter Debt": "9637.1995",
+        "LP Staking (HAI_BOLD_CURVE)": "23753.2543"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 9637.19945151186,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 9637.19945151186
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 23753.25431849379
+        },
+        "boosts": {
+          "minter": 1.0170349812590531
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 9637.19945151186,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 9637.19945151186
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 23753.25431849379
+        },
+        "boosts": {
+          "minter": 1.0170349812590531
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x00ae02130f4a404dfd2872c6673d1834b5df8edc",
+      "run1Rewards": {
+        "HAI": "112.4223",
+        "KITE": "8.1280"
+      },
+      "run2Rewards": {
+        "HAI": "113.1199",
+        "KITE": "8.1280"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "83173.9451"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "83173.9451"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 83173.94511015645
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 83173.94511015645
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x0556bdc524fcd2b8855eaacb1e10638b292a47a3",
+      "run1Rewards": {
+        "KITE": "61.4650"
+      },
+      "run2Rewards": {
+        "KITE": "64.3797"
+      },
+      "run1Positions": {
+        "Minter Debt": "7044.6207"
+      },
+      "run2Positions": {
+        "Minter Debt": "7044.6207"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 7044.620655925815,
+          "byCollateral": {
+            "ALETH": 7044.620655925815
+          }
+        },
+        "kiteStaked": 4620.710376833894,
+        "kiteShare": 0.02048064966440029,
+        "boosts": {
+          "minter": 1.012452267015394
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 7044.620655925815,
+          "byCollateral": {
+            "ALETH": 7044.620655925815
+          }
+        },
+        "kiteStaked": 4620.710376833894,
+        "kiteShare": 0.020362349916622047,
+        "boosts": {
+          "minter": 1.012452267015394
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x0b9bc785fd2bea7bf9cb81065cfaba2fc5d0286b",
+      "run1Rewards": {},
+      "run2Rewards": {
+        "HAI": "0.0580"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "6335.3665"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "6335.3665"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 6335.366496051709
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 6335.366496051709
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x139776871ee95f55d20b10d9ba5a0385451066cd",
+      "run1Rewards": {
+        "HAI": "36.3177",
+        "KITE": "102.9330"
+      },
+      "run2Rewards": {
+        "HAI": "37.7423",
+        "KITE": "106.6692"
+      },
+      "run1Positions": {
+        "Minter Debt": "3200.7234",
+        "haiVELO Collateral": "119775.2665",
+        "LP Staking (HAI_VELO_VELO)": "45350.9333"
+      },
+      "run2Positions": {
+        "Minter Debt": "3200.7234",
+        "haiVELO Collateral": "119775.2665",
+        "LP Staking (HAI_VELO_VELO)": "45350.9333"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 3200.723447697652,
+          "byCollateral": {
+            "ALETH": 2778.8653426811265,
+            "HAIVELOV2": 421.85810501652514
+          }
+        },
+        "haivelo": {
+          "collateral": 119775.26650537943
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 45350.93326547576
+        },
+        "kiteStaked": 1045.7596273836868,
+        "kiteShare": 0.004635182648321395,
+        "boosts": {
+          "minter": 1.0056576876115588,
+          "haivelo": 1.4189196195730984,
+          "lpStaking_HAI_VELO_VELO": 1.048804852584446
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 3200.723447697652,
+          "byCollateral": {
+            "ALETH": 2778.8653426811265,
+            "HAIVELOV2": 421.85810501652514
+          }
+        },
+        "haivelo": {
+          "collateral": 119775.26650537943
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 45350.93326547576
+        },
+        "kiteStaked": 1045.7596273836868,
+        "kiteShare": 0.004608409037757877,
+        "boosts": {
+          "minter": 1.0056576876115588,
+          "haivelo": 1.416818083570552,
+          "lpStaking_HAI_VELO_VELO": 1.0485229473790105
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x1474ba7f53dcd016a156e64e7d40a1543df58acd",
+      "run1Rewards": {
+        "HAI": "7.0597"
+      },
+      "run2Rewards": {
+        "HAI": "7.2938"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "15692.0183"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "15692.0183"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 15692.018281853387
+        },
+        "kiteStaked": 255.0828841203882,
+        "kiteShare": 0.0011306190518337888,
+        "boosts": {
+          "haivelo": 1.779953099360141
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 15692.018281853387
+        },
+        "kiteStaked": 255.0828841203882,
+        "kiteShare": 0.0011240884021299516,
+        "boosts": {
+          "haivelo": 1.7760404167307777
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x1fc620d9d35c7b4b331f1b0d2c832cff49747c1b",
+      "run1Rewards": {
+        "KITE": "84.8474"
+      },
+      "run2Rewards": {
+        "KITE": "105.5589"
+      },
+      "run1Positions": {
+        "Minter Debt": "41829.0084",
+        "LP Staking (HAI_BOLD_CURVE)": "28421.8792"
+      },
+      "run2Positions": {
+        "Minter Debt": "41829.0084",
+        "LP Staking (HAI_BOLD_CURVE)": "28421.8792"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 41829.00838008626,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 36002.26219573772,
+            "MSETH": 2178.0382674337056,
+            "YV-VELO-MSETH-WETH": 1186.2525744290617,
+            "ALETH": 2462.4553424857704
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 28421.87917437418
+        },
+        "kiteStaked": 6063.1305681348185,
+        "kiteShare": 0.026873974542540223,
+        "boosts": {
+          "minter": 1.0739381162986885,
+          "lpStaking_HAI_BOLD_CURVE": 1.0980128267247928
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 41829.00838008626,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 36002.26219573772,
+            "MSETH": 2178.0382674337056,
+            "YV-VELO-MSETH-WETH": 1186.2525744290617,
+            "ALETH": 2462.4553424857704
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 28421.87917437418
+        },
+        "kiteStaked": 6063.1305681348185,
+        "kiteShare": 0.026718745852909957,
+        "boosts": {
+          "minter": 1.0739381162986885,
+          "lpStaking_HAI_BOLD_CURVE": 1.097446687814623
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x287e8d16c6ab64dab594c71ee1ac881b88844cda",
+      "run1Rewards": {
+        "HAI": "0.0447",
+        "KITE": "0.0180"
+      },
+      "run2Rewards": {
+        "HAI": "0.5354",
+        "KITE": "0.2146"
+      },
+      "run1Positions": {
+        "Minter Debt": "146.9463",
+        "haiVELO Collateral": "44907.7557"
+      },
+      "run2Positions": {
+        "Minter Debt": "146.9463",
+        "haiVELO Collateral": "44907.7557"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 146.94633634641804,
+          "byCollateral": {
+            "HAIVELOV2": 146.94633634641804
+          }
+        },
+        "haivelo": {
+          "collateral": 44907.75565220939
+        },
+        "kiteStaked": 286.2538712968154,
+        "kiteShare": 0.0012687800738391006,
+        "boosts": {
+          "minter": 1.0002597464230498,
+          "haivelo": 1.305841202623637
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 146.94633634641804,
+          "byCollateral": {
+            "HAIVELOV2": 146.94633634641804
+          }
+        },
+        "haivelo": {
+          "collateral": 44907.75565220939
+        },
+        "kiteStaked": 476.48190291412834,
+        "kiteShare": 0.002099740179501018,
+        "boosts": {
+          "minter": 1.0002597464230498,
+          "haivelo": 1.5065319994035677
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x2c1403fa870f92f480ad107f74db2028ba317e39",
+      "run1Rewards": {
+        "HAI": "793.0500",
+        "KITE": "48.1140"
+      },
+      "run2Rewards": {
+        "HAI": "793.6673",
+        "KITE": "48.1140"
+      },
+      "run1Positions": {
+        "Minter Debt": "149.6458",
+        "haiVELO Collateral": "73603.8536"
+      },
+      "run2Positions": {
+        "Minter Debt": "149.6458",
+        "haiVELO Collateral": "73603.8536"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 149.64579253658584,
+          "byCollateral": {
+            "HAIVELO": 149.64579253658584
+          }
+        },
+        "haivelo": {
+          "collateral": 73603.85361386297
+        },
+        "boosts": {
+          "minter": 1.0002645180567429
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 149.64579253658584,
+          "byCollateral": {
+            "HAIVELO": 149.64579253658584
+          }
+        },
+        "haivelo": {
+          "collateral": 73603.85361386297
+        },
+        "boosts": {
+          "minter": 1.0002645180567429
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x328cace41eadf6df6e693b8e4810bf97aac4f5ee",
+      "run1Rewards": {
+        "HAI": "198.8969",
+        "KITE": "73.3784"
+      },
+      "run2Rewards": {
+        "HAI": "199.3728",
+        "KITE": "73.4217"
+      },
+      "run1Positions": {
+        "Minter Debt": "314.9323",
+        "haiVELO Collateral": "15222.3365",
+        "haiAERO Collateral": "1645.0000",
+        "LP Staking (HAI_BOLD_CURVE)": "20.1000",
+        "LP Staking (HAI_VELO_VELO)": "24.0000",
+        "Uniswap LP": "146693898819492260"
+      },
+      "run2Positions": {
+        "Minter Debt": "314.9323",
+        "haiVELO Collateral": "15222.3365",
+        "haiAERO Collateral": "1645.0000",
+        "LP Staking (HAI_BOLD_CURVE)": "20.1000",
+        "LP Staking (HAI_VELO_VELO)": "24.0000",
+        "Uniswap LP": "146693898819492260"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 314.9322516513066,
+          "byCollateral": {
+            "HAIAERO": 149.9322516513066,
+            "MOO-VELO-BOLD-LUSD": 165
+          }
+        },
+        "haivelo": {
+          "collateral": 15222.336500037578
+        },
+        "haiaero": {
+          "collateral": 1645
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 20.1,
+          "HAI_VELO_VELO": 24
+        },
+        "lp": {
+          "liquidity": 146693898819492260
+        },
+        "kiteStaked": 219.84780581290244,
+        "kiteShare": 0.0009744445167814985,
+        "boosts": {
+          "minter": 1.0005566829898815,
+          "haivelo": 1.6929578075408331,
+          "haiaero": 1.1267056984621473,
+          "lpStaking_HAI_BOLD_CURVE": 2,
+          "lpStaking_HAI_VELO_VELO": 2,
+          "lp": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 314.9322516513066,
+          "byCollateral": {
+            "HAIAERO": 149.9322516513066,
+            "MOO-VELO-BOLD-LUSD": 165
+          }
+        },
+        "haivelo": {
+          "collateral": 15222.336500037578
+        },
+        "haiaero": {
+          "collateral": 1645
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 20.1,
+          "HAI_VELO_VELO": 24
+        },
+        "lp": {
+          "liquidity": 146693898819492260
+        },
+        "kiteStaked": 219.84780581290244,
+        "kiteShare": 0.0009688159579980576,
+        "boosts": {
+          "minter": 1.0005566829898815,
+          "haivelo": 1.6894815421363223,
+          "haiaero": 1.1259738245999529,
+          "lpStaking_HAI_BOLD_CURVE": 2,
+          "lpStaking_HAI_VELO_VELO": 2,
+          "lp": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x33b037e9abca879b7917c10c7657bbde11a39ca5",
+      "run1Rewards": {
+        "HAI": "95.6779"
+      },
+      "run2Rewards": {
+        "HAI": "96.0280"
+      },
+      "run1Positions": {
+        "Minter Debt": "149.9291",
+        "haiAERO Collateral": "2499.1343"
+      },
+      "run2Positions": {
+        "Minter Debt": "149.9291",
+        "haiAERO Collateral": "2499.1343"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 149.92908630290816,
+          "byCollateral": {
+            "HAIAERO": 149.92908630290816
+          }
+        },
+        "haiaero": {
+          "collateral": 2499.134287022628
+        },
+        "boosts": {
+          "minter": 1.0002650188146678
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 149.92908630290816,
+          "byCollateral": {
+            "HAIAERO": 149.92908630290816
+          }
+        },
+        "haiaero": {
+          "collateral": 2499.134287022628
+        },
+        "boosts": {
+          "minter": 1.0002650188146678
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x3cc01c28320c3babd6f200ab9b61755cbb030317",
+      "run1Rewards": {
+        "HAI": "3.4065",
+        "KITE": "1.1039"
+      },
+      "run2Rewards": {
+        "HAI": "6.5272",
+        "KITE": "2.1167"
+      },
+      "run1Positions": {
+        "Minter Debt": "742.0902",
+        "haiVELO Collateral": "186042.1465"
+      },
+      "run2Positions": {
+        "Minter Debt": "742.0902",
+        "haiVELO Collateral": "186042.1465"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 742.0902332137834,
+          "byCollateral": {
+            "HAIVELOV2": 742.0902332137834
+          }
+        },
+        "haivelo": {
+          "collateral": 186042.14645971457
+        },
+        "kiteStaked": 5907.001722884234,
+        "kiteShare": 0.026181955367714643,
+        "boosts": {
+          "minter": 1.001311739295106,
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 742.0902332137834,
+          "byCollateral": {
+            "HAIVELOV2": 742.0902332137834
+          }
+        },
+        "haivelo": {
+          "collateral": 186042.14645971457
+        },
+        "kiteStaked": 5907.001722884234,
+        "kiteShare": 0.02603072389961695,
+        "boosts": {
+          "minter": 1.001311739295106,
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x3e88681de2e12d1ac4116a7a6fb964a2c4c102ae",
+      "run1Rewards": {
+        "KITE": "4.1273"
+      },
+      "run2Rewards": {
+        "KITE": "4.3063"
+      },
+      "run1Positions": {
+        "Minter Debt": "899.7919"
+      },
+      "run2Positions": {
+        "Minter Debt": "899.7919"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 899.7919366451924,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 899.7919366451924
+          }
+        },
+        "boosts": {
+          "minter": 1.0015904972035619
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 899.7919366451924,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 899.7919366451924
+          }
+        },
+        "boosts": {
+          "minter": 1.0015904972035619
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x4cd6bdcc4abd55a546c8f416234e1ec6495a6478",
+      "run1Rewards": {
+        "KITE": "17.8252"
+      },
+      "run2Rewards": {
+        "KITE": "17.9749"
+      },
+      "run1Positions": {
+        "Minter Debt": "149.0270"
+      },
+      "run2Positions": {
+        "Minter Debt": "149.0270"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 149.0269718600992,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 149.0269718600992
+          }
+        },
+        "kiteStaked": 7.205706838232798,
+        "kiteShare": 0.00003193828335965506,
+        "boosts": {
+          "minter": 1.000263424212138
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 149.0269718600992,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 149.0269718600992
+          }
+        },
+        "kiteStaked": 7.205706838232798,
+        "kiteShare": 0.000031753802353054736,
+        "boosts": {
+          "minter": 1.000263424212138
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x516b2d73a67a15b765c7538124dd55cbca5dfea1",
+      "run1Rewards": {
+        "KITE": "0.0569"
+      },
+      "run2Rewards": {
+        "KITE": "0.6793"
+      },
+      "run1Positions": {
+        "Minter Debt": "1872.4162",
+        "LP Staking (HAI_BOLD_CURVE)": "415.5124"
+      },
+      "run2Positions": {
+        "Minter Debt": "1872.4162",
+        "LP Staking (HAI_BOLD_CURVE)": "415.5124"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 1872.4162289021692,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 1078.4883691298423,
+            "ALETH": 793.927859772327
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 415.5124337564359
+        },
+        "kiteStaked": 127.32442250885737,
+        "kiteShare": 0.0005643476172407877,
+        "boosts": {
+          "minter": 1.0033097349005775,
+          "lpStaking_HAI_BOLD_CURVE": 1.1407882704132493
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 1872.4162289021692,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 1078.4883691298423,
+            "ALETH": 793.927859772327
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 415.5124337564359
+        },
+        "kiteStaked": 127.32442250885737,
+        "kiteShare": 0.0005610878485384851,
+        "boosts": {
+          "minter": 1.0033097349005775,
+          "lpStaking_HAI_BOLD_CURVE": 1.1399750531983202
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x5275817b74021e97c980e95ede6bbac0d0d6f3a2",
+      "run1Rewards": {
+        "HAI": "137.5569",
+        "KITE": "216.7422"
+      },
+      "run2Rewards": {
+        "HAI": "182.2041",
+        "KITE": "286.6147"
+      },
+      "run1Positions": {
+        "Minter Debt": "84359.8726",
+        "haiVELO Collateral": "871808.5078",
+        "haiAERO Collateral": "192657.7140",
+        "LP Staking (HAI_BOLD_CURVE)": "10962.7686",
+        "LP Staking (HAI_VELO_VELO)": "48678.0728"
+      },
+      "run2Positions": {
+        "Minter Debt": "84359.8726",
+        "haiVELO Collateral": "871808.5078",
+        "haiAERO Collateral": "192657.7140",
+        "LP Staking (HAI_BOLD_CURVE)": "10962.7686",
+        "LP Staking (HAI_VELO_VELO)": "48678.0728"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 84359.87259896612,
+          "byCollateral": {
+            "ALETH": 9834.837447960597,
+            "HAIVELOV2": 3285.063080167851,
+            "HAIAERO": 6995.222071448999,
+            "YV-VELO-ALETH-WETH": 5453.454303691944,
+            "MSETH": 12241.97095842893,
+            "MOO-VELO-BOLD-LUSD": 36046.4043724237,
+            "YV-VELO-MSETH-WETH": 10502.920364844089
+          }
+        },
+        "haivelo": {
+          "collateral": 871808.5077834921
+        },
+        "haiaero": {
+          "collateral": 192657.71400897403
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 10962.768633745323,
+          "HAI_VELO_VELO": 48678.07277169678
+        },
+        "kiteStaked": 23294.408294189714,
+        "kiteShare": 0.10324919254941439,
+        "boosts": {
+          "minter": 1.1491168524600832,
+          "haivelo": 2,
+          "haiaero": 1.1146318218027111,
+          "lpStaking_HAI_BOLD_CURVE": 1.9762706147567632,
+          "lpStaking_HAI_VELO_VELO": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 84359.87259896612,
+          "byCollateral": {
+            "ALETH": 9834.837447960597,
+            "HAIVELOV2": 3285.063080167851,
+            "HAIAERO": 6995.222071448999,
+            "YV-VELO-ALETH-WETH": 5453.454303691944,
+            "MSETH": 12241.97095842893,
+            "MOO-VELO-BOLD-LUSD": 36046.4043724237,
+            "YV-VELO-MSETH-WETH": 10502.920364844089
+          }
+        },
+        "haivelo": {
+          "collateral": 871808.5077834921
+        },
+        "haiaero": {
+          "collateral": 192657.71400897403
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 10962.768633745323,
+          "HAI_VELO_VELO": 48678.07277169678
+        },
+        "kiteStaked": 23294.408294189714,
+        "kiteShare": 0.10265280749146705,
+        "boosts": {
+          "minter": 1.1491168524600832,
+          "haivelo": 2,
+          "haiaero": 1.1139696887244723,
+          "lpStaking_HAI_BOLD_CURVE": 1.970631508117984,
+          "lpStaking_HAI_VELO_VELO": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x58772689ec7fa6589207af74dc2055fa831522d1",
+      "run1Rewards": {
+        "KITE": "263.4545"
+      },
+      "run2Rewards": {
+        "KITE": "267.4865"
+      },
+      "run1Positions": {
+        "LP Staking (HAI_VELO_VELO)": "92716.2426"
+      },
+      "run2Positions": {
+        "LP Staking (HAI_VELO_VELO)": "92716.2426"
+      },
+      "run1DetailedPositions": {
+        "lpStaking": {
+          "HAI_VELO_VELO": 92716.24259474936
+        }
+      },
+      "run2DetailedPositions": {
+        "lpStaking": {
+          "HAI_VELO_VELO": 92716.24259474936
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x5a1cae6f827791bf6108049bb0ce72c5dae856f2",
+      "run1Rewards": {
+        "HAI": "15.9540",
+        "KITE": "33.7468"
+      },
+      "run2Rewards": {
+        "HAI": "16.5528",
+        "KITE": "34.9674"
+      },
+      "run1Positions": {
+        "Minter Debt": "10317.1045",
+        "haiVELO Collateral": "55882.3066",
+        "LP Staking (HAI_VELO_VELO)": "21692.6100"
+      },
+      "run2Positions": {
+        "Minter Debt": "10317.1045",
+        "haiVELO Collateral": "55882.3066",
+        "LP Staking (HAI_VELO_VELO)": "21692.6100"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 10317.104517218077,
+          "byCollateral": {
+            "HAIVELOV2": 184.6621183114693,
+            "WETH": 10132.442398906607
+          }
+        },
+        "haivelo": {
+          "collateral": 55882.306568823544
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 21692.61
+        },
+        "kiteStaked": 323.8085134737133,
+        "kiteShare": 0.0014352357499085391,
+        "boosts": {
+          "minter": 1.018236800325942,
+          "haivelo": 1.2780224808233407,
+          "lpStaking_HAI_VELO_VELO": 1.0315932145749587
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 10317.104517218077,
+          "byCollateral": {
+            "HAIVELOV2": 184.6621183114693,
+            "WETH": 10132.442398906607
+          }
+        },
+        "haivelo": {
+          "collateral": 55882.306568823544
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 21692.61
+        },
+        "kiteStaked": 323.8085134737133,
+        "kiteShare": 0.0014269455818719447,
+        "boosts": {
+          "minter": 1.018236800325942,
+          "haivelo": 1.2766277639715422,
+          "lpStaking_HAI_VELO_VELO": 1.0314107267448867
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x62aabd981fc0b1538e16ffb3d47ada4feda9e585",
+      "run1Rewards": {
+        "KITE": "693.0510"
+      },
+      "run2Rewards": {
+        "KITE": "699.7572"
+      },
+      "run1Positions": {
+        "Minter Debt": "5337.0396"
+      },
+      "run2Positions": {
+        "Minter Debt": "5337.0396"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 5337.039565592644,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 5337.039565592644
+          }
+        },
+        "kiteStaked": 482.4017649248747,
+        "kiteShare": 0.002138178059037849,
+        "boosts": {
+          "minter": 1.0094338992812308
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 5337.039565592644,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 5337.039565592644
+          }
+        },
+        "kiteStaked": 482.4017649248747,
+        "kiteShare": 0.0021258275755700897,
+        "boosts": {
+          "minter": 1.0094338992812308
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x63712c2f30f48ff20beb3837578071b70cea9f07",
+      "run1Rewards": {
+        "KITE": "35.9147"
+      },
+      "run2Rewards": {
+        "KITE": "38.4492"
+      },
+      "run1Positions": {
+        "Minter Debt": "1936.9826",
+        "LP Staking (HAI_BOLD_CURVE)": "2323.6268"
+      },
+      "run2Positions": {
+        "Minter Debt": "1936.9826",
+        "LP Staking (HAI_BOLD_CURVE)": "2323.6268"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 1936.9825933892066,
+          "byCollateral": {
+            "MSETH": 754.0878845722335,
+            "YV-VELO-MSETH-WETH": 1182.8947088169732
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 2323.626821125928
+        },
+        "kiteStaked": 370.6395409914693,
+        "kiteShare": 0.0016428077009279505,
+        "boosts": {
+          "minter": 1.0034238641986724,
+          "lpStaking_HAI_BOLD_CURVE": 1.0732865286843176
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 1936.9825933892066,
+          "byCollateral": {
+            "MSETH": 754.0878845722335,
+            "YV-VELO-MSETH-WETH": 1182.8947088169732
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 2323.626821125928
+        },
+        "kiteStaked": 370.6395409914693,
+        "kiteShare": 0.0016333185616744365,
+        "boosts": {
+          "minter": 1.0034238641986724,
+          "lpStaking_HAI_BOLD_CURVE": 1.0728632131156728
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x6d36cab6e4c76b8fb388a4738f9611459b4b30da",
+      "run1Rewards": {
+        "KITE": "175.9726"
+      },
+      "run2Rewards": {
+        "KITE": "176.4383"
+      },
+      "run1Positions": {
+        "Minter Debt": "1199.4080"
+      },
+      "run2Positions": {
+        "Minter Debt": "1199.4080"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 1199.4079571167665,
+          "byCollateral": {
+            "ALETH": 1199.4079571167665
+          }
+        },
+        "boosts": {
+          "minter": 1.0021201067980634
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 1199.4079571167665,
+          "byCollateral": {
+            "ALETH": 1199.4079571167665
+          }
+        },
+        "boosts": {
+          "minter": 1.0021201067980634
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x7831286da8a0b8bac1c254c598a7c480128a9700",
+      "run1Rewards": {
+        "HAI": "18.6201",
+        "KITE": "25.8654"
+      },
+      "run2Rewards": {
+        "HAI": "23.3086",
+        "KITE": "32.2456"
+      },
+      "run1Positions": {
+        "Minter Debt": "814.0263",
+        "haiVELO Collateral": "279500.1474",
+        "LP Staking (HAI_VELO_VELO)": "107462.2766"
+      },
+      "run2Positions": {
+        "Minter Debt": "814.0263",
+        "haiVELO Collateral": "279500.1474",
+        "LP Staking (HAI_VELO_VELO)": "107462.2766"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 814.0263172231428,
+          "byCollateral": {
+            "HAIVELOV2": 814.0263172231428
+          }
+        },
+        "haivelo": {
+          "collateral": 279500.1473828182
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 107462.27658790007
+        },
+        "kiteStaked": 6442.361030881594,
+        "kiteShare": 0.028554860297363698,
+        "boosts": {
+          "minter": 1.0014388955139968,
+          "haivelo": 2,
+          "lpStaking_HAI_VELO_VELO": 1.1268838608100213
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 814.0263172231428,
+          "byCollateral": {
+            "HAIVELOV2": 814.0263172231428
+          }
+        },
+        "haivelo": {
+          "collateral": 279500.1473828182
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 107462.27658790007
+        },
+        "kiteStaked": 6442.361030881594,
+        "kiteShare": 0.02838992252310487,
+        "boosts": {
+          "minter": 1.0014388955139968,
+          "haivelo": 2,
+          "lpStaking_HAI_VELO_VELO": 1.1261509578515256
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x79a5c6c2560dda27954236205d867d906643b18f",
+      "run1Rewards": {
+        "HAI": "6.3034"
+      },
+      "run2Rewards": {
+        "HAI": "6.7715"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "27909.4582"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "27909.4582"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 27909.45822380617
+        },
+        "kiteStaked": 1800,
+        "kiteShare": 0.007978247150209943,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 27909.45822380617
+        },
+        "kiteStaked": 1800,
+        "kiteShare": 0.007932163425276993,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x7b22fda532f9f9fb688e502d4caf7b2b9bd36a26",
+      "run1Rewards": {
+        "HAI": "65.3345",
+        "KITE": "6.4016"
+      },
+      "run2Rewards": {
+        "HAI": "65.5978",
+        "KITE": "6.4016"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "15700.5000"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "15700.5000"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 15700.499976114928
+        },
+        "kiteStaked": 1435.1565375506368,
+        "kiteShare": 0.00636112975323252,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 15700.499976114928
+        },
+        "kiteStaked": 1435.1565375506368,
+        "kiteShare": 0.006324386775947961,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x7c6accd51cbbdd53354de581841803b4f79d48e7",
+      "run1Rewards": {
+        "HAI": "106.9146",
+        "KITE": "20.9517"
+      },
+      "run2Rewards": {
+        "HAI": "107.2621",
+        "KITE": "20.9517"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "40493.9222"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "40493.9222"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 40493.92215361335
+        },
+        "kiteStaked": 19.65558740206889,
+        "kiteShare": 0.00008712063009792142,
+        "boosts": {
+          "haivelo": 1.0232896069081723
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 40493.92215361335
+        },
+        "kiteStaked": 19.65558740206889,
+        "kiteShare": 0.0000866174063850145,
+        "boosts": {
+          "haivelo": 1.0231727731646187
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x7e551dc6ef6987139a4014a4fdaff7d2075b00a3",
+      "run1Rewards": {
+        "HAI": "7.6364",
+        "KITE": "1.6297"
+      },
+      "run2Rewards": {
+        "HAI": "8.9368",
+        "KITE": "1.8595"
+      },
+      "run1Positions": {
+        "Minter Debt": "148.3749",
+        "haiVELO Collateral": "77519.6617",
+        "LP Staking (HAI_VELO_VELO)": "360.4362"
+      },
+      "run2Positions": {
+        "Minter Debt": "148.3749",
+        "haiVELO Collateral": "77519.6617",
+        "LP Staking (HAI_VELO_VELO)": "360.4362"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 148.37485398608408,
+          "byCollateral": {
+            "HAIVELOV2": 148.37485398608408
+          }
+        },
+        "haivelo": {
+          "collateral": 77519.6617297921
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 360.436219325499
+        },
+        "kiteStaked": 15255,
+        "kiteShare": 0.06761564459802925,
+        "boosts": {
+          "minter": 1.0002622715104823,
+          "haivelo": 2,
+          "lpStaking_HAI_VELO_VELO": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 148.37485398608408,
+          "byCollateral": {
+            "HAIVELOV2": 148.37485398608408
+          }
+        },
+        "haivelo": {
+          "collateral": 77519.6617297921
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 360.436219325499
+        },
+        "kiteStaked": 15255,
+        "kiteShare": 0.06722508502922252,
+        "boosts": {
+          "minter": 1.0002622715104823,
+          "haivelo": 2,
+          "lpStaking_HAI_VELO_VELO": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x7fb7d0d4799b56ccbfd7303e9f66e8ff6776dcf7",
+      "run1Rewards": {
+        "HAI": "38.0677",
+        "KITE": "5.9417"
+      },
+      "run2Rewards": {
+        "HAI": "39.3363",
+        "KITE": "6.1396"
+      },
+      "run1Positions": {
+        "Minter Debt": "147.8771",
+        "haiVELO Collateral": "140857.3716"
+      },
+      "run2Positions": {
+        "Minter Debt": "147.8771",
+        "haiVELO Collateral": "140857.3716"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 147.87714618157725,
+          "byCollateral": {
+            "HAIVELOV2": 147.87714618157725
+          }
+        },
+        "haivelo": {
+          "collateral": 140857.3716272851
+        },
+        "kiteStaked": 216.97361433421375,
+        "kiteShare": 0.0009617050667959399,
+        "boosts": {
+          "minter": 1.0002613917483518,
+          "haivelo": 1.0739083178921298
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 147.87714618157725,
+          "byCollateral": {
+            "HAIVELOV2": 147.87714618157725
+          }
+        },
+        "haivelo": {
+          "collateral": 140857.3716272851
+        },
+        "kiteStaked": 216.97361433421375,
+        "kiteShare": 0.0009561500932622258,
+        "boosts": {
+          "minter": 1.0002613917483518,
+          "haivelo": 1.0735375522758135
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x87880c614432add2bb93b350dbdd8a59bd06fed7",
+      "run1Rewards": {
+        "OP": "129.4319"
+      },
+      "run2Rewards": {
+        "OP": "129.4319"
+      },
+      "run1Positions": {
+        "Uniswap LP": "24258354848290693000"
+      },
+      "run2Positions": {
+        "Uniswap LP": "24258354848290693000"
+      },
+      "run1DetailedPositions": {
+        "lp": {
+          "liquidity": 24258354848290693000
+        }
+      },
+      "run2DetailedPositions": {
+        "lp": {
+          "liquidity": 24258354848290693000
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x89edc11116ca95170fdfe2669f66dbb287dccf7a",
+      "run1Rewards": {
+        "HAI": "71.8164",
+        "KITE": "31.9361"
+      },
+      "run2Rewards": {
+        "HAI": "74.5196",
+        "KITE": "33.0889"
+      },
+      "run1Positions": {
+        "Minter Debt": "8436.0518",
+        "haiVELO Collateral": "264880.3618",
+        "Uniswap LP": "215930730274077540000"
+      },
+      "run2Positions": {
+        "Minter Debt": "8436.0518",
+        "haiVELO Collateral": "264880.3618",
+        "Uniswap LP": "215930730274077540000"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 8436.051835313963,
+          "byCollateral": {
+            "RETH": 1155.439942805343,
+            "HAIVELOV2": 841.8820554630465,
+            "WETH": 6438.729837045574
+          }
+        },
+        "haivelo": {
+          "collateral": 264880.3617711591
+        },
+        "lp": {
+          "liquidity": 215930730274077540000
+        },
+        "kiteStaked": 1198.766293311958,
+        "kiteShare": 0.005313363201879925,
+        "boosts": {
+          "minter": 1.0149117993913086,
+          "haivelo": 1.2171454516541067,
+          "lp": 1.0105112324452408
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 8436.051835313963,
+          "byCollateral": {
+            "RETH": 1155.439942805343,
+            "HAIVELOV2": 841.8820554630465,
+            "WETH": 6438.729837045574
+          }
+        },
+        "haivelo": {
+          "collateral": 264880.3617711591
+        },
+        "lp": {
+          "liquidity": 215930730274077540000
+        },
+        "kiteStaked": 1198.766293311958,
+        "kiteShare": 0.005282672304035548,
+        "boosts": {
+          "minter": 1.0149117993913086,
+          "haivelo": 1.216056128158336,
+          "lp": 1.0104505177624798
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x909d859036b914aa02e33004287b9c7536db0416",
+      "run1Rewards": {
+        "KITE": "0.2766"
+      },
+      "run2Rewards": {
+        "KITE": "0.2790"
+      },
+      "run1Positions": {
+        "LP Staking (HAI_BOLD_CURVE)": "11.0400"
+      },
+      "run2Positions": {
+        "LP Staking (HAI_BOLD_CURVE)": "11.0400"
+      },
+      "run1DetailedPositions": {
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 11.04
+        }
+      },
+      "run2DetailedPositions": {
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 11.04
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x91097504c1ca1ffa06798a16a31b1702d76f798f",
+      "run1Rewards": {
+        "HAI": "3.5081",
+        "KITE": "0.6096"
+      },
+      "run2Rewards": {
+        "HAI": "5.1842",
+        "KITE": "0.9000"
+      },
+      "run1Positions": {
+        "Minter Debt": "255.8498",
+        "haiVELO Collateral": "212946.7192",
+        "LP Staking (HAI_BOLD_CURVE)": "367.1828",
+        "LP Staking (HAI_VELO_VELO)": "2038.4717"
+      },
+      "run2Positions": {
+        "Minter Debt": "255.8498",
+        "haiVELO Collateral": "212946.7192",
+        "LP Staking (HAI_BOLD_CURVE)": "367.1828",
+        "LP Staking (HAI_VELO_VELO)": "2038.4717"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 255.8498124788513,
+          "byCollateral": {
+            "ALETH": 255.8498124788513
+          }
+        },
+        "haivelo": {
+          "collateral": 212946.71916002472
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 367.18284526562456,
+          "HAI_VELO_VELO": 2038.4716774869478
+        },
+        "kiteStaked": 137.1980867599301,
+        "kiteShare": 0.0006081112470592605,
+        "boosts": {
+          "minter": 1.000452247230395,
+          "haivelo": 1.0309131368642497,
+          "lpStaking_HAI_BOLD_CURVE": 1.1716739718088944,
+          "lpStaking_HAI_VELO_VELO": 1.142449436630692
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 255.8498124788513,
+          "byCollateral": {
+            "ALETH": 255.8498124788513
+          }
+        },
+        "haivelo": {
+          "collateral": 212946.71916002472
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 367.18284526562456,
+          "HAI_VELO_VELO": 2038.4716774869478
+        },
+        "kiteStaked": 137.1980867599301,
+        "kiteShare": 0.0006045986921194986,
+        "boosts": {
+          "minter": 1.000452247230395,
+          "haivelo": 1.0307580592144179,
+          "lpStaking_HAI_BOLD_CURVE": 1.1706823534814552,
+          "lpStaking_HAI_VELO_VELO": 1.141626624234567
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x93148918047d0953d34ae1376031492d0dd472ec",
+      "run1Rewards": {
+        "HAI": "187.3975",
+        "KITE": "157.5358"
+      },
+      "run2Rewards": {
+        "HAI": "233.3471",
+        "KITE": "192.0160"
+      },
+      "run1Positions": {
+        "Minter Debt": "15146.0852",
+        "haiVELO Collateral": "4722454.2749",
+        "haiAERO Collateral": "13582.3719",
+        "LP Staking (HAI_VELO_VELO)": "102792.8352"
+      },
+      "run2Positions": {
+        "Minter Debt": "15146.0852",
+        "haiVELO Collateral": "4730724.8865",
+        "haiAERO Collateral": "13582.3719",
+        "LP Staking (HAI_VELO_VELO)": "102792.8352"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 15146.085177843857,
+          "byCollateral": {
+            "HAIVELOV2": 14646.599967902373,
+            "HAIAERO": 499.4852099414837
+          }
+        },
+        "haivelo": {
+          "collateral": 4722454.274949418
+        },
+        "haiaero": {
+          "collateral": 13582.371930740308
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 102792.83518580561
+        },
+        "kiteStaked": 9504.971517795328,
+        "kiteShare": 0.042129451069265134,
+        "boosts": {
+          "minter": 1.0267726405840978,
+          "haivelo": 1.0965715124497555,
+          "haiaero": 1.6634605664136588,
+          "lpStaking_HAI_VELO_VELO": 1.1957065394587374
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 15146.085177843857,
+          "byCollateral": {
+            "HAIVELOV2": 14646.599967902373,
+            "HAIAERO": 499.4852099414837
+          }
+        },
+        "haivelo": {
+          "collateral": 4730724.886529065
+        },
+        "haiaero": {
+          "collateral": 13582.371930740308
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 102792.83518580561
+        },
+        "kiteStaked": 9504.971517795328,
+        "kiteShare": 0.04188610412875314,
+        "boosts": {
+          "minter": 1.0267726405840978,
+          "haivelo": 1.095919068857247,
+          "haiaero": 1.6596283043051,
+          "lpStaking_HAI_VELO_VELO": 1.1945761048955816
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x9492510bbcb93b6992d8b7bb67888558e12dcac4",
+      "run1Rewards": {
+        "OP": "137.4319"
+      },
+      "run2Rewards": {
+        "OP": "137.4319"
+      },
+      "run1Positions": {
+        "Uniswap LP": "25757726375864990000"
+      },
+      "run2Positions": {
+        "Uniswap LP": "25757726375864990000"
+      },
+      "run1DetailedPositions": {
+        "lp": {
+          "liquidity": 25757726375864990000
+        }
+      },
+      "run2DetailedPositions": {
+        "lp": {
+          "liquidity": 25757726375864990000
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x9aa00d3eadda7017f30bed9d483b873776bd251c",
+      "run1Rewards": {
+        "HAI": "2.2992",
+        "KITE": "0.9957"
+      },
+      "run2Rewards": {
+        "HAI": "2.7985",
+        "KITE": "1.1920"
+      },
+      "run1Positions": {
+        "Minter Debt": "54533.6083",
+        "haiVELO Collateral": "29764.9785"
+      },
+      "run2Positions": {
+        "Minter Debt": "54533.6083",
+        "haiVELO Collateral": "29764.9785"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 54533.60825966057,
+          "byCollateral": {
+            "WSTETH": 54386.93328166212,
+            "HAIVELOV2": 146.6749779984497
+          }
+        },
+        "haivelo": {
+          "collateral": 29764.978505745934
+        },
+        "kiteStaked": 1107.0196189260869,
+        "kiteShare": 0.004906708955513083,
+        "boosts": {
+          "minter": 1.0963951196990243,
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 54533.60825966057,
+          "byCollateral": {
+            "WSTETH": 54386.93328166212,
+            "HAIVELOV2": 146.6749779984497
+          }
+        },
+        "haivelo": {
+          "collateral": 29764.978505745934
+        },
+        "kiteStaked": 1107.0196189260869,
+        "kiteShare": 0.004878366962394212,
+        "boosts": {
+          "minter": 1.0963951196990243,
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0x9cfe1fd77853b72532c68eba90e9d50f0192c925",
+      "run1Rewards": {
+        "HAI": "2.9958"
+      },
+      "run2Rewards": {
+        "HAI": "3.7501"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "44968.3518"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "44968.3518"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 44968.351776799245
+        },
+        "kiteStaked": 2204.776271684901,
+        "kiteShare": 0.00977236111467809,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 44968.351776799245
+        },
+        "kiteStaked": 2204.776271684901,
+        "kiteShare": 0.00971591427954308,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xa83da61e7ec3fbf3b898cdce1a4e6f5f0bea8501",
+      "run1Rewards": {
+        "HAI": "0.8236"
+      },
+      "run2Rewards": {
+        "HAI": "1.2298"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "24210.0967"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "24210.0967"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 24210.09670195113
+        },
+        "kiteStaked": 9663.2781911816,
+        "kiteShare": 0.04283112316137804,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 24210.09670195113
+        },
+        "kiteStaked": 9663.2781911816,
+        "kiteShare": 0.042583723242426395,
+        "boosts": {
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xa904a0f8b4f0292785ad610dae1084a916142a77",
+      "run1Rewards": {
+        "HAI": "29.4759",
+        "KITE": "7.1008"
+      },
+      "run2Rewards": {
+        "HAI": "43.5586",
+        "KITE": "10.4989"
+      },
+      "run1Positions": {
+        "Minter Debt": "847.6466",
+        "haiVELO Collateral": "1488102.1422",
+        "LP Staking (HAI_BOLD_CURVE)": "249.0797",
+        "LP Staking (HAI_VELO_VELO)": "46111.3974"
+      },
+      "run2Positions": {
+        "Minter Debt": "847.6466",
+        "haiVELO Collateral": "1488102.1422",
+        "LP Staking (HAI_BOLD_CURVE)": "249.0797",
+        "LP Staking (HAI_VELO_VELO)": "46111.3974"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 847.6466310920728,
+          "byCollateral": {
+            "ALETH": 241.50144480402872,
+            "HAIVELOV2": 606.145186288044
+          }
+        },
+        "haivelo": {
+          "collateral": 1488102.1422015112
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 249.07971145248575,
+          "HAI_VELO_VELO": 46111.39740811188
+        },
+        "kiteStaked": 4011.030206788901,
+        "kiteShare": 0.01777832795373308,
+        "boosts": {
+          "minter": 1.0014983237140214,
+          "haivelo": 1.1293269887722022,
+          "lpStaking_HAI_BOLD_CURVE": 2,
+          "lpStaking_HAI_VELO_VELO": 1.1841047575602617
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 847.6466310920728,
+          "byCollateral": {
+            "ALETH": 241.50144480402872,
+            "HAIVELOV2": 606.145186288044
+          }
+        },
+        "haivelo": {
+          "collateral": 1488102.1422015112
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 249.07971145248575,
+          "HAI_VELO_VELO": 46111.39740811188
+        },
+        "kiteStaked": 4011.030206788901,
+        "kiteShare": 0.017675637279984523,
+        "boosts": {
+          "minter": 1.0014983237140214,
+          "haivelo": 1.1286782119894803,
+          "lpStaking_HAI_BOLD_CURVE": 2,
+          "lpStaking_HAI_VELO_VELO": 1.1830413368806916
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xb7d672703e7987715912a0784be91b27d1098c89",
+      "run1Rewards": {
+        "HAI": "4.4194"
+      },
+      "run2Rewards": {
+        "HAI": "4.4194"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "0.0000"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "0.0000"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 3.637978807091713e-12
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 3.637978807091713e-12
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xbad58e133138549936d2576ebc33251be841d3e9",
+      "run1Rewards": {
+        "HAI": "31.1534",
+        "KITE": "14.3974"
+      },
+      "run2Rewards": {
+        "HAI": "31.9721",
+        "KITE": "14.7759"
+      },
+      "run1Positions": {
+        "haiVELO Collateral": "83051.5295",
+        "LP Staking (HAI_VELO_VELO)": "8059.8500"
+      },
+      "run2Positions": {
+        "haiVELO Collateral": "83051.5295",
+        "LP Staking (HAI_VELO_VELO)": "8059.8500"
+      },
+      "run1DetailedPositions": {
+        "haivelo": {
+          "collateral": 83051.52954210063
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 8059.8499985481985
+        },
+        "kiteStaked": 304.15985329120116,
+        "kiteShare": 0.0013481458237382222,
+        "boosts": {
+          "haivelo": 1.1757196096219953,
+          "lpStaking_HAI_VELO_VELO": 1.0798715832698964
+        }
+      },
+      "run2DetailedPositions": {
+        "haivelo": {
+          "collateral": 83051.52954210063
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 8059.8499985481985
+        },
+        "kiteStaked": 304.15985329120116,
+        "kiteShare": 0.0013403587020633788,
+        "boosts": {
+          "haivelo": 1.1748381014072444,
+          "lpStaking_HAI_VELO_VELO": 1.0794102312957008
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xbbff7c2df218839895695c6d13bbfd4acdf8191d",
+      "run1Rewards": {
+        "HAI": "4.1761",
+        "KITE": "2.2050"
+      },
+      "run2Rewards": {
+        "HAI": "5.2277",
+        "KITE": "2.7447"
+      },
+      "run1Positions": {
+        "Minter Debt": "399.9816",
+        "haiVELO Collateral": "117152.8890"
+      },
+      "run2Positions": {
+        "Minter Debt": "399.9816",
+        "haiVELO Collateral": "117152.8890"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 399.9815855482568,
+          "byCollateral": {
+            "HAIVELOV2": 399.9815855482568
+          }
+        },
+        "haivelo": {
+          "collateral": 117152.88900473107
+        },
+        "kiteStaked": 180.96105282491385,
+        "kiteShare": 0.0008020844466663109,
+        "boosts": {
+          "minter": 1.0007070185532698,
+          "haivelo": 1.0741136302288201
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 399.9815855482568,
+          "byCollateral": {
+            "HAIVELOV2": 399.9815855482568
+          }
+        },
+        "haivelo": {
+          "collateral": 117152.88900473107
+        },
+        "kiteStaked": 180.96105282491385,
+        "kiteShare": 0.0007974514692318886,
+        "boosts": {
+          "minter": 1.0007070185532698,
+          "haivelo": 1.073741834650556
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xc224bf25dcc99236f00843c7d8c4194abe8aa94a",
+      "run1Rewards": {
+        "KITE": "9856.9350"
+      },
+      "run2Rewards": {
+        "KITE": "9904.7253"
+      },
+      "run1Positions": {
+        "Minter Debt": "66757.1275"
+      },
+      "run2Positions": {
+        "Minter Debt": "66757.1275"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 66757.1275132859,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 6937.246116581305,
+            "ALETH": 59819.88139670459
+          }
+        },
+        "boosts": {
+          "minter": 1.1180017516311378
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 66757.1275132859,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 6937.246116581305,
+            "ALETH": 59819.88139670459
+          }
+        },
+        "boosts": {
+          "minter": 1.1180017516311378
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xc5233c3b46c83adee1039d340094173f0f7c1ecf",
+      "run1Rewards": {
+        "KITE": "22.2313"
+      },
+      "run2Rewards": {
+        "KITE": "23.3694"
+      },
+      "run1Positions": {
+        "Minter Debt": "6982.5484"
+      },
+      "run2Positions": {
+        "Minter Debt": "6982.5484"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 6982.548422674854,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 766.461855470864,
+            "TBTC": 5820.111689280481,
+            "MSETH": 395.97487792350853
+          }
+        },
+        "boosts": {
+          "minter": 1.0123425464129039
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 6982.548422674854,
+          "byCollateral": {
+            "YV-VELO-ALETH-WETH": 766.461855470864,
+            "TBTC": 5820.111689280481,
+            "MSETH": 395.97487792350853
+          }
+        },
+        "boosts": {
+          "minter": 1.0123425464129039
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xd7c3e89f7a42216a187effa0ee26c1492493b705",
+      "run1Rewards": {
+        "KITE": "0.3460"
+      },
+      "run2Rewards": {
+        "KITE": "0.3460"
+      },
+      "run1Positions": {
+        "Minter Debt": "14552.8624"
+      },
+      "run2Positions": {
+        "Minter Debt": "14552.8624"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 14552.86240340767,
+          "byCollateral": {
+            "TBTC": 14552.86240340767
+          }
+        },
+        "boosts": {
+          "minter": 1.0257240435413773
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 14552.86240340767,
+          "byCollateral": {
+            "TBTC": 14552.86240340767
+          }
+        },
+        "boosts": {
+          "minter": 1.0257240435413773
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xde93a283495fa2834047b53871a8e4e09f96d841",
+      "run1Rewards": {
+        "KITE": "0.0715"
+      },
+      "run2Rewards": {
+        "KITE": "0.0750"
+      },
+      "run1Positions": {
+        "Minter Debt": "7243.2347"
+      },
+      "run2Positions": {
+        "Minter Debt": "7243.2347"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 7243.234734001353,
+          "byCollateral": {
+            "WSTETH": 7243.234734001353
+          }
+        },
+        "boosts": {
+          "minter": 1.012803342772913
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 7243.234734001353,
+          "byCollateral": {
+            "WSTETH": 7243.234734001353
+          }
+        },
+        "boosts": {
+          "minter": 1.012803342772913
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xea9b45f713dfba500d1e0e7d599bb63aa32955c8",
+      "run1Rewards": {
+        "KITE": "0.1409"
+      },
+      "run2Rewards": {
+        "KITE": "0.3355"
+      },
+      "run1Positions": {
+        "Minter Debt": "147.9920",
+        "LP Staking (HAI_BOLD_CURVE)": "183.6672"
+      },
+      "run2Positions": {
+        "Minter Debt": "147.9920",
+        "LP Staking (HAI_BOLD_CURVE)": "183.6672"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 147.9920063200204,
+          "byCollateral": {
+            "YV-VELO-MSETH-WETH": 147.9920063200204
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 183.66719889598096
+        },
+        "boosts": {
+          "minter": 1.0002615947783207
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 147.9920063200204,
+          "byCollateral": {
+            "YV-VELO-MSETH-WETH": 147.9920063200204
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 183.66719889598096
+        },
+        "boosts": {
+          "minter": 1.0002615947783207
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xf23954c514da88490ea715a89d591b3f586d7b7a",
+      "run1Rewards": {
+        "HAI": "64.8443",
+        "KITE": "23.8866"
+      },
+      "run2Rewards": {
+        "HAI": "68.7750",
+        "KITE": "25.2440"
+      },
+      "run1Positions": {
+        "Minter Debt": "850.0447",
+        "haiVELO Collateral": "235650.7074",
+        "LP Staking (HAI_VELO_VELO)": "2222.7764"
+      },
+      "run2Positions": {
+        "Minter Debt": "850.0447",
+        "haiVELO Collateral": "235650.7074",
+        "LP Staking (HAI_VELO_VELO)": "2222.7764"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 850.0446504816172,
+          "byCollateral": {
+            "HAIVELOV2": 850.0446504816172
+          }
+        },
+        "haivelo": {
+          "collateral": 235650.70742508414
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 2222.7763850803362
+        },
+        "kiteStaked": 5854.551394112529,
+        "kiteShare": 0.02594947665324218,
+        "boosts": {
+          "minter": 1.0015025625196583,
+          "haivelo": 2,
+          "lpStaking_HAI_VELO_VELO": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 850.0446504816172,
+          "byCollateral": {
+            "HAIVELOV2": 850.0446504816172
+          }
+        },
+        "haivelo": {
+          "collateral": 235650.70742508414
+        },
+        "lpStaking": {
+          "HAI_VELO_VELO": 2222.7763850803362
+        },
+        "kiteStaked": 5882.666683206493,
+        "kiteShare": 0.02592348528201448,
+        "boosts": {
+          "minter": 1.0015025625196583,
+          "haivelo": 2,
+          "lpStaking_HAI_VELO_VELO": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xf23f999ece302ea646509b51e6c4c19055471ab0",
+      "run1Rewards": {
+        "HAI": "3.0425",
+        "KITE": "35.1970"
+      },
+      "run2Rewards": {
+        "HAI": "4.0267",
+        "KITE": "46.4762"
+      },
+      "run1Positions": {
+        "Minter Debt": "19830.2719",
+        "haiAERO Collateral": "3512.8980"
+      },
+      "run2Positions": {
+        "Minter Debt": "19830.2719",
+        "haiAERO Collateral": "3512.8980"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 19830.271942278447,
+          "byCollateral": {
+            "TBTC": 5807.3142517305305,
+            "YV-VELO-MSETH-WETH": 3065.7295327147103,
+            "HAIAERO": 299.7238111348878,
+            "WETH": 1524.336917273217,
+            "YV-VELO-ALETH-WETH": 913.8619852934471,
+            "ALETH": 3347.6600393185113,
+            "MSETH": 4871.645404813146
+          }
+        },
+        "haiaero": {
+          "collateral": 3512.897957744748
+        },
+        "kiteStaked": 8500,
+        "kiteShare": 0.0376750559871025,
+        "boosts": {
+          "minter": 1.0350525391321692,
+          "haiaero": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 19830.271942278447,
+          "byCollateral": {
+            "TBTC": 5807.3142517305305,
+            "YV-VELO-MSETH-WETH": 3065.7295327147103,
+            "HAIAERO": 299.7238111348878,
+            "WETH": 1524.336917273217,
+            "YV-VELO-ALETH-WETH": 913.8619852934471,
+            "ALETH": 3347.6600393185113,
+            "MSETH": 4871.645404813146
+          }
+        },
+        "haiaero": {
+          "collateral": 3512.897957744748
+        },
+        "kiteStaked": 8500,
+        "kiteShare": 0.03745743839714136,
+        "boosts": {
+          "minter": 1.0350525391321692,
+          "haiaero": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xf4527a233f669a55922f707c61054fa78bea7402",
+      "run1Rewards": {
+        "HAI": "44.8271",
+        "KITE": "13.8457"
+      },
+      "run2Rewards": {
+        "HAI": "50.5764",
+        "KITE": "15.2224"
+      },
+      "run1Positions": {
+        "Minter Debt": "1000.3117",
+        "haiVELO Collateral": "342744.4734"
+      },
+      "run2Positions": {
+        "Minter Debt": "1000.3117",
+        "haiVELO Collateral": "342744.4734"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 1000.3116561492646,
+          "byCollateral": {
+            "HAIVELOV2": 1000.3116561492646
+          }
+        },
+        "haivelo": {
+          "collateral": 342744.47341090976
+        },
+        "kiteStaked": 10000,
+        "kiteShare": 0.04432359527894412,
+        "boosts": {
+          "minter": 1.001768178649975,
+          "haivelo": 2
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 1000.3116561492646,
+          "byCollateral": {
+            "HAIVELOV2": 1000.3116561492646
+          }
+        },
+        "haivelo": {
+          "collateral": 342744.47341090976
+        },
+        "kiteStaked": 10000,
+        "kiteShare": 0.044067574584872184,
+        "boosts": {
+          "minter": 1.001768178649975,
+          "haivelo": 2
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xf7039de39c595bc7eb91a65f61fc465b9035775c",
+      "run1Rewards": {
+        "KITE": "5.1277"
+      },
+      "run2Rewards": {
+        "KITE": "12.3386"
+      },
+      "run1Positions": {
+        "Minter Debt": "4678.7615",
+        "haiVELO Collateral": "1204725.9118"
+      },
+      "run2Positions": {
+        "Minter Debt": "4678.7615",
+        "haiVELO Collateral": "1204725.9118"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 4678.761526094487,
+          "byCollateral": {
+            "HAIVELOV2": 4678.761526094487
+          }
+        },
+        "haivelo": {
+          "collateral": 1204725.911821464
+        },
+        "boosts": {
+          "minter": 1.0082703087461882
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 4678.761526094487,
+          "byCollateral": {
+            "HAIVELOV2": 4678.761526094487
+          }
+        },
+        "haivelo": {
+          "collateral": 1204725.911821464
+        },
+        "boosts": {
+          "minter": 1.0082703087461882
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    },
+    {
+      "address": "0xfe2f55dcefb42b018ed7f2b44d8cb8158733f5fe",
+      "run1Rewards": {
+        "KITE": "860.4105"
+      },
+      "run2Rewards": {
+        "KITE": "871.2829"
+      },
+      "run1Positions": {
+        "Minter Debt": "13482.9053",
+        "LP Staking (HAI_BOLD_CURVE)": "36950.1220"
+      },
+      "run2Positions": {
+        "Minter Debt": "13482.9053",
+        "LP Staking (HAI_BOLD_CURVE)": "36950.1220"
+      },
+      "run1DetailedPositions": {
+        "minter": {
+          "totalDebt": 13482.905316972809,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 13482.905316972809
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 36950.12200965796
+        },
+        "boosts": {
+          "minter": 1.0238327576956174
+        }
+      },
+      "run2DetailedPositions": {
+        "minter": {
+          "totalDebt": 13482.905316972809,
+          "byCollateral": {
+            "MOO-VELO-BOLD-LUSD": 13482.905316972809
+          }
+        },
+        "lpStaking": {
+          "HAI_BOLD_CURVE": 36950.12200965796
+        },
+        "boosts": {
+          "minter": 1.0238327576956174
+        }
+      },
+      "run1HasPosition": true,
+      "run2HasPosition": true
+    }
+  ]
+}

@@ -24,6 +24,17 @@ export type RewardsMap = {
 
 type RewardObject = Record<string, { address: string; earned: number }[]>;
 
+export type StrategyRewardEntry = {
+  strategy: string;
+  token: string;
+  rewards: { address: string; earned: number }[];
+};
+
+export type DetailedCombineResult = {
+  combined: RewardsMap;
+  byStrategy: StrategyRewardEntry[];
+};
+
 type ProcessedTransfer = {
   blockNumber: number;
   value: number;
@@ -522,6 +533,91 @@ export const combineResults = async () => {
   const combinedRewards = combineRewards(allRewardMaps);
 
   return combinedRewards;
+};
+
+/**
+ * Same as combineResults but preserves per-strategy reward attribution.
+ * Used by the report generator for detailed breakdown visualization.
+ */
+export const combineResultsDetailed = async (): Promise<DetailedCombineResult> => {
+  const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2;
+
+  const haiaeroEnabled = config().HAIAERO_REWARDS_ENABLED;
+
+  const [processedTransfers, haiaeroProcessedTransfers] = await Promise.all([
+    getProcessedTransfers(),
+    haiaeroEnabled ? getHaiaeroProcessedTransfers() : Promise.resolve([]),
+  ]);
+
+  const earliestTransferBlock =
+    processedTransfers.length > 0
+      ? Math.min(...processedTransfers.map(t => t.blockNumber))
+      : 0;
+
+  const [
+    haiVeloHistoricalRewards,
+    haiVeloDailyRewards,
+    haiAeroDailyRewards,
+    lpHistoricalRewards,
+    minterRewards,
+    lpStakingRewards
+  ] = await Promise.all([
+    earliestTransferBlock > 0
+      ? calculateHaiVeloHistoricalRewards(
+          earliestTransferBlock,
+          REWARD_DEPOSIT_ِEPOCH_BLOCK
+        )
+      : {},
+    calculateHaiVeloDailyRewards(processedTransfers),
+    calculateHaiAeroDailyRewards(haiaeroProcessedTransfers),
+    calculateLpHistoricalRewards(),
+    calculateCurrentMinterRewards(),
+    calculateCurrentLpStakingRewards()
+  ]);
+
+  // Tag each reward map with strategy name
+  const byStrategy: StrategyRewardEntry[] = [];
+
+  for (const [token, rewards] of Object.entries(haiVeloHistoricalRewards as RewardObject)) {
+    if (rewards && rewards.length > 0) byStrategy.push({ strategy: 'haiVELO-historical', token, rewards });
+  }
+
+  haiVeloDailyRewards.forEach((epochRewards) => {
+    for (const [token, rewards] of Object.entries(epochRewards)) {
+      if (rewards.length > 0) byStrategy.push({ strategy: 'haiVELO', token, rewards });
+    }
+  });
+
+  haiAeroDailyRewards.forEach((epochRewards) => {
+    for (const [token, rewards] of Object.entries(epochRewards)) {
+      if (rewards.length > 0) byStrategy.push({ strategy: 'haiAERO', token, rewards });
+    }
+  });
+
+  for (const [token, rewards] of Object.entries(lpHistoricalRewards)) {
+    if (rewards.length > 0) byStrategy.push({ strategy: 'LP', token, rewards });
+  }
+
+  for (const [token, rewards] of Object.entries(minterRewards)) {
+    if (rewards.length > 0) byStrategy.push({ strategy: 'minter', token, rewards });
+  }
+
+  for (const [token, rewards] of Object.entries(lpStakingRewards)) {
+    if (rewards.length > 0) byStrategy.push({ strategy: 'lpStaking', token, rewards });
+  }
+
+  const allRewardMaps = [
+    lpHistoricalRewards,
+    haiVeloHistoricalRewards,
+    ...haiVeloDailyRewards,
+    ...haiAeroDailyRewards,
+    minterRewards,
+    lpStakingRewards
+  ];
+
+  const combined = combineRewards(allRewardMaps);
+
+  return { combined, byStrategy };
 };
 
 export const combineResultsProd = async (): Promise<RewardsMap> => {
