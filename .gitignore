@@ -24,3 +24,5 @@ telegram-users.json
 .env.development
 
 *.log
+
+/reports

@@ -1,8 +1,13 @@
 import { providers } from "ethers";
 import { RewardStrategy, BlockRange, StrategyEvent } from "../interfaces/IRewardStrategy";
-import { TimeWeightedDistributor } from "./TimeWeightedDistributor";
+import { TimeWeightedDistributor, DailySnapshot } from "./TimeWeightedDistributor";
 
 const distributor = new TimeWeightedDistributor();
+
+export interface StrategyRewardsResult {
+  earned: Map<string, number>;
+  dailySnapshots: DailySnapshot[];
+}
 
 export async function calculateStrategyRewards<
   TEvent extends StrategyEvent,
@@ -13,6 +18,24 @@ export async function calculateStrategyRewards<
   rewardAmount: number,
   provider: providers.Provider
 ): Promise<Map<string, number>> {
+  const result = await calculateStrategyRewardsDetailed(
+    strategy,
+    blockRange,
+    rewardAmount,
+    provider
+  );
+  return result.earned;
+}
+
+export async function calculateStrategyRewardsDetailed<
+  TEvent extends StrategyEvent,
+  TUserState
+>(
+  strategy: RewardStrategy<TEvent, TUserState>,
+  blockRange: BlockRange,
+  rewardAmount: number,
+  provider: providers.Provider
+): Promise<StrategyRewardsResult> {
   const [startTimestamp, endTimestamp] = await Promise.all([
     provider.getBlock(blockRange.startBlock).then((b) => b.timestamp),
     provider.getBlock(blockRange.endBlock).then((b) => b.timestamp),
@@ -34,5 +57,5 @@ export async function calculateStrategyRewards<
     rewardAmount,
   });
 
-  return result.earned;
+  return { earned: result.earned, dailySnapshots: result.dailySnapshots };
 }
