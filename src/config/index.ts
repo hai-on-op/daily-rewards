@@ -55,7 +55,11 @@ const parseMinterWindows = (windowsStr: string | undefined): MinterRewardWindow[
       if (!config || typeof config !== 'object') {
         throw new Error("Invalid config in REWARD_MINTER_WINDOWS item");
       }
-      return { startBlock, endBlock, config } as MinterRewardWindow;
+      const mode = w.mode as MinterRewardWindow['mode'];
+      if (mode && mode !== 'fixed' && mode !== 'dynamic') {
+        throw new Error(`Invalid mode "${mode}" in REWARD_MINTER_WINDOWS item`);
+      }
+      return { startBlock, endBlock, ...(mode ? { mode } : {}), config } as MinterRewardWindow;
     });
   } catch (error) {
     console.error("Error parsing minter windows:", error);

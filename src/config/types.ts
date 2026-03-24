@@ -20,6 +20,7 @@ export interface MinterRewardConfig {
 export interface MinterRewardWindow {
   startBlock: number;
   endBlock?: number;
+  mode?: 'fixed' | 'dynamic';
   config: MinterRewardConfig;
 }
 

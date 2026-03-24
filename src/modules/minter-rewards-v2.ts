@@ -1,10 +1,42 @@
 import { UserList } from "../types";
 import { config } from "../config";
+import { MinterRewardWindow } from "../config/types";
 import { minterProvider } from "../utils/chain";
 import { MinterStrategy } from "../core/rewards/strategies/MinterStrategy";
 import { calculateStrategyRewards } from "../core/rewards/calculateRewards";
+import {
+  DynamicRewardCalculator,
+  getDynamicTotalReward,
+} from "./dynamic-reward-calculator";
 
 type FinalResult = Record<string, Record<string, UserList>>;
+
+async function resolveRewardAmount(
+  window: MinterRewardWindow,
+  rewardToken: string,
+  collateralType: string,
+  blockRange: { startBlock: number; endBlock: number },
+  dynamicCalculator: DynamicRewardCalculator = getDynamicTotalReward
+): Promise<number> {
+  const configValue = window.config[rewardToken]?.[collateralType] ?? 0;
+
+  if (!window.mode || window.mode === "fixed") {
+    const totalBlocks = blockRange.endBlock - blockRange.startBlock;
+    const secsInDay = 86400;
+    const opBlockTime = 2;
+    const blocksInDay = Math.floor(secsInDay / opBlockTime);
+    const perBlockRewardAmount =
+      blocksInDay > 0 ? configValue / blocksInDay : 0;
+    return perBlockRewardAmount * totalBlocks;
+  }
+
+  if (window.mode === "dynamic") {
+    const totalDynamic = await dynamicCalculator(rewardToken, blockRange);
+    return totalDynamic * configValue;
+  }
+
+  throw new Error(`Unknown window mode: ${(window as any).mode}`);
+}
 
 /**
  * V2 implementation of minter rewards using the new RewardStrategy abstraction.
@@ -42,17 +74,12 @@ export const calculateMinterRewardsV2 = async (
       for (const cType of collateralTypes) {
         const startBlock = window.startBlock;
         const endBlock = effectiveEndBlock;
-        const dailyRewardAmount =
-          window.config[rewardToken][cType] ?? 0;
-
-        // Calculate total rewards for the window based on block time
-        const totalBlocks = endBlock - startBlock;
-        const secsInDay = 86400;
-        const opBlockTime = 2;
-        const blocksInDay = Math.floor(secsInDay / opBlockTime);
-        const perBlockRewardAmount =
-          blocksInDay > 0 ? dailyRewardAmount / blocksInDay : 0;
-        const rewardAmount = perBlockRewardAmount * totalBlocks;
+        const rewardAmount = await resolveRewardAmount(
+          window,
+          rewardToken,
+          cType,
+          { startBlock, endBlock }
+        );
 
         console.log(
           `[V2] Minter: window=${w} token=${rewardToken} cType=${cType} reward=${rewardAmount.toFixed(2)}`
