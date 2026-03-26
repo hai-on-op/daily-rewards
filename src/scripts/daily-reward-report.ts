@@ -78,21 +78,41 @@ interface StrategyDailyEntry {
   dailyEarned: Map<number, Map<string, number>>;
   /** dayTimestamp → total pool earned delta for that day */
   dailyTotal: Map<number, number>;
-  /** dayTimestamp → per-user position weight (from strategy.getWeight) */
+  /** dayTimestamp → per-user time-weighted avg boosted weight */
   dailyWeights: Map<number, Map<string, number>>;
-  /** dayTimestamp → per-user boost multiplier */
+  /** dayTimestamp → per-user time-weighted avg position (real units) */
+  dailyAvgPositions: Map<number, Map<string, number>>;
+  /** dayTimestamp → per-user point-in-time end-of-day weight */
+  dailyEodWeights: Map<number, Map<string, number>>;
+  /** dayTimestamp → per-user boost at end of day */
   dailyBoosts: Map<number, Map<string, number>>;
-  /** dayTimestamp → total boosted weight (sum of weight*boost) */
+  /** dayTimestamp → time-weighted avg total position (sum of getWeight, real units) */
+  dailyAvgTotalPosition: Map<number, number>;
+  /** dayTimestamp → time-weighted avg total boosted weight */
   dailyTotalWeight: Map<number, number>;
-  /** dayTimestamp → total unboosted weight (sum of weight) */
+  /** dayTimestamp → time-weighted avg total unboosted weight */
   dailyTotalUnboostedWeight: Map<number, number>;
 }
 
 interface StrategyPositionData {
-  weight: number;
-  boost: number;
-  totalWeight: number;
-  totalUnboostedWeight: number;
+  /** Time-weighted avg boosted weight for this day */
+  avgWeight: number;
+  /** Time-weighted avg unboosted weight for this day */
+  avgUnboostedWeight: number;
+  /** Time-weighted avg total boosted weight for this day */
+  avgTotalWeight: number;
+  /** Time-weighted avg total unboosted weight for this day */
+  avgTotalUnboostedWeight: number;
+  /** Time-weighted avg position in real units (debt, collateral, LP staked) */
+  avgPosition: number;
+  /** Time-weighted avg total position across all users (real units) */
+  avgTotalPosition: number;
+  /** Point-in-time weight at end of day */
+  endOfDayWeight: number;
+  /** Point-in-time boost at end of day */
+  endOfDayBoost: number;
+  /** True if this reward is based on a delayed position (~7 days ago) */
+  isDelayed: boolean;
 }
 
 interface DailyUserData {
@@ -167,6 +187,9 @@ function diffSnapshots(snapshots: DailySnapshot[]): Omit<StrategyDailyEntry, 'st
   const dailyEarned = new Map<number, Map<string, number>>();
   const dailyTotal = new Map<number, number>();
   const dailyWeights = new Map<number, Map<string, number>>();
+  const dailyAvgPositions = new Map<number, Map<string, number>>();
+  const dailyAvgTotalPosition = new Map<number, number>();
+  const dailyEodWeights = new Map<number, Map<string, number>>();
   const dailyBoosts = new Map<number, Map<string, number>>();
   const dailyTotalWeight = new Map<number, number>();
   const dailyTotalUnboostedWeight = new Map<number, number>();
@@ -190,16 +213,19 @@ function diffSnapshots(snapshots: DailySnapshot[]): Omit<StrategyDailyEntry, 'st
     dailyEarned.set(curr.dayTimestamp, dayDeltas);
     dailyTotal.set(curr.dayTimestamp, daySum);
 
-    // Use the latest snapshot's weights/boosts for each day
-    dailyWeights.set(curr.dayTimestamp, curr.weights);
+    // Time-weighted avg weights, positions, and point-in-time data
+    dailyWeights.set(curr.dayTimestamp, curr.avgWeights);
+    dailyAvgPositions.set(curr.dayTimestamp, curr.avgPositions);
+    dailyAvgTotalPosition.set(curr.dayTimestamp, curr.avgTotalPosition);
+    dailyEodWeights.set(curr.dayTimestamp, curr.weights);
     dailyBoosts.set(curr.dayTimestamp, curr.boosts);
-    dailyTotalWeight.set(curr.dayTimestamp, curr.totalWeight);
-    dailyTotalUnboostedWeight.set(curr.dayTimestamp, curr.totalUnboostedWeight);
+    dailyTotalWeight.set(curr.dayTimestamp, curr.avgTotalWeight);
+    dailyTotalUnboostedWeight.set(curr.dayTimestamp, curr.avgTotalUnboostedWeight);
   }
 
   return {
     dailyEarned, dailyTotal,
-    dailyWeights, dailyBoosts, dailyTotalWeight, dailyTotalUnboostedWeight,
+    dailyWeights, dailyAvgPositions, dailyAvgTotalPosition, dailyEodWeights, dailyBoosts, dailyTotalWeight, dailyTotalUnboostedWeight,
   };
 }
 
@@ -811,8 +837,16 @@ function buildDailyReports(
     > = {};
 
     for (const entry of entries) {
-      const dayEarned = entry.dailyEarned.get(dayTs);
-      const dayTotal = entry.dailyTotal.get(dayTs) || 0;
+      // haiVELO and haiAERO rewards are based on positions from ~7 days ago.
+      // Shift their data forward so it appears on the day the user receives it.
+      const DELAY_SECONDS = 7 * 86400; // 7 days
+      const isDelayedStrategy = entry.strategy === 'haiVELO' ||
+        entry.strategy === 'haiVELO-historical' ||
+        entry.strategy === 'haiAERO';
+      const lookupTs = isDelayedStrategy ? dayTs - DELAY_SECONDS : dayTs;
+
+      const dayEarned = entry.dailyEarned.get(lookupTs);
+      const dayTotal = entry.dailyTotal.get(lookupTs) || 0;
       if (!dayEarned || dayTotal <= 0) continue;
 
       strategyTotals.push({
@@ -823,11 +857,11 @@ function buildDailyReports(
       totalRewardByToken[entry.token] =
         (totalRewardByToken[entry.token] || 0) + dayTotal;
 
-      // Weight data for this day
-      const dayWeights = entry.dailyWeights.get(dayTs);
-      const dayBoosts = entry.dailyBoosts.get(dayTs);
-      const dayTotalW = entry.dailyTotalWeight.get(dayTs) || 0;
-      const dayTotalUW = entry.dailyTotalUnboostedWeight.get(dayTs) || 0;
+      // Weight data for this day (from the position day, not the reward day)
+      const dayWeights = entry.dailyWeights.get(lookupTs);
+      const dayBoosts = entry.dailyBoosts.get(lookupTs);
+      const dayTotalW = entry.dailyTotalWeight.get(lookupTs) || 0;
+      const dayTotalUW = entry.dailyTotalUnboostedWeight.get(lookupTs) || 0;
 
       for (const [addr, earned] of dayEarned) {
         // By token
@@ -850,19 +884,81 @@ function buildDailyReports(
         userStrategyShare[addr][entry.strategy][entry.token] =
           dayTotal > 0 ? earned / dayTotal : 0;
 
-        // Position weights
-        if (dayWeights) {
-          const w = dayWeights.get(addr) || 0;
-          const b = dayBoosts?.get(addr) || 1;
+        // Position data from snapshot
+        if (dayBoosts) {
+          const b = dayBoosts.get(addr) || 1;
+          const eodWeights = entry.dailyEodWeights.get(lookupTs);
+          const endW = eodWeights?.get(addr) || 0;
+          const avgPositions = entry.dailyAvgPositions.get(lookupTs);
+          const avgPos = avgPositions?.get(addr) || 0;
+          const avgTotalPos = entry.dailyAvgTotalPosition.get(lookupTs) || 0;
+
           if (!userStrategyPositions[addr]) userStrategyPositions[addr] = {};
           if (!userStrategyPositions[addr][entry.strategy])
             userStrategyPositions[addr][entry.strategy] = {};
-          userStrategyPositions[addr][entry.strategy][entry.token] = {
-            weight: w,
-            boost: b,
-            totalWeight: dayTotalW,
-            totalUnboostedWeight: dayTotalUW,
-          };
+
+          const existing = userStrategyPositions[addr][entry.strategy][entry.token];
+          if (existing) {
+            // Sum across sub-entries (e.g. minter collateral types)
+            existing.endOfDayWeight += endW;
+            existing.avgPosition += avgPos;
+            existing.avgTotalPosition += avgTotalPos;
+            existing.endOfDayBoost = Math.max(existing.endOfDayBoost, b);
+          } else {
+            userStrategyPositions[addr][entry.strategy][entry.token] = {
+              avgWeight: 0,        // computed after loop from earned
+              avgUnboostedWeight: 0,
+              avgTotalWeight: 0,
+              avgTotalUnboostedWeight: 0,
+              avgPosition: avgPos,
+              avgTotalPosition: avgTotalPos,
+              endOfDayWeight: endW,
+              endOfDayBoost: b,
+              isDelayed: isDelayedStrategy,
+            };
+          }
+        }
+      }
+    }
+
+    // Compute avgWeight from earned-based share. For multi-sub-entry strategies,
+    // the distributor weights can't be combined, so we derive from earned amounts.
+    //
+    // Boosted weight: proportional to earned (since earned ∝ weight * boost)
+    // Unboosted weight: earned / boost (removing the boost effect)
+    // Total unboosted: sum across ALL users of (earned / boost)
+
+    // First, compute total unboosted weight per strategy+token across all users
+    const stratTotalUnboosted: Record<string, Record<string, number>> = {};
+    for (const [addr, stratMap] of Object.entries(userStrategyEarned)) {
+      for (const [strat, tokenMap] of Object.entries(stratMap)) {
+        for (const [token, earned] of Object.entries(tokenMap)) {
+          if (earned <= 0) continue;
+          const boost = userStrategyPositions[addr]?.[strat]?.[token]?.endOfDayBoost || 1;
+          if (!stratTotalUnboosted[strat]) stratTotalUnboosted[strat] = {};
+          stratTotalUnboosted[strat][token] =
+            (stratTotalUnboosted[strat][token] || 0) + earned / boost;
+        }
+      }
+    }
+
+    // Now set per-user position data
+    for (const [addr, stratMap] of Object.entries(userStrategyPositions)) {
+      for (const [strat, tokenMap] of Object.entries(stratMap)) {
+        for (const [token, pos] of Object.entries(tokenMap)) {
+          const userEarned = userStrategyEarned[addr]?.[strat]?.[token] || 0;
+          let stratPool = 0;
+          for (const st of strategyTotals) {
+            if (st.strategy === strat && st.token === token) stratPool += st.totalReward;
+          }
+          if (stratPool > 0 && userEarned > 0) {
+            pos.avgWeight = userEarned;
+            pos.avgTotalWeight = stratPool;
+            pos.avgUnboostedWeight = pos.endOfDayBoost > 0
+              ? userEarned / pos.endOfDayBoost : userEarned;
+            pos.avgTotalUnboostedWeight =
+              stratTotalUnboosted[strat]?.[token] || stratPool;
+          }
         }
       }
     }

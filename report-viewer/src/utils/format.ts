@@ -39,6 +39,17 @@ export function formatDateShort(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+/** Human-readable unit label for a strategy's position weight */
+export function strategyPositionUnit(strategy: string): string {
+  const s = strategy.toLowerCase();
+  if (s === 'minter') return 'debt';
+  if (s === 'haivelo') return 'collateral';
+  if (s === 'haiaero') return 'collateral';
+  if (s.startsWith('lpstaking')) return 'LP staked';
+  if (s === 'lp') return 'liquidity';
+  return 'position';
+}
+
 export function strategyDisplayName(key: string): string {
   const map: Record<string, string> = {
     minter: 'Minter',

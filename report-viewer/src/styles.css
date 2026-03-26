@@ -434,6 +434,20 @@ body {
 .strat-token { font-size: 0.7rem; font-weight: 600; }
 .strat-pool { color: var(--text-dim); font-size: 0.78rem; margin-left: auto; }
 .strat-earned { font-size: 0.78rem; }
+.strat-share {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.strat-position-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  border-bottom: 1px solid rgba(42, 42, 62, 0.3);
+}
+
 .strat-boost {
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.75rem;
@@ -505,6 +519,15 @@ body {
 .narrative-value.highlight { color: #fff; font-size: 0.85rem; }
 .narrative-value.cyan { color: var(--cyan); }
 .narrative-value.green { color: var(--green); }
+
+.delayed-note {
+  padding: 4px 10px 6px;
+  font-size: 0.7rem;
+  color: var(--amber);
+  font-style: italic;
+  background: rgba(245, 158, 11, 0.05);
+  border-top: 1px solid rgba(245, 158, 11, 0.15);
+}
 
 .sort-toggle {
   background: var(--surface);

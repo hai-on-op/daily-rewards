@@ -35,10 +35,24 @@ export interface DayStrategyTotal {
 }
 
 export interface StrategyPositionData {
-  weight: number;
-  boost: number;
-  totalWeight: number;
-  totalUnboostedWeight: number;
+  /** Time-weighted avg boosted weight for this day */
+  avgWeight: number;
+  /** Time-weighted avg unboosted weight for this day */
+  avgUnboostedWeight: number;
+  /** Time-weighted avg total boosted weight for this day */
+  avgTotalWeight: number;
+  /** Time-weighted avg total unboosted weight for this day */
+  avgTotalUnboostedWeight: number;
+  /** Time-weighted avg position in real units (debt, collateral, LP staked) */
+  avgPosition: number;
+  /** Time-weighted avg total position across all users (real units) */
+  avgTotalPosition: number;
+  /** Point-in-time weight at end of day */
+  endOfDayWeight: number;
+  /** Point-in-time boost at end of day */
+  endOfDayBoost: number;
+  /** True if this reward is based on a delayed position (~7 days ago) */
+  isDelayed: boolean;
 }
 
 export interface DayUserEntry {

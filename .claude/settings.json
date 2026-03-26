@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yarn dev:*)"
+      "Bash(yarn dev:*)",
+      "Bash(ls -t reports/daily-reward-report-*.json)"
     ]
   }
 }

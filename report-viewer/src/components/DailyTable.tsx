@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { DayReport, DayUserEntry, StrategyPositionData } from '../types';
-import { formatTokenAmount, formatPercent, formatBoost, formatDateShort, strategyDisplayName } from '../utils/format';
+import { formatTokenAmount, formatPercent, formatBoost, formatDateShort, strategyDisplayName, strategyPositionUnit } from '../utils/format';
 
 interface DailyDataEntry {
   date: string;
@@ -36,11 +36,10 @@ function calcMaxBoostPotential(
   poolTotal: number,
   currentEarned: number,
 ): { maxEarned: number; additionalEarned: number; pctIncrease: number } | null {
-  if (pos.boost >= 2.0 || pos.weight <= 0 || poolTotal <= 0 || pos.totalWeight <= 0) return null;
+  if (pos.endOfDayBoost >= 2.0 || pos.avgWeight <= 0 || poolTotal <= 0 || pos.avgTotalWeight <= 0) return null;
 
-  const currentShare = (pos.weight * pos.boost) / pos.totalWeight;
-  const s = currentShare;
-  const b = pos.boost;
+  const s = pos.avgWeight / pos.avgTotalWeight; // current time-weighted boosted share
+  const b = pos.endOfDayBoost;
   const maxShare = (2 * s) / (b * (1 - s) + 2 * s);
   const maxEarned = poolTotal * maxShare;
   const additionalEarned = maxEarned - currentEarned;
@@ -173,14 +172,10 @@ function DayCard({ entry, allStrategies }: {
 
           if (stratPoolTotal === 0 && userEarned === 0) return null;
 
+          const effectiveShare = stratPoolTotal > 0 ? userEarned / stratPoolTotal : 0;
           const maxBoost = pos && userEarned > 0
             ? calcMaxBoostPotential(pos, stratPoolTotal, userEarned)
             : null;
-
-          const unboostedShare = pos && pos.totalUnboostedWeight > 0
-            ? pos.weight / pos.totalUnboostedWeight : 0;
-          const boostedShare = pos && pos.totalWeight > 0
-            ? (pos.weight * pos.boost) / pos.totalWeight : 0;
 
           return (
             <div key={`${strategy}-${token}`} className={`strat-block ${userEarned > 0 ? '' : 'strat-inactive'}`}>
@@ -193,38 +188,58 @@ function DayCard({ entry, allStrategies }: {
                     {userEarned > 0 ? formatTokenAmount(userEarned) : '-'}
                   </strong>
                 </span>
-                {pos && pos.boost > 1 ? (
-                  <span className={`strat-boost ${pos.boost >= 1.5 ? 'boost-high' : pos.boost >= 1.2 ? 'boost-mid' : ''}`}>
-                    {formatBoost(pos.boost)}
+                {effectiveShare > 0 && (
+                  <span className="strat-share mono">{formatPercent(effectiveShare)}</span>
+                )}
+                {pos && pos.endOfDayBoost > 1 ? (
+                  <span className={`strat-boost ${pos.endOfDayBoost >= 1.5 ? 'boost-high' : pos.endOfDayBoost >= 1.2 ? 'boost-mid' : ''}`}>
+                    {formatBoost(pos.endOfDayBoost)}
                   </span>
                 ) : null}
               </div>
 
-              {pos && userEarned > 0 && (
-                <table className="day-table weights-table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Total Weight</th>
-                      <th>Your Weight</th>
-                      <th>Your Share</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="row-label">Unboosted</td>
-                      <td className="mono">{formatTokenAmount(pos.totalUnboostedWeight)}</td>
-                      <td className="mono">{formatTokenAmount(pos.weight)}</td>
-                      <td className="mono">{formatPercent(unboostedShare)}</td>
-                    </tr>
-                    <tr>
-                      <td className="row-label">Boosted</td>
-                      <td className="mono"><strong>{formatTokenAmount(pos.totalWeight)}</strong></td>
-                      <td className="mono"><strong>{formatTokenAmount(pos.weight * pos.boost)}</strong></td>
-                      <td className="mono"><strong>{formatPercent(boostedShare)}</strong></td>
-                    </tr>
-                  </tbody>
-                </table>
+              {pos && userEarned > 0 && pos.avgPosition > 0 && (() => {
+                const unit = strategyPositionUnit(strategy);
+                const unboostedShare = pos.avgTotalPosition > 0
+                  ? pos.avgPosition / pos.avgTotalPosition : 0;
+                const boostedPos = pos.avgPosition * pos.endOfDayBoost;
+                const boostedTotalPos = pos.avgTotalPosition * (pos.avgTotalWeight / pos.avgTotalUnboostedWeight || 1);
+                const boostedShare = boostedTotalPos > 0 ? boostedPos / boostedTotalPos : 0;
+
+                return (
+                  <table className="day-table weights-table">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Total {unit}</th>
+                        <th>Your avg {unit}</th>
+                        <th>Your Share</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="row-label">Unboosted</td>
+                        <td className="mono">{formatTokenAmount(pos.avgTotalPosition)}</td>
+                        <td className="mono">{formatTokenAmount(pos.avgPosition)}</td>
+                        <td className="mono">{formatPercent(unboostedShare)}</td>
+                      </tr>
+                      <tr>
+                        <td className="row-label">Boosted</td>
+                        <td className="mono"><strong>{formatTokenAmount(boostedTotalPos)}</strong></td>
+                        <td className="mono"><strong>{formatTokenAmount(boostedPos)}</strong></td>
+                        <td className="mono"><strong>{formatPercent(boostedShare)}</strong></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                );
+              })()}
+
+              {pos && pos.endOfDayWeight > 0 && userEarned > 0 &&
+                Math.abs(pos.endOfDayWeight - pos.avgPosition) / (pos.avgPosition || 1) > 0.01 && (
+                <div className="strat-position-row dim">
+                  <span>End-of-day {strategyPositionUnit(strategy)}:</span>
+                  <span className="mono">{formatTokenAmount(pos.endOfDayWeight)}</span>
+                </div>
               )}
 
               {maxBoost && (
@@ -237,9 +252,14 @@ function DayCard({ entry, allStrategies }: {
                   </span>
                 </div>
               )}
-              {pos && pos.boost >= 2 && userEarned > 0 && (
+              {pos && pos.endOfDayBoost >= 2 && userEarned > 0 && (
                 <div className="max-boost-row">
                   <span className="boost-high" style={{ fontSize: '0.72rem' }}>Already at max boost</span>
+                </div>
+              )}
+              {pos && pos.isDelayed && (
+                <div className="delayed-note">
+                  Based on your position from ~7 days ago
                 </div>
               )}
             </div>
@@ -312,25 +332,35 @@ function DaySummary({ dayReport, userEntry, allStrategies, poolTotals }: {
     const pos = userEntry.strategyPositions?.[strategy]?.[token];
     const name = strategyDisplayName(strategy);
 
-    if (pos && pos.weight > 0) {
-      const boostedWeight = pos.weight * pos.boost;
+    const effectiveShare = stratPool > 0 ? userEarned / stratPool : 0;
+
+    if (pos && pos.avgPosition > 0) {
+      const unit = strategyPositionUnit(strategy);
+      const boostStr = pos.endOfDayBoost > 1 ? `, ${formatBoost(pos.endOfDayBoost)} boost` : '';
+      const delayStr = pos.isDelayed ? ' ~7 days ago' : '';
       lines.push({
-        text: `In ${name}, your position of ${formatTokenAmount(pos.weight)} (${formatTokenAmount(boostedWeight)} after ${formatBoost(pos.boost)} boost) earned you`,
+        text: `In ${name}, your avg ${unit}${delayStr} of ${formatTokenAmount(pos.avgPosition)} (${formatPercent(effectiveShare)} of pool${boostStr}) earned you`,
+        value: `${formatTokenAmount(userEarned)} ${token}`,
+        cls: token === 'HAI' ? 'cyan' : 'green',
+      });
+    } else if (pos && pos.avgWeight > 0) {
+      lines.push({
+        text: `In ${name} (${formatPercent(effectiveShare)} of pool, ${formatBoost(pos.endOfDayBoost)} boost) you earned`,
         value: `${formatTokenAmount(userEarned)} ${token}`,
         cls: token === 'HAI' ? 'cyan' : 'green',
       });
     } else {
       lines.push({
         text: `From ${name} you earned`,
-        value: `${formatTokenAmount(userEarned)} ${token}`,
+        value: `${formatTokenAmount(userEarned)} ${token} (${formatPercent(effectiveShare)} of pool)`,
         cls: token === 'HAI' ? 'cyan' : 'green',
       });
     }
 
     // Max boost opportunity
-    if (pos && pos.boost < 2 && pos.boost > 0 && stratPool > 0 && pos.totalWeight > 0) {
-      const s = (pos.weight * pos.boost) / pos.totalWeight;
-      const maxShare = (2 * s) / (pos.boost * (1 - s) + 2 * s);
+    if (pos && pos.endOfDayBoost < 2 && pos.endOfDayBoost > 0 && stratPool > 0 && pos.avgTotalWeight > 0) {
+      const s = pos.avgWeight / pos.avgTotalWeight;
+      const maxShare = (2 * s) / (pos.endOfDayBoost * (1 - s) + 2 * s);
       const maxEarned = stratPool * maxShare;
       const extra = maxEarned - userEarned;
       if (extra > 0.0001) {
