@@ -43,11 +43,26 @@ export function formatDateShort(dateStr: string): string {
 export function strategyPositionUnit(strategy: string): string {
   const s = strategy.toLowerCase();
   if (s === 'minter') return 'debt';
-  if (s === 'haivelo') return 'collateral';
+  if (s === 'haivelo') return 'position (collateral + LP)';
   if (s === 'haiaero') return 'collateral';
   if (s.startsWith('lpstaking')) return 'LP staked';
   if (s === 'lp') return 'liquidity';
   return 'position';
+}
+
+export function formatDelta(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return '-';
+  const sign = n > 0 ? '+' : '';
+  return `${sign}${formatTokenAmount(n)}`;
+}
+
+export function formatPctChange(n: number | null | undefined): string {
+  if (n == null || isNaN(n) || !isFinite(n)) return '-';
+  const pct = n * 100;
+  const sign = pct > 0 ? '+' : '';
+  if (Math.abs(pct) >= 1) return `${sign}${pct.toFixed(1)}%`;
+  if (Math.abs(pct) >= 0.01) return `${sign}${pct.toFixed(2)}%`;
+  return `${sign}${pct.toExponential(1)}%`;
 }
 
 export function strategyDisplayName(key: string): string {

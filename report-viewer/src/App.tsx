@@ -7,6 +7,7 @@ import EarningsChart from './components/EarningsChart';
 import StrategyBreakdown from './components/StrategyBreakdown';
 import BoostSection from './components/BoostSection';
 import DailyTable from './components/DailyTable';
+import CompareView from './components/CompareView';
 
 interface DailyDataEntry {
   date: string;
@@ -15,6 +16,7 @@ interface DailyDataEntry {
 }
 
 export default function App() {
+  const [viewMode, setViewMode] = useState<'single' | 'compare'>('single');
   const [reports, setReports] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState('');
   const [report, setReport] = useState<DailyRewardReport | null>(null);
@@ -93,57 +95,73 @@ export default function App() {
     <div className="container">
       <header className="header">
         <h1>Daily Rewards Report</h1>
-        {reports.length > 0 && (
-          <select
-            className="report-select"
-            value={selectedFile}
-            onChange={(e) => { setSelectedFile(e.target.value); setResolvedAddress(null); setSearchError(null); }}
-          >
-            {reports.map((f) => (
-              <option key={f} value={f}>{f.replace('daily-reward-report-', '').replace('.json', '')}</option>
-            ))}
-          </select>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="tab-bar">
+            <button className={`tab-btn ${viewMode === 'single' ? 'active' : ''}`} onClick={() => setViewMode('single')}>Single</button>
+            <button className={`tab-btn ${viewMode === 'compare' ? 'active' : ''}`} onClick={() => setViewMode('compare')}>Compare</button>
+          </div>
+          {viewMode === 'single' && reports.length > 0 && (
+            <select
+              className="report-select"
+              value={selectedFile}
+              onChange={(e) => { setSelectedFile(e.target.value); setResolvedAddress(null); setSearchError(null); }}
+            >
+              {reports.map((f) => (
+                <option key={f} value={f}>{f.replace('daily-reward-report-', '').replace('.json', '')}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </header>
 
-      <AddressSearch onSearch={handleSearch} error={searchError} />
-
-      {loading && <div className="loading">Loading report...</div>}
-      {error && <div className="error-box">{error}</div>}
-
-      {!loading && report && (
+      {viewMode === 'compare' ? (
+        reports.length >= 2 ? (
+          <CompareView reports={reports} />
+        ) : (
+          <div className="loading">Need at least 2 reports to compare.</div>
+        )
+      ) : (
         <>
-          <GlobalOverview report={report} />
+          <AddressSearch onSearch={handleSearch} error={searchError} />
 
-          {searchError && !resolvedAddress && (
-            <div className="warning-box">
-              <strong>Address not found</strong>
-              <div>This address has no reward history in the current report period.</div>
-            </div>
+          {loading && <div className="loading">Loading report...</div>}
+          {error && <div className="error-box">{error}</div>}
+
+          {!loading && report && (
+            <>
+              <GlobalOverview report={report} />
+
+              {searchError && !resolvedAddress && (
+                <div className="warning-box">
+                  <strong>Address not found</strong>
+                  <div>This address has no reward history in the current report period.</div>
+                </div>
+              )}
+
+              {resolvedAddress && userAggregated && (
+                <div className="user-section">
+                  <div className="section-title">
+                    Rewards for <span className="mono">{resolvedAddress}</span>
+                  </div>
+
+                  <HeroStats user={userAggregated} />
+                  <EarningsChart dailyData={userDailyData} />
+
+                  <div className="charts-row">
+                    <StrategyBreakdown user={userAggregated} />
+                    <BoostSection user={userAggregated} />
+                  </div>
+
+                  <DailyTable dailyData={userDailyData} userAddress={resolvedAddress} />
+                </div>
+              )}
+            </>
           )}
 
-          {resolvedAddress && userAggregated && (
-            <div className="user-section">
-              <div className="section-title">
-                Rewards for <span className="mono">{resolvedAddress}</span>
-              </div>
-
-              <HeroStats user={userAggregated} />
-              <EarningsChart dailyData={userDailyData} />
-
-              <div className="charts-row">
-                <StrategyBreakdown user={userAggregated} />
-                <BoostSection user={userAggregated} />
-              </div>
-
-              <DailyTable dailyData={userDailyData} userAddress={resolvedAddress} />
-            </div>
+          {!loading && !report && !error && (
+            <div className="loading">No report files found in the reports/ directory.</div>
           )}
         </>
-      )}
-
-      {!loading && !report && !error && (
-        <div className="loading">No report files found in the reports/ directory.</div>
       )}
     </div>
   );

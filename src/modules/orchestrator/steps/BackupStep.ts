@@ -39,16 +39,20 @@ export class BackupStep implements ProcessingStep {
         const filename = `merkle-tree-${token}-entry${context.entryCounter}-${dateString}-${timestamp}.json`;
         const filepath = path.join(backupDir, filename);
 
+        // Include gross rewards (pre-claim) for comparison tooling
+        const grossRewards = context.adjustedRewards?.[token] || [];
+
         const treeData = {
           token,
           entryCounter: context.entryCounter,
           date: currentDate.toISOString(),
           root: tree.root,
           tree: tree.dump(),
+          grossRewards,
         };
 
         fs.writeFileSync(filepath, JSON.stringify(treeData, null, 2));
-        console.log(`[${this.name}] Merkle tree for ${token} saved to: ${filename}`);
+        console.log(`[${this.name}] Merkle tree for ${token} saved to: ${filename} (${grossRewards.length} gross entries)`);
       } catch (error) {
         console.error(`[${this.name}] Error saving merkle tree for ${token}:`, error);
         context.errors.push(error instanceof Error ? error : new Error(String(error)));

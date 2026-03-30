@@ -17,7 +17,7 @@ CalculateRewardsStep
     v
 result-combiner.ts (combineResults)
     |
-    +---> calculateHaiveloRewardsV2()     ---> HaiVeloStrategy
+    +---> calculateHaiveloRewardsV2()     ---> HaiVeloStrategyz
     +---> calculateHaiaeroRewardsV2()     ---> HaiAeroStrategy
     +---> calculateMinterRewardsV2()      ---> MinterStrategy (per window x cType)
     +---> calculateLpStakingRewardsV2()   ---> LpStakingStrategy (per window x stakingType)

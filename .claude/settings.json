@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(yarn dev:*)",
-      "Bash(ls -t reports/daily-reward-report-*.json)"
+      "Bash(ls -t reports/daily-reward-report-*.json)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(git stash:*)",
+      "Bash(FEATURE_SAVE_BACKUPS=false yarn entry:dry-run)"
     ]
   }
 }
