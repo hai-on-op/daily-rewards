@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily Reward Report Timer (10min after entry task)
+
+[Timer]
+OnCalendar=*-*-* 18:10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

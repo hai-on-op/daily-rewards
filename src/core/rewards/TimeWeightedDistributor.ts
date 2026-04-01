@@ -318,6 +318,80 @@ export class TimeWeightedDistributor {
     boosts = await strategy.calculateBoosts(users, timestamp);
     creditAllUsers(boosts);
 
+    // Capture any remaining partial-day rewards in a final snapshot.
+    // Without this, rewards earned between the last midnight boundary and
+    // endTimestamp are in `earned` but missing from dailySnapshots, causing
+    // under-reported totals on epoch boundary days (e.g. the weekly dip).
+    if (endTimestamp > dayStartTs) {
+      const snapWeights = new Map<string, number>();
+      const snapBoosts = new Map<string, number>();
+      let snapTotalWeight = 0;
+      let snapTotalUnboosted = 0;
+      for (const [addr, state] of users) {
+        const w = strategy.getWeight(state);
+        const b = boosts.get(addr) ?? 1;
+        snapWeights.set(addr, w);
+        snapBoosts.set(addr, b);
+        snapTotalWeight += w * b;
+        snapTotalUnboosted += w;
+      }
+
+      const dayDuration = endTimestamp - dayStartTs;
+      const avgTotalWeight = dayDuration > 0 ? totalBoostedIntegral / dayDuration : 0;
+      const avgTotalUnboostedWeight = dayDuration > 0 ? totalUnboostedIntegral / dayDuration : 0;
+
+      const avgWeightsMap = new Map<string, number>();
+      const avgUnboostedMap = new Map<string, number>();
+
+      let actualDayPool = 0;
+      for (const [addr] of users) {
+        const delta = (earned.get(addr) ?? 0) - (prevEarnedSnapshot.get(addr) ?? 0);
+        if (delta > 0) actualDayPool += delta;
+      }
+
+      for (const [addr] of users) {
+        const currEarned = earned.get(addr) ?? 0;
+        const prevEarned = prevEarnedSnapshot.get(addr) ?? 0;
+        const dayEarned = currEarned - prevEarned;
+
+        if (actualDayPool > 0 && dayEarned > 0) {
+          const userShare = dayEarned / actualDayPool;
+          const userAvgBoosted = userShare * avgTotalWeight;
+          avgWeightsMap.set(addr, userAvgBoosted);
+
+          const b = boosts.get(addr) ?? 1;
+          avgUnboostedMap.set(addr, b > 0 ? userAvgBoosted / b : 0);
+        } else {
+          avgWeightsMap.set(addr, 0);
+          avgUnboostedMap.set(addr, 0);
+        }
+      }
+
+      const avgPositionsMap = new Map<string, number>();
+      for (const [addr] of users) {
+        const integral = userWeightIntegrals.get(addr) ?? 0;
+        avgPositionsMap.set(addr, dayDuration > 0 ? integral / dayDuration : 0);
+      }
+
+      // Key the snapshot at the next midnight boundary so it aligns with
+      // the subsequent epoch's first snapshot for the same calendar day.
+      dailySnapshots.push({
+        dayTimestamp: nextDayBoundary,
+        earned: new Map(earned),
+        avgWeights: avgWeightsMap,
+        avgUnboostedWeights: avgUnboostedMap,
+        avgPositions: avgPositionsMap,
+        avgTotalPosition: avgTotalUnboostedWeight,
+        avgTotalWeight,
+        avgTotalUnboostedWeight,
+        dayDuration,
+        weights: snapWeights,
+        boosts: snapBoosts,
+        totalWeight: snapTotalWeight,
+        totalUnboostedWeight: snapTotalUnboosted,
+      });
+    }
+
     // Sanity: remove negative earned (shouldn't happen but matches existing behavior)
     for (const [addr, amount] of earned) {
       if (amount < 0) {

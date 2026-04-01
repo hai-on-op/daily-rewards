@@ -1275,6 +1275,11 @@ async function generateDailyReport(): Promise<void> {
   );
   fs.writeFileSync(reportFile, JSON.stringify(reportData, null, 2));
   console.log(`\nReport saved to: ${reportFile}`);
+
+  // Also save as latest report for the API to serve
+  const latestFile = path.join(reportDir, "latest-report.json");
+  fs.copyFileSync(reportFile, latestFile);
+  console.log(`Latest report updated: ${latestFile}`);
 }
 
 // ── Entry point ────────────────────────────────────────────────────────

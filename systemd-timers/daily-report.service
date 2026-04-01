@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily Rewards Entry Task
+Description=Generate Daily Reward Report
 After=network.target
 
 [Service]
@@ -8,10 +8,9 @@ User=root
 Group=root
 WorkingDirectory=/var/www/daily-rewards
 EnvironmentFile=/var/www/daily-rewards/.env
-
-ExecStart=/usr/bin/pm2 restart entry-task --stop-exit-codes 0
-StandardOutput=append:/var/log/entry-task.log
-StandardError=append:/var/log/entry-task.log
+ExecStart=/usr/bin/pm2 restart daily-report --stop-exit-codes 0
+StandardOutput=append:/var/log/daily-report.log
+StandardError=append:/var/log/daily-report.log
 TimeoutStartSec=300
 
 # Retry configuration

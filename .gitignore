@@ -26,3 +26,7 @@ telegram-users.json
 *.log
 
 /reports
+
+/remote-merkles
+
+**comparison.html

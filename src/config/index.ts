@@ -198,6 +198,14 @@ export const config = () => {
     HAIVELO_COLLATERAL_ENABLED: envs.HAIVELO_COLLATERAL_ENABLED !== 'false',
     HAIVELO_LP_STAKING_ENABLED: envs.HAIVELO_LP_STAKING_ENABLED !== 'false',
 
+    // Liquidation events (confiscations & transfers)
+    // Set LIQUIDATION_EVENTS_ENABLED=true to include confiscation/transfer events
+    // LIQUIDATION_EVENTS_EFFECTIVE_BLOCK + _TIMESTAMP override all confiscation/transfer
+    // timestamps so they take effect at a single point rather than at their original times
+    LIQUIDATION_EVENTS_ENABLED: envs.LIQUIDATION_EVENTS_ENABLED === 'true',
+    LIQUIDATION_EVENTS_EFFECTIVE_BLOCK: Number(envs.LIQUIDATION_EVENTS_EFFECTIVE_BLOCK) || 0,
+    LIQUIDATION_EVENTS_EFFECTIVE_TIMESTAMP: Number(envs.LIQUIDATION_EVENTS_EFFECTIVE_TIMESTAMP) || 0,
+
     // haiAERO Configuration
     HAIAERO_REWARDS_ENABLED: envs.HAIAERO_REWARDS_ENABLED !== 'false',
     DEBUG_HAIAERO:
