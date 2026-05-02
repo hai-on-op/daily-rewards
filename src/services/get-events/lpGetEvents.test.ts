@@ -7,7 +7,7 @@ import {
 import { subgraphQueryPaginated } from "../subgraph/utils";
 import { config } from "../../config";
 import { RewardEventType } from "../../types";
-import { blockToTimestamp } from "../../utils/chain";
+import { lpProvider } from "../../utils/chain";
 import { getExclusionList } from "../../utils/getExclusionList";
 import { getEvents } from "./lpGetEvents";
 
@@ -17,15 +17,18 @@ jest.mock("../../utils/getExclusionList", () => ({
 }));
 
 jest.mock("../../utils/chain", () => ({
-  blockToTimestamp: jest
+  lpProvider: {
+    getBlock: jest
     .fn()
-    .mockImplementation((block: number) => Promise.resolve(block * 1000)),
+      .mockImplementation((block: number) => Promise.resolve({ timestamp: block * 1000 })),
+  },
 }));
 
 jest.mock("../subgraph/utils");
 jest.mock("../../config", () => ({
   config: jest.fn().mockReturnValue({
     GEB_SUBGRAPH_URL: "https://geb.subgraph",
+    LP_GEB_SUBGRAPH_URL: "https://geb.subgraph",
     UNISWAP_POOL_ADDRESS: "0xpool",
     UNISWAP_SUBGRAPH_URL: "https://uni.subgraph",
     EXCLUSION_LIST_FILE: "exclusion.json",
@@ -271,9 +274,9 @@ describe("getPoolSwap", () => {
   });
 
   it("should fetch and process swap events", async () => {
-    (blockToTimestamp as jest.Mock)
-      .mockResolvedValueOnce(100000) // for start block
-      .mockResolvedValueOnce(200000); // for end block
+    (lpProvider.getBlock as jest.Mock)
+      .mockResolvedValueOnce({ timestamp: 100000 }) // for start block
+      .mockResolvedValueOnce({ timestamp: 200000 }); // for end block
 
     const mockSwaps = [
       {
@@ -292,9 +295,9 @@ describe("getPoolSwap", () => {
 
     const result = await getPoolSwap(100, 200);
 
-    expect(blockToTimestamp).toHaveBeenCalledTimes(2);
-    expect(blockToTimestamp).toHaveBeenCalledWith(100);
-    expect(blockToTimestamp).toHaveBeenCalledWith(200);
+    expect(lpProvider.getBlock).toHaveBeenCalledTimes(2);
+    expect(lpProvider.getBlock).toHaveBeenCalledWith(100);
+    expect(lpProvider.getBlock).toHaveBeenCalledWith(200);
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({
@@ -447,9 +450,9 @@ describe("getEvents", () => {
     });
 
     (getExclusionList as jest.Mock).mockResolvedValue([]);
-    (blockToTimestamp as jest.Mock)
-      .mockResolvedValueOnce(100000) // for start block
-      .mockResolvedValueOnce(200000); // for end block
+    (lpProvider.getBlock as jest.Mock)
+      .mockResolvedValueOnce({ timestamp: 100000 }) // for start block
+      .mockResolvedValueOnce({ timestamp: 200000 }); // for end block
 
     const result = await getEvents(100, 200, mockOwners);
 
@@ -519,13 +522,14 @@ describe("getEvents", () => {
       },
     ];
 
-    (subgraphQueryPaginated as jest.Mock)
-      .mockResolvedValueOnce([]) // safe modifications
-      .mockResolvedValueOnce([]) // confiscations
-      .mockResolvedValueOnce([]) // transfers
-      .mockResolvedValueOnce(mockPositions) // positions
-      .mockResolvedValueOnce([]) // swaps
-      .mockResolvedValueOnce([]); // rate updates
+    (subgraphQueryPaginated as jest.Mock).mockImplementation((query, type) => {
+      switch (type) {
+        case "positionSnapshots":
+          return Promise.resolve(mockPositions);
+        default:
+          return Promise.resolve([]);
+      }
+    });
 
     (getExclusionList as jest.Mock).mockResolvedValue(["0xexcluded"]);
 
@@ -552,13 +556,14 @@ describe("getEvents", () => {
       },
     ];
 
-    (subgraphQueryPaginated as jest.Mock)
-      .mockResolvedValueOnce(mockEvents) // safe modifications
-      .mockResolvedValueOnce([]) // confiscations
-      .mockResolvedValueOnce([]) // transfers
-      .mockResolvedValueOnce([]) // positions
-      .mockResolvedValueOnce([]) // swaps
-      .mockResolvedValueOnce([]); // rate updates
+    (subgraphQueryPaginated as jest.Mock).mockImplementation((query, type) => {
+      switch (type) {
+        case "modifySAFECollateralizations":
+          return Promise.resolve(mockEvents);
+        default:
+          return Promise.resolve([]);
+      }
+    });
 
     (getExclusionList as jest.Mock).mockResolvedValue([]);
 
@@ -580,13 +585,14 @@ describe("getEvents", () => {
       },
     ];
 
-    (subgraphQueryPaginated as jest.Mock)
-      .mockResolvedValueOnce(mockEvents) // safe modifications
-      .mockResolvedValueOnce([]) // confiscations
-      .mockResolvedValueOnce([]) // transfers
-      .mockResolvedValueOnce([]) // positions
-      .mockResolvedValueOnce([]) // swaps
-      .mockResolvedValueOnce([]); // rate updates
+    (subgraphQueryPaginated as jest.Mock).mockImplementation((query, type) => {
+      switch (type) {
+        case "modifySAFECollateralizations":
+          return Promise.resolve(mockEvents);
+        default:
+          return Promise.resolve([]);
+      }
+    });
 
     (getExclusionList as jest.Mock).mockResolvedValue([]);
 
@@ -638,9 +644,9 @@ describe("getEvents", () => {
     });
 
     (getExclusionList as jest.Mock).mockResolvedValue([]);
-    (blockToTimestamp as jest.Mock)
-      .mockResolvedValueOnce(100000)
-      .mockResolvedValueOnce(200000);
+    (lpProvider.getBlock as jest.Mock)
+      .mockResolvedValueOnce({ timestamp: 100000 })
+      .mockResolvedValueOnce({ timestamp: 200000 });
 
     await expect(getEvents(100, 200, mockOwners)).rejects.toThrow(
       "Inconsistent event"

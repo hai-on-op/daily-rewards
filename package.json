@@ -19,6 +19,8 @@
     "entry:legacy:prod": "yarn build && node dist/modules/entry.js",
     "debug-viewer": "cd debug-viewer && VITE_DEBUG_DATA_DIR=../debug-data yarn dev",
     "verify-positions": "ts-node src/scripts/verify-positions-report.ts",
+    "audit:claim-overpayments": "ts-node src/scripts/audit-claim-overpayments.ts",
+    "audit:bad-claims": "ts-node src/scripts/audit-bad-claims.ts",
     "verify-viewer": "cd verify-viewer && yarn dev",
     "golden:record": "ts-node src/scripts/golden-master.ts --record",
     "golden:verify": "ts-node src/scripts/golden-master.ts --verify"

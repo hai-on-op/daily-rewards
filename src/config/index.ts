@@ -279,6 +279,11 @@ export const config = () => {
     PLACEHOLDER_COLLATERAL_TYPES: ['HAIVELO'] as TokenType[],
     LP_COLLATERAL_TYPES: ['OP', 'WETH', 'WSTETH'] as TokenType[],
     EXCLUSION_LIST_FILE: path.join(__dirname, '..', '..', 'exclusion-list.csv'),
+    CLAIM_ADJUSTMENTS_FILE: envs.CLAIM_ADJUSTMENTS_FILE
+      ? path.isAbsolute(envs.CLAIM_ADJUSTMENTS_FILE)
+        ? envs.CLAIM_ADJUSTMENTS_FILE
+        : path.join(__dirname, '..', '..', envs.CLAIM_ADJUSTMENTS_FILE)
+      : undefined,
 
     // API Keys
     COVALENT_API_KEY: envs.COVALENT_API_KEY,
