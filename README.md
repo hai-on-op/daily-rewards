@@ -108,6 +108,10 @@ HAIVELO_SUBGRAPH_URL=https://your-haivelo-subgraph-url/api
 
 # Reward Distributor subgraph
 DISTRIBUTOR_SUBGRAPH_URL=https://your-distributor-subgraph-url/api
+
+# Optional JSON ledger of approved returned overpayments.
+# Amounts must be wei-denominated token amounts and entries must include returnTx.
+CLAIM_ADJUSTMENTS_FILE=
 ```
 
 #### Contract Addresses
@@ -688,4 +692,3 @@ ls -la /var/log/entry-task.log /var/log/unpause-task.log 2>/dev/null || echo "Lo
 - **Smart Contract**: See [contract/README.md](contract/README.md) for Reward Distributor contract documentation
 - **PM2 Documentation**: https://pm2.keymetrics.io/docs/
 - **Systemd Timer Documentation**: https://www.freedesktop.org/software/systemd/man/systemd.timer.html
-

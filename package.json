@@ -22,6 +22,8 @@
     "daily-report": "ts-node src/scripts/daily-reward-report.ts",
     "report-api": "ts-node src/scripts/report-api.ts",
     "report-api:prod": "yarn build && node dist/scripts/report-api.js",
+    "audit:claim-overpayments": "ts-node src/scripts/audit-claim-overpayments.ts",
+    "audit:bad-claims": "ts-node src/scripts/audit-bad-claims.ts",
     "verify-viewer": "cd verify-viewer && yarn dev",
     "report-viewer": "cd report-viewer && yarn dev",
     "golden:record": "ts-node src/scripts/golden-master.ts --record",

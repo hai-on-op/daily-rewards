@@ -179,11 +179,6 @@ describe("getInitialLpPosition", () => {
       .spyOn(moduleUnderTest, "fetchLpPositions")
       .mockResolvedValue(rawPositions);
 
-    // Mock processLpPositions
-    jest
-      .spyOn(moduleUnderTest, "processLpPositions")
-      .mockReturnValue(userPositions);
-
     const result = await getInitialLpPosition(
       startBlock,
       poolAddress,
@@ -197,9 +192,6 @@ describe("getInitialLpPosition", () => {
     expect(moduleUnderTest.fetchLpPositions).toHaveBeenCalledWith(
       query,
       subgraphUrl
-    );
-    expect(moduleUnderTest.processLpPositions).toHaveBeenCalledWith(
-      rawPositions
     );
     expect(result).toEqual(userPositions);
   });
