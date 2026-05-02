@@ -1,6 +1,10 @@
 import { ProcessingStep, ProcessingContext, FeatureFlags } from "../types";
 import { uploadMerkleTree } from "../../upload-merkle-tree";
 import { config } from "../../../config";
+import {
+  saveRootUpdateManifest,
+  upsertManifestToken,
+} from "../../../services/ops-state";
 
 /**
  * Step: Upload merkle trees to Cloudflare KV
@@ -24,7 +28,7 @@ export class CloudUploadStep implements ProcessingStep {
     const uploadPromises = Object.entries(context.merkleTrees).map(
       async ([token, tree]) => {
         try {
-          await uploadMerkleTree({
+          const result = await uploadMerkleTree({
             config: {
               accountId: cfg.CLOUDFLARE_ACCOUNT_ID,
               namespaceId: cfg.CLOUDFLARE_NAMESPACE_ID,
@@ -33,18 +37,45 @@ export class CloudUploadStep implements ProcessingStep {
             treeId: token,
             merkleTree: JSON.stringify(tree.dump()),
           });
+          if (!result.success) {
+            const message = result.error || "Cloudflare upload returned success=false";
+            console.error(`[${this.name}] Error uploading merkle tree for ${token}: ${message}`);
+            context.errors.push(new Error(`[${this.name}] ${token}: ${message}`));
+            if (context.runManifest) {
+              upsertManifestToken(context.runManifest, token, {
+                cloudflareUploaded: false,
+                cloudflareError: message,
+              });
+            }
+            return;
+          }
+
           console.log(`[${this.name}] Merkle tree for ${token} uploaded successfully`);
+          if (context.runManifest) {
+            upsertManifestToken(context.runManifest, token, {
+              cloudflareUploaded: true,
+              cloudflareError: undefined,
+            });
+          }
         } catch (err) {
           console.error(`[${this.name}] Error uploading merkle tree for ${token}:`, err);
           context.errors.push(err instanceof Error ? err : new Error(String(err)));
+          if (context.runManifest) {
+            upsertManifestToken(context.runManifest, token, {
+              cloudflareUploaded: false,
+              cloudflareError: err instanceof Error ? err.message : String(err),
+            });
+          }
         }
       }
     );
 
     await Promise.all(uploadPromises);
+    if (context.runManifest) {
+      saveRootUpdateManifest(context.runManifest);
+    }
     console.log(`[${this.name}] All uploads completed`);
 
     return context;
   }
 }
-

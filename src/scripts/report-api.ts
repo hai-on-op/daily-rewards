@@ -14,7 +14,12 @@
 import http from "http";
 import fs from "fs";
 import path from "path";
+import { config as dotenv } from "dotenv";
+import { buildOpsStatus } from "../services/ops-state";
 
+dotenv();
+
+const HOST = process.env.REPORT_API_HOST || "127.0.0.1";
 const PORT = parseInt(process.env.PORT || "3100", 10);
 const REPORT_PATH = path.join(process.cwd(), "reports", "latest-report.json");
 
@@ -38,7 +43,7 @@ function jsonResponse(
   res.end(JSON.stringify(body));
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://localhost:${PORT}`);
   const pathname = url.pathname;
 
@@ -55,6 +60,19 @@ const server = http.createServer((req, res) => {
       totalDaysWithData: data.totalDaysWithData,
       totalUsers: data.users?.length ?? 0,
     });
+  }
+
+  // Operational automation status
+  if (pathname === "/ops/status") {
+    try {
+      const status = await buildOpsStatus();
+      return jsonResponse(res, 200, status);
+    } catch (error) {
+      return jsonResponse(res, 500, {
+        status: "error",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   // Full report
@@ -98,9 +116,10 @@ const server = http.createServer((req, res) => {
   jsonResponse(res, 404, { error: "Not found" });
 });
 
-server.listen(PORT, () => {
-  console.log(`Report API listening on http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Report API listening on http://${HOST}:${PORT}`);
   console.log(`  GET /              → full latest report`);
   console.log(`  GET /health        → status & metadata`);
+  console.log(`  GET /ops/status    → automation & contract status`);
   console.log(`  GET /user/0x...    → single user report`);
 });

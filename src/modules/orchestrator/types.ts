@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { RewardsMap } from "../result-combiner";
+import { RootUpdateManifest } from "../../services/ops-state";
 
 /**
  * Feature flags for controlling which steps of the reward distribution process are executed.
@@ -73,6 +74,8 @@ export interface ProcessingContext {
   merkleTrees: { [token: string]: StandardMerkleTree<[string, string]> } | null;
   /** Any errors that occurred during processing */
   errors: Error[];
+  /** Durable manifest for production root-update runs */
+  runManifest: RootUpdateManifest | null;
 }
 
 /**
@@ -142,4 +145,3 @@ export const DRY_RUN_FEATURE_FLAGS: FeatureFlags = {
   uploadToCloudflare: false,
   sendNotifications: false,
 };
-

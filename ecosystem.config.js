@@ -1,30 +1,21 @@
-// PM2 Configuration for Daily Rewards
-// 
-// NOTE: Scheduling is handled by systemd timers, NOT by PM2's cron_restart.
-// Use this file only if you want to run tasks manually via PM2:
-//   pm2 start ecosystem.config.js --only entry-task
+// PM2 Configuration for non-critical long-running services.
 //
-// For automated daily scheduling, use the systemd timers in systemd-timers/
+// Reward root updates and unpause automation are handled directly by systemd
+// timers in systemd-timers/. Do not schedule entry-task or unpause-task in PM2.
 
 module.exports = {
   apps: [
     {
-      name: "entry-task",
-      script: "./src/modules/entry.ts",
-      interpreter: "node_modules/.bin/ts-node",
+      name: "report-api",
+      script: "dist/scripts/report-api.js",
+      interpreter: "node",
       watch: false,
-      autorestart: false,
+      autorestart: true,
       instances: 1,
-      // No cron_restart - scheduling handled by systemd timers
-    },
-    {
-      name: "unpause-task",
-      script: "./src/modules/unpause.ts",
-      interpreter: "node_modules/.bin/ts-node",
-      watch: false,
-      autorestart: false,
-      instances: 1,
-      // No cron_restart - scheduling handled by systemd timers
+      env: {
+        REPORT_API_HOST: "127.0.0.1",
+        PORT: "3100",
+      },
     },
   ],
 };

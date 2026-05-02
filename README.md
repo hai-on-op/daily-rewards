@@ -307,61 +307,61 @@ chmod 600 /var/www/daily-rewards/.env
 
 ---
 
-## PM2 Setup (Optional - for Manual Runs)
+## PM2 Setup (Optional - for Report API)
 
-PM2 can be used to manually run tasks or for debugging. **Scheduling is handled by systemd timers, not PM2.**
+PM2 can be used to keep non-critical long-running services alive. **Reward root
+updates and unpause are handled by systemd timers, not PM2.**
 
 ### When to Use PM2
 
-- **Manual execution**: Run tasks outside the scheduled time for testing
-- **Debugging**: Monitor task output in real-time
-- **One-off runs**: Execute tasks without waiting for the schedule
+- **Report API**: Keep the read-only HTTP status/report API running
+- **Debugging**: Monitor long-running service output in real time
 
 ### Configure PM2
 
-The `ecosystem.config.js` file defines task configurations (without scheduling):
+PM2 is only used for non-critical long-running services. Do not run or schedule
+the reward root update or unpause tasks through PM2; those are handled directly
+by systemd timers with a shared lock and guarded unpause checks.
 
 ```javascript
 module.exports = {
   apps: [
     {
-      name: "entry-task",
-      script: "./src/modules/entry.ts",
-      interpreter: "node_modules/.bin/ts-node",
+      name: "report-api",
+      script: "dist/scripts/report-api.js",
+      interpreter: "node",
       watch: false,
-      autorestart: false,
+      autorestart: true,
       instances: 1,
-      // No cron_restart - scheduling handled by systemd timers
-    },
-    {
-      name: "unpause-task",
-      script: "./src/modules/unpause.ts",
-      interpreter: "node_modules/.bin/ts-node",
-      watch: false,
-      autorestart: false,
-      instances: 1,
-      // No cron_restart - scheduling handled by systemd timers
+      env: {
+        REPORT_API_HOST: "127.0.0.1",
+        PORT: "3100",
+      },
     },
   ],
 };
 ```
 
-### Run Tasks Manually via PM2
+### Run Report API via PM2
 
 ```bash
 cd /var/www/daily-rewards
-
-# Run entry task manually
-pm2 start ecosystem.config.js --only entry-task
-
-# Run unpause task manually
-pm2 start ecosystem.config.js --only unpause-task
-
-# View logs
-pm2 logs
+yarn build
+pm2 start ecosystem.config.js --only report-api
+pm2 logs report-api
 ```
 
-> **Important**: Do not use PM2's `cron_restart` feature together with systemd timers, as this would cause duplicate task executions.
+> **Important**: Do not use PM2's `cron_restart` for `entry-task` or `unpause-task`.
+
+The report API binds to `REPORT_API_HOST` (`127.0.0.1` by default) and exposes:
+
+```bash
+curl http://127.0.0.1:3100/ops/status
+```
+
+`/ops/status` returns systemd timer state, live reward distributor state, latest
+root-update manifest metadata, backup status, Cloudflare upload status, and
+whether the latest manifest is safe to unpause.
 
 ---
 
@@ -373,7 +373,8 @@ Systemd timers handle the daily scheduling of tasks. The timer and service files
 
 #### Entry Task Service (`systemd-timers/entry-task.service`)
 
-This service runs the entry task directly via ts-node:
+This service runs the built orchestrator directly and uses a shared lock so it
+cannot overlap with the guarded unpause task:
 
 ```ini
 [Unit]
@@ -386,7 +387,8 @@ User=root
 Group=root
 WorkingDirectory=/var/www/daily-rewards
 EnvironmentFile=/var/www/daily-rewards/.env
-ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/entry.ts
+Environment=FEATURE_MODE=production
+ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /usr/bin/node dist/modules/orchestrator/cli.js
 StandardOutput=append:/var/log/entry-task.log
 StandardError=append:/var/log/entry-task.log
 TimeoutStartSec=7200
@@ -414,7 +416,7 @@ User=root
 Group=root
 WorkingDirectory=/var/www/daily-rewards
 EnvironmentFile=/var/www/daily-rewards/.env
-ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/unpause.ts
+ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /usr/bin/node dist/modules/unpause.js
 StandardOutput=append:/var/log/unpause-task.log
 StandardError=append:/var/log/unpause-task.log
 TimeoutStartSec=300

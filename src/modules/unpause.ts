@@ -2,6 +2,11 @@ import { config } from "../config";
 import { ethers } from "ethers";
 import { REWARD_DISTRIBUTOR_ABI } from "../abis/REWARD_DISTRIBUTOR_ABI";
 import { notifyTransaction, getTelegramBot } from "./telegram-bot";
+import {
+  saveRootUpdateManifest,
+  saveUnpauseManifest,
+  verifyLatestRootUpdateForUnpause,
+} from "../services/ops-state";
 
 config();
 
@@ -29,11 +34,27 @@ const unpause = async () => {
   );
 
   try {
+    const verification = await verifyLatestRootUpdateForUnpause(cfg);
+    if (!verification.ok) {
+      const message = `Unpause guard failed: ${verification.errors.join("; ")}`;
+      console.error(message);
+      await notifyTransaction({
+        type: 'failure',
+        operation: 'Unpause Reward Distributor',
+        error: message,
+        details: verification.contractState,
+      });
+      throw new Error(message);
+    }
+
     // Notify unpause initiation
     await notifyTransaction({
       type: 'initiate',
       operation: 'Unpause Reward Distributor',
-      details: { currentStatus: 'paused' }
+      details: {
+        currentStatus: 'paused',
+        rootUpdateRunId: verification.manifest?.runId,
+      }
     });
 
     console.log("Unpausing Reward Distributor...");
@@ -42,6 +63,26 @@ const unpause = async () => {
     
     const receipt = await tx.wait();
     console.log("Reward Distributor Successfully Unpaused!");
+    const [paused, epochCounter] = await Promise.all([
+      rewardDistributor.paused(),
+      rewardDistributor.epochCounter(),
+    ]);
+
+    saveUnpauseManifest({
+      version: 1,
+      rootUpdateRunId: verification.manifest?.runId,
+      txHash: tx.hash,
+      blockNumber: receipt?.blockNumber,
+      completedAt: new Date().toISOString(),
+      epochCounter: String(epochCounter),
+      paused,
+    });
+
+    if (verification.manifest) {
+      verification.manifest.unpauseTxHash = tx.hash;
+      verification.manifest.unpausedAt = new Date().toISOString();
+      saveRootUpdateManifest(verification.manifest);
+    }
 
     // Notify unpause success
     await notifyTransaction({
@@ -51,6 +92,7 @@ const unpause = async () => {
       blockNumber: receipt?.blockNumber,
       details: { 
         newStatus: 'unpaused',
+        rootUpdateRunId: verification.manifest?.runId,
         gasUsed: receipt?.gasUsed?.toString()
       }
     });
@@ -77,4 +119,4 @@ unpause()
   .catch((err) => {
     console.error("Error unpausing reward distributor:", err);
     process.exit(1);
-  }); 
+  });

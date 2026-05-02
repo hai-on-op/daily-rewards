@@ -15,7 +15,13 @@ import {
   UpdateOnChainStep,
   BackupStep,
   CloudUploadStep,
+  VerifyRootUpdateStep,
 } from "./steps";
+import {
+  createRootUpdateManifest,
+  recordManifestError,
+  saveRootUpdateManifest,
+} from "../../services/ops-state";
 
 /**
  * Creates the default processing pipeline with all steps in order
@@ -28,9 +34,10 @@ function createDefaultPipeline(): ProcessingStep[] {
     new PrepareConfigStep(),
     new CalculateRewardsStep(),
     new GenerateMerkleTreesStep(),
-    new UpdateOnChainStep(),
     new BackupStep(),
+    new UpdateOnChainStep(),
     new CloudUploadStep(),
+    new VerifyRootUpdateStep(),
   ];
 }
 
@@ -58,7 +65,23 @@ function createInitialContext(flags: FeatureFlags): ProcessingContext {
     finalRewards: null,
     merkleTrees: null,
     errors: [],
+    runManifest: flags.updateOnChain ? createRootUpdateManifest() : null,
   };
+}
+
+function syncManifestFromContext(context: ProcessingContext): void {
+  if (!context.runManifest) return;
+
+  context.runManifest.entryCounterBefore = context.entryCounter;
+  context.runManifest.effectiveEntryCounter = context.effectiveEntryCounter;
+  if (
+    context.blockNumbers.lp ||
+    context.blockNumbers.minter ||
+    context.blockNumbers.haivelo
+  ) {
+    context.runManifest.blockNumbers = { ...context.blockNumbers };
+  }
+  saveRootUpdateManifest(context.runManifest);
 }
 
 /**
@@ -95,6 +118,7 @@ export class RewardDistributionOrchestrator {
 
     // Initialize context
     let context = createInitialContext(this.flags);
+    syncManifestFromContext(context);
 
     // Get initial epoch counter if we're not handling it in a step
     if (!this.flags.handleInitialEpoch) {
@@ -115,6 +139,7 @@ export class RewardDistributionOrchestrator {
           const startTime = Date.now();
           
           context = await step.execute(context);
+          syncManifestFromContext(context);
           
           const duration = Date.now() - startTime;
           console.log(`<<< Step ${step.name} completed in ${duration}ms`);
@@ -160,6 +185,10 @@ export class RewardDistributionOrchestrator {
 
       return context;
     } catch (error) {
+      if (context.runManifest) {
+        recordManifestError(context.runManifest, error);
+      }
+
       console.error("\n========================================");
       console.error("Pipeline Failed");
       console.error("========================================");
@@ -202,4 +231,3 @@ export class RewardDistributionOrchestrator {
       .map((step) => step.name);
   }
 }
-

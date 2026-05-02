@@ -9,15 +9,16 @@ Group=root
 WorkingDirectory=/var/www/daily-rewards
 EnvironmentFile=/var/www/daily-rewards/.env
 
-ExecStart=/usr/bin/pm2 restart entry-task --stop-exit-codes 0
+Environment=FEATURE_MODE=production
+ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /usr/bin/node dist/modules/orchestrator/cli.js
 StandardOutput=append:/var/log/entry-task.log
 StandardError=append:/var/log/entry-task.log
-TimeoutStartSec=300
+TimeoutStartSec=7200
 
 # Retry configuration
 Restart=on-failure
-RestartSec=30
-StartLimitBurst=5
+RestartSec=60
+StartLimitBurst=3
 StartLimitIntervalSec=600
 
 [Install]
