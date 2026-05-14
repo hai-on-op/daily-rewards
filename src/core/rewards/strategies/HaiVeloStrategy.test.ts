@@ -1,5 +1,6 @@
 import { HaiVeloStrategy } from "./HaiVeloStrategy";
 import { HaiVeloUserState, HaiVeloEvent } from "../types";
+import { calculateStakingAtTimestamp } from "../../../services/skite-data";
 
 jest.mock("../../../config", () => ({
   config: jest.fn(() => ({
@@ -37,12 +38,14 @@ const mockProvider = {
     Promise.resolve({ timestamp: block * 2 })
   ),
 } as any;
+const mockCalculateStakingAtTimestamp = calculateStakingAtTimestamp as jest.Mock;
 
 describe("HaiVeloStrategy", () => {
   let strategy: HaiVeloStrategy;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCalculateStakingAtTimestamp.mockReturnValue({ users: {} });
     strategy = new HaiVeloStrategy(mockProvider);
   });
 
@@ -224,6 +227,29 @@ describe("HaiVeloStrategy", () => {
 
       const boosts = await strategy.calculateBoosts(users, 1000);
       expect(boosts.size).toBe(0);
+    });
+
+    it("should calculate KITE-share boost against haiVELO-equivalent weight", async () => {
+      strategy.applyEvent(
+        { eventType: "PRICE_UPDATE", timestamp: 1000, haiVeloPerLp: 2 },
+        new Map()
+      );
+      mockCalculateStakingAtTimestamp.mockReturnValue({
+        users: {
+          "0xalice": { share: 0.5 },
+          "0xbob": { share: 0.5 },
+        },
+      });
+
+      const users = new Map<string, HaiVeloUserState>([
+        ["0xalice", { address: "0xalice", collateral: 10, lpStakedRaw: 0 }],
+        ["0xbob", { address: "0xbob", collateral: 70, lpStakedRaw: 10 }],
+      ]);
+
+      const boosts = await strategy.calculateBoosts(users, 1000);
+
+      expect(boosts.get("0xalice")).toBe(2);
+      expect(boosts.get("0xbob")).toBeCloseTo(1.5555555556, 10);
     });
   });
 });

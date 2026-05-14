@@ -15,9 +15,11 @@ import {
   getRawHaiaeroCollateralData,
   processHaiaeroCollateral,
 } from "../../../services/initial-data/getInitialHaiaeroState";
+import { calculateStakingAtTimestamp } from "../../../services/skite-data";
 
 const mockGetRaw = getRawHaiaeroCollateralData as jest.Mock;
 const mockProcess = processHaiaeroCollateral as jest.Mock;
+const mockCalculateStakingAtTimestamp = calculateStakingAtTimestamp as jest.Mock;
 
 const makeEvent = (
   address: string,
@@ -40,6 +42,7 @@ describe("HaiAeroStrategy", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCalculateStakingAtTimestamp.mockReturnValue({ users: {} });
     strategy = new HaiAeroStrategy();
   });
 
@@ -207,6 +210,28 @@ describe("HaiAeroStrategy", () => {
       const boosts = await strategy.calculateBoosts(users, 1000);
 
       expect(boosts.size).toBe(0);
+    });
+
+    it("should calculate KITE-share boost against collateral share", async () => {
+      mockCalculateStakingAtTimestamp.mockReturnValue({
+        users: {
+          "0xalice": { share: 0.5 },
+          "0xbob": { share: 0.5 },
+          "0xcarol": { share: 0.2 },
+        },
+      });
+
+      const users = new Map([
+        ["0xalice", { address: "0xalice", collateral: 10 }],
+        ["0xbob", { address: "0xbob", collateral: 90 }],
+        ["0xcarol", { address: "0xcarol", collateral: 0 }],
+      ]);
+
+      const boosts = await strategy.calculateBoosts(users, 1000);
+
+      expect(boosts.get("0xalice")).toBe(2);
+      expect(boosts.get("0xbob")).toBeCloseTo(1.5555555556, 10);
+      expect(boosts.get("0xcarol")).toBe(1);
     });
   });
 });

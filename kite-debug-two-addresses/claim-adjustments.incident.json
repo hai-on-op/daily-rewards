@@ -1,0 +1,32 @@
+[
+  {
+    "token": "KITE",
+    "user": "0xf4527a233f669a55922f707c61054fa78bea7402",
+    "amount": "1152916838608540956557",
+    "sourceClaimTx":
+  "0x483e5989431a69215389513e07dfa03ae25fffefa6fdbfe968145c7b97be2c44",
+    "returnTx":
+  "0xdc981dd6f0efffc3d069970d056e060df6adb7b36f857b32aa49fca846122547",
+    "reason": "returned KITE overpayment from claim pagination incident"
+  },
+  {
+    "token": "KITE",
+    "user": "0xf4527a233f669a55922f707c61054fa78bea7402",
+    "amount": "1163791115387482250298",
+    "sourceClaimTx":
+  "0x62f22212f1d4c7e59ad740d2808f7e618fcbd496b722d55cd5c1fce2f932f382",
+    "returnTx":
+  "0xdc981dd6f0efffc3d069970d056e060df6adb7b36f857b32aa49fca846122547",
+    "reason": "returned KITE overpayment from claim pagination incident"
+  },
+  {
+    "token": "KITE",
+    "user": "0xf23f999ece302ea646509b51e6c4c19055471ab0",
+    "amount": "2792111596213107077347",
+    "sourceClaimTx":
+  "0x813cc5a24a590867b7c98bf5158cfce2a7d05c096b4b687d3ea17233cb5882a8",
+    "returnTx":
+  "0x7c9ca736255fc1d5149ff493bd2c2a29defd53b226138be22f1863334358597f",
+    "reason": "returned KITE overpayment from claim pagination incident"
+  }
+]

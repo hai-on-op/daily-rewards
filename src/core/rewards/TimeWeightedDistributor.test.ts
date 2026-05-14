@@ -16,7 +16,9 @@ interface MockEvent extends StrategyEvent {
 // --- Mock strategy: simple weight-based, no boost by default ---
 
 function createMockStrategy(
-  boostOverrides?: Map<string, number>
+  boostOverrides?:
+    | Map<string, number>
+    | ((users: Map<string, MockState>, timestamp: number) => Map<string, number>)
 ): RewardStrategy<MockEvent, MockState> {
   return {
     name: "mock",
@@ -50,8 +52,13 @@ function createMockStrategy(
     },
 
     async calculateBoosts(
-      users: Map<string, MockState>
+      users: Map<string, MockState>,
+      timestamp: number
     ): Promise<Map<string, number>> {
+      if (typeof boostOverrides === "function") {
+        return boostOverrides(users, timestamp);
+      }
+
       const boosts = new Map<string, number>();
       for (const [addr] of users) {
         boosts.set(addr, boostOverrides?.get(addr) ?? 1);
@@ -226,6 +233,39 @@ describe("TimeWeightedDistributor", () => {
     // Alice earns 2/3 * 1000 = 666.67, Bob earns 1/3 * 1000 = 333.33
     expect(result.earned.get("alice")).toBeCloseTo(666.667, 2);
     expect(result.earned.get("bob")).toBeCloseTo(333.333, 2);
+  });
+
+  it("documents current behavior when boost changes at a strategy event timestamp", async () => {
+    const strategy = createMockStrategy((_users, timestamp) =>
+      new Map<string, number>([
+        ["alice", timestamp >= 500 ? 2 : 1],
+        ["bob", 1],
+      ])
+    );
+
+    const users = new Map<string, MockState>([
+      ["alice", { address: "alice", weight: 100 }],
+      ["bob", { address: "bob", weight: 100 }],
+    ]);
+
+    const result = await distributor.distribute(
+      strategy,
+      [{ timestamp: 500, address: "bob", deltaWeight: 0 }],
+      users,
+      baseConfig
+    );
+
+    const total = Array.from(result.earned.values()).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+    // This locks the current implementation for audit purposes:
+    // rewardPerWeight for 0-500 is accumulated with the old total weight,
+    // but credited using the boost returned at timestamp 500.
+    expect(total).toBeCloseTo(1250, 2);
+    expect(result.earned.get("alice")).toBeCloseTo(833.333, 2);
+    expect(result.earned.get("bob")).toBeCloseTo(416.667, 2);
   });
 
   it("total distributed equals reward amount", async () => {

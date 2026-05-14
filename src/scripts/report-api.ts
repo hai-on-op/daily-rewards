@@ -7,8 +7,11 @@
  *   GET /user/:address → filtered report for a single address
  *
  * Usage:
- *   yarn report-api                  # default port 3100
+ *   yarn report-api                  # default host 127.0.0.1, port 3100
  *   PORT=8080 yarn report-api        # custom port
+ *
+ * Keep this API bound to localhost in production and expose it privately with
+ * Tailscale Serve rather than binding the Node process to a public interface.
  */
 
 import http from "http";

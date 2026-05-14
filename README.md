@@ -347,7 +347,7 @@ module.exports = {
 ```bash
 cd /var/www/daily-rewards
 yarn build
-pm2 start ecosystem.config.js --only report-api
+pm2 startOrRestart ecosystem.config.js --only report-api --update-env
 pm2 logs report-api
 ```
 
@@ -358,6 +358,22 @@ The report API binds to `REPORT_API_HOST` (`127.0.0.1` by default) and exposes:
 ```bash
 curl http://127.0.0.1:3100/ops/status
 ```
+
+Expose the localhost-only API to the tailnet with Tailscale Serve:
+
+```bash
+sudo tailscale serve --bg --http=3100 localhost:3100
+tailscale serve status
+```
+
+Then open the private tailnet URL:
+
+```text
+http://<vps-machine-name>:3100/ops/status
+```
+
+Do not bind `report-api` to `0.0.0.0` for browser access. Keep the Node process
+on `127.0.0.1` and let Tailscale Serve proxy tailnet traffic to it.
 
 `/ops/status` returns systemd timer state, live reward distributor state, latest
 root-update manifest metadata, backup status, Cloudflare upload status, and

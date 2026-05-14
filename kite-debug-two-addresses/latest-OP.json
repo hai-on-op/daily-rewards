@@ -1,0 +1,139 @@
+{
+  "token": "OP",
+  "entryCounter": 320,
+  "date": "2026-05-07T18:04:22.545Z",
+  "root": "0x2abd8cc5e1f4a34d29257fa75813c1501394143415ea5fb5c427f70415ec64de",
+  "tree": {
+    "format": "standard-v1",
+    "leafEncoding": [
+      "address",
+      "uint256"
+    ],
+    "tree": [
+      "0x2abd8cc5e1f4a34d29257fa75813c1501394143415ea5fb5c427f70415ec64de",
+      "0x594c355a6446ed11d0de8e60adca4a686621e6a9d5cac9bd2c6e651fa3e6fb30",
+      "0x735eb8c7da763d26eadc25dec1fc625c258df2e4916911d17727ef6854026b62",
+      "0xc7a76bab4625d42be3fb28a166c49b607361f8c8b226f971f8885b74f3522dc5",
+      "0xd89b9d8f7b4a6e52a2ad70fbde336e58437df79f4aaa07e24954fd259d803360",
+      "0xc1c6900e675033739ea5ae8b3c71f1e4ffdd8878462103950d85c13360af1716",
+      "0xa7611016233bda8885b0d87e14b1fafe1f60271de64661ca10d1d863af8e7b2e",
+      "0x489d7276c3b2d45944d6c62cdf142d9c593616af34053667f1f60efb05d9c4ba",
+      "0x0c5f56fb53c449dfa51801e93935d0e67da122092a96d3aea7dc2c552f644955"
+    ],
+    "values": [
+      {
+        "value": [
+          "0xb7d672703e7987715912a0784be91b27d1098c89",
+          "35854175829172164"
+        ],
+        "treeIndex": 7
+      },
+      {
+        "value": [
+          "0xe551388b683bb1e34e27e5a7b00eabe79b080bf7",
+          "431145868226179857174"
+        ],
+        "treeIndex": 5
+      },
+      {
+        "value": [
+          "0x9492510bbcb93b6992d8b7bb67888558e12dcac4",
+          "137431866869126082520"
+        ],
+        "treeIndex": 4
+      },
+      {
+        "value": [
+          "0x87880c614432add2bb93b350dbdd8a59bd06fed7",
+          "129431881732320306355"
+        ],
+        "treeIndex": 6
+      },
+      {
+        "value": [
+          "0xadd179224b9895bd773e9550d84505e1365427ea",
+          "47877758255652615560"
+        ],
+        "treeIndex": 8
+      }
+    ]
+  },
+  "grossRewards": [
+    {
+      "address": "0xda27d2bdf91a8919b91bdf71f8fd1d2638f9421c",
+      "earned": "2593308094873029858718"
+    },
+    {
+      "address": "0x89edc11116ca95170fdfe2669f66dbb287dccf7a",
+      "earned": "1522322176280255462189"
+    },
+    {
+      "address": "0xb7d672703e7987715912a0784be91b27d1098c89",
+      "earned": "1064436324274449134464"
+    },
+    {
+      "address": "0xc3597578d6c3929cfb1aa55feb72f7b530a4cb5b",
+      "earned": "1038913218031645783412"
+    },
+    {
+      "address": "0x58772689ec7fa6589207af74dc2055fa831522d1",
+      "earned": "773982833674056564632"
+    },
+    {
+      "address": "0xe551388b683bb1e34e27e5a7b00eabe79b080bf7",
+      "earned": "431145868226179857174"
+    },
+    {
+      "address": "0x99758478c660d48abf6ea0741b0fa34c91c6cf9a",
+      "earned": "383632339491345476290"
+    },
+    {
+      "address": "0x9492510bbcb93b6992d8b7bb67888558e12dcac4",
+      "earned": "137431866869126082520"
+    },
+    {
+      "address": "0x87880c614432add2bb93b350dbdd8a59bd06fed7",
+      "earned": "129431881732320306355"
+    },
+    {
+      "address": "0x6954ba40d5787041d7d1dbc091e0197c6566e910",
+      "earned": "91720744848682144834"
+    },
+    {
+      "address": "0xadd179224b9895bd773e9550d84505e1365427ea",
+      "earned": "47877758255652615560"
+    },
+    {
+      "address": "0xf4527a233f669a55922f707c61054fa78bea7402",
+      "earned": "11196268946696728008"
+    },
+    {
+      "address": "0x02f43df0412da9bda64653980288bd4c804681bf",
+      "earned": "7619050272709205984"
+    },
+    {
+      "address": "0x7e551dc6ef6987139a4014a4fdaff7d2075b00a3",
+      "earned": "5821413471087486968"
+    },
+    {
+      "address": "0x328cace41eadf6df6e693b8e4810bf97aac4f5ee",
+      "earned": "5052270519492958023"
+    },
+    {
+      "address": "0xec5c16f3eaf86a801a3e89201dd39bddd1786cbf",
+      "earned": "3619590223351090152"
+    },
+    {
+      "address": "0xcafd432b7ecafff352d92fcb81c60380d437e99d",
+      "earned": "2235502204290154893"
+    },
+    {
+      "address": "0x78cd2a44e14529499559f374d8b39a37d2764bf4",
+      "earned": "916538142512941079"
+    },
+    {
+      "address": "0x422a569593865ace312acbfddc4c1ffb20322c78",
+      "earned": "339153196893171693"
+    }
+  ]
+}
