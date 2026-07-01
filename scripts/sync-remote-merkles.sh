@@ -4,7 +4,7 @@
 
 REMOTE_USER="root"
 REMOTE_HOST="143.198.123.60"
-REMOTE_DIR="/var/www/daily-rewards/merkle-backups/"
+REMOTE_DIR="/opt/hai/daily-rewards/merkle-backups/"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)/remote-merkles/"
 
 echo "Syncing remote merkle-backups from ${REMOTE_HOST}..."

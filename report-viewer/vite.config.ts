@@ -62,6 +62,7 @@ function createApiMiddleware(): Connect.Router {
 
 export default defineConfig({
   server: {
+    allowedHosts: ['foundation-prod'],
     fs: {
       allow: [__dirname, PROJECT_ROOT, REPORTS_DIR],
     },

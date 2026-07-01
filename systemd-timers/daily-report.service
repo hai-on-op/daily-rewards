@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=root
-Group=root
-WorkingDirectory=/var/www/daily-rewards
-EnvironmentFile=/var/www/daily-rewards/.env
-ExecStart=/usr/bin/pm2 restart daily-report --stop-exit-codes 0
+User=pies
+Group=pies
+WorkingDirectory=/opt/hai/daily-rewards
+EnvironmentFile=/opt/hai/daily-rewards/.env
+ExecStart=/home/pies/.nvm/versions/node/v24.16.0/bin/node dist/scripts/daily-reward-report.js
 StandardOutput=append:/var/log/daily-report.log
 StandardError=append:/var/log/daily-report.log
 TimeoutStartSec=300

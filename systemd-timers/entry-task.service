@@ -4,13 +4,13 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=root
-Group=root
-WorkingDirectory=/var/www/daily-rewards
-EnvironmentFile=/var/www/daily-rewards/.env
+User=pies
+Group=pies
+WorkingDirectory=/opt/hai/daily-rewards
+EnvironmentFile=/opt/hai/daily-rewards/.env
 
 Environment=FEATURE_MODE=production
-ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /usr/bin/node dist/modules/orchestrator/cli.js
+ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /home/pies/.nvm/versions/node/v24.16.0/bin/node dist/modules/orchestrator/cli.js
 StandardOutput=append:/var/log/entry-task.log
 StandardError=append:/var/log/entry-task.log
 TimeoutStartSec=7200
