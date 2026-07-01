@@ -8,9 +8,9 @@ For complete setup instructions, see the main [README.md](../README.md) in the p
 
 | File | Description |
 |------|-------------|
-| `entry-task.service` | Service unit for the entry task (uses orchestrator CLI) |
+| `entry-task.service` | Service unit for the entry task (uses built orchestrator CLI directly) |
 | `entry-task.timer` | Timer unit that triggers entry-task.service daily at 6:00 PM |
-| `unpause-task.service` | Service unit for the unpause task |
+| `unpause-task.service` | Service unit for the guarded unpause task |
 | `unpause-task.timer` | Timer unit that triggers unpause-task.service daily at 8:00 PM |
 
 ## Feature Flags
@@ -42,6 +42,17 @@ FEATURE_SAVE_BACKUPS=true
 FEATURE_UPLOAD_TO_CLOUDFLARE=true
 FEATURE_SEND_NOTIFICATIONS=true
 ```
+
+## Automation Safety
+
+The entry and unpause services use `/var/lock/daily-rewards.lock` so they cannot
+run at the same time. The entry service writes root-update manifests to
+`OPS_STATE_DIR` (default: `./ops-state`). The unpause service reads the latest
+manifest and exits without sending a transaction unless roots, backups,
+Cloudflare upload status, pause state, and epoch counter all verify.
+
+PM2 should not schedule or run `entry-task` or `unpause-task`. PM2 can still be
+used for non-critical long-running services such as the report API.
 
 ## Quick Installation
 

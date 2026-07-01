@@ -27,11 +27,25 @@ describe("AxiosSubgraphClient", () => {
     });
 
     it("should throw on network error", async () => {
+      jest.useFakeTimers();
       mockedAxios.post.mockRejectedValue(new Error("Network failure"));
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
 
-      await expect(
-        client.query("{ users { id } }", "http://subgraph")
-      ).rejects.toThrow("Error with subgraph query:");
+      try {
+        const queryExpectation = expect(
+          client.query("{ users { id } }", "http://subgraph")
+        ).rejects.toThrow("Error with subgraph query:");
+
+        await jest.runAllTimersAsync();
+        await queryExpectation;
+
+        expect(mockedAxios.post).toHaveBeenCalledTimes(6);
+      } finally {
+        consoleSpy.mockRestore();
+        jest.useRealTimers();
+      }
     });
 
     it("should throw when response has no data", async () => {

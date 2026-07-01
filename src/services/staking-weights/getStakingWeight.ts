@@ -22,7 +22,7 @@ export const getStakingWeightForLPPositions = (positions: LpPosition[]) => {
 
 export const getStakingWeightForDebt = (
   debt: number,
-  collateral: number,
+  collateral?: number,
   effectiveBridgedTokens?: number,
   withBridge?: boolean
 ): number => {

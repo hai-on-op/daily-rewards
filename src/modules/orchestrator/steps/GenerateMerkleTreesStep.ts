@@ -1,5 +1,11 @@
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { ProcessingStep, ProcessingContext, FeatureFlags } from "../types";
+import { getTokenAddressMap } from "../contractHelpers";
+import {
+  saveRootUpdateManifest,
+  updateManifestStatus,
+  upsertManifestToken,
+} from "../../../services/ops-state";
 
 /**
  * Step: Generate merkle trees from calculated rewards
@@ -21,6 +27,7 @@ export class GenerateMerkleTreesStep implements ProcessingStep {
 
     // Generate merkle trees for each token
     const merkleTrees: { [token: string]: StandardMerkleTree<[string, string]> } = {};
+    const tokenAddressMap = getTokenAddressMap();
     
     for (const [token, rewards] of Object.entries(context.finalRewards)) {
       console.log(`[${this.name}] Generating tree for ${token} with ${rewards.length} entries`);
@@ -30,12 +37,24 @@ export class GenerateMerkleTreesStep implements ProcessingStep {
       
       console.log(`[${this.name}] ${token} merkle root: ${tree.root}`);
       merkleTrees[token] = tree;
+
+      if (context.runManifest) {
+        const tokenAddress = tokenAddressMap[token as keyof typeof tokenAddressMap];
+        upsertManifestToken(context.runManifest, token, {
+          tokenAddress,
+          root: tree.root,
+        });
+      }
     }
 
     context.merkleTrees = merkleTrees;
     console.log(`[${this.name}] Generated ${Object.keys(merkleTrees).length} merkle trees`);
 
+    if (context.runManifest) {
+      updateManifestStatus(context.runManifest, "generated");
+      saveRootUpdateManifest(context.runManifest);
+    }
+
     return context;
   }
 }
-

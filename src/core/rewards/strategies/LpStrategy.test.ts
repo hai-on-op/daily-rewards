@@ -1,5 +1,6 @@
 import { LpStrategy } from "./LpStrategy";
 import { LpUserState, LpPosition } from "../types";
+import { calculateStakingAtTimestamp } from "../../../services/skite-data";
 
 jest.mock("../../../config", () => ({
   config: jest.fn(() => ({
@@ -54,12 +55,14 @@ const mockProvider = {
     Promise.resolve({ timestamp: block * 2 })
   ),
 } as any;
+const mockCalculateStakingAtTimestamp = calculateStakingAtTimestamp as jest.Mock;
 
 describe("LpStrategy", () => {
   let strategy: LpStrategy;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCalculateStakingAtTimestamp.mockReturnValue({ users: {} });
     strategy = new LpStrategy(mockProvider, "http://test");
   });
 
@@ -306,6 +309,44 @@ describe("LpStrategy", () => {
       const boosts1 = await strategy.calculateBoosts(users, 1000);
       const boosts2 = await strategy.calculateBoosts(users, 1000);
       expect(boosts1).toBe(boosts2);
+    });
+
+    it("should calculate current LP boost with all LP liquidity as denominator", async () => {
+      mockCalculateStakingAtTimestamp.mockReturnValue({
+        users: {
+          "0xalice": { share: 0.05 },
+          "0xbob": { share: 0.95 },
+        },
+      });
+
+      const users = new Map<string, LpUserState>([
+        [
+          "0xalice",
+          {
+            address: "0xalice",
+            debt: 0,
+            lpPositions: [
+              { tokenId: 1, lowerTick: -887220, upperTick: 887220, liquidity: 100 },
+            ],
+          },
+        ],
+        [
+          "0xbob",
+          {
+            address: "0xbob",
+            debt: 0,
+            lpPositions: [
+              { tokenId: 2, lowerTick: -887220, upperTick: 887220, liquidity: 100 },
+              { tokenId: 3, lowerTick: -100, upperTick: 100, liquidity: 900 },
+            ],
+          },
+        ],
+      ]);
+
+      const boosts = await strategy.calculateBoosts(users, 1000);
+
+      expect(boosts.get("0xalice")).toBeCloseTo(1.55, 10);
+      expect(boosts.get("0xbob")).toBe(2);
     });
   });
 });

@@ -4,15 +4,13 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=root
-Group=root
-WorkingDirectory=/var/www/daily-rewards
-EnvironmentFile=/var/www/daily-rewards/.env
+User=pies
+Group=pies
+WorkingDirectory=/opt/hai/daily-rewards
+EnvironmentFile=/opt/hai/daily-rewards/.env
 
-# Run entry task via the new orchestrator CLI
-# Set FEATURE_MODE=production for all features, or development/dry-run for testing
-ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/orchestrator/cli.ts
-
+Environment=FEATURE_MODE=production
+ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /home/pies/.nvm/versions/node/v24.16.0/bin/node dist/modules/orchestrator/cli.js
 StandardOutput=append:/var/log/entry-task.log
 StandardError=append:/var/log/entry-task.log
 TimeoutStartSec=7200

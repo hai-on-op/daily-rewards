@@ -1,16 +1,16 @@
 [Unit]
 Description=Daily Rewards Unpause Task
-After=network.target
+After=network.target entry-task.service
 
 [Service]
 Type=oneshot
-User=root
-Group=root
-WorkingDirectory=/var/www/daily-rewards
-EnvironmentFile=/var/www/daily-rewards/.env
+User=pies
+Group=pies
+WorkingDirectory=/opt/hai/daily-rewards
+EnvironmentFile=/opt/hai/daily-rewards/.env
 
-# Run unpause task directly via ts-node
-ExecStart=/usr/bin/node node_modules/.bin/ts-node ./src/modules/unpause.ts
+# Run guarded unpause task directly from the built output
+ExecStart=/usr/bin/flock -n /var/lock/daily-rewards.lock /home/pies/.nvm/versions/node/v24.16.0/bin/node dist/modules/unpause.js
 
 StandardOutput=append:/var/log/unpause-task.log
 StandardError=append:/var/log/unpause-task.log

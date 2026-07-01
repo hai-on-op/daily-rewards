@@ -1,0 +1,598 @@
+{
+  "generatedAt": "2026-05-03T02:51:44.636Z",
+  "policyMatrix": [
+    {
+      "strategy": "haiAERO",
+      "implementationPath": "src/core/rewards/strategies/HaiAeroStrategy.ts",
+      "positionMetric": "haiAERO collateral",
+      "implementedFormula": "min(kiteShare / collateralShare + 1, 2)",
+      "usesKiteStake": true,
+      "denominator": "sum of active haiAERO collateral",
+      "timestampPolicy": "Recomputed when TimeWeightedDistributor asks calculateBoosts().",
+      "auditQuestion": "Confirm haiAERO boost should be based on collateral share and stKITE share."
+    },
+    {
+      "strategy": "haiVELO",
+      "implementationPath": "src/core/rewards/strategies/HaiVeloStrategy.ts",
+      "positionMetric": "haiVELO collateral + staked LP converted to haiVELO-equivalent",
+      "implementedFormula": "min(kiteShare / haiVeloWeightShare + 1, 2)",
+      "usesKiteStake": true,
+      "denominator": "sum of active haiVELO-equivalent weight",
+      "timestampPolicy": "Recomputed when TimeWeightedDistributor asks calculateBoosts().",
+      "auditQuestion": "Confirm LP-to-haiVELO conversion and stKITE share should be combined this way."
+    },
+    {
+      "strategy": "lpStaking",
+      "implementationPath": "src/core/rewards/strategies/LpStakingStrategy.ts",
+      "positionMetric": "staked LP token amount",
+      "implementedFormula": "min(kiteShare / lpStakeShare + 1, 2)",
+      "usesKiteStake": true,
+      "denominator": "sum of active LP staking balance for that staking type",
+      "timestampPolicy": "Recomputed when TimeWeightedDistributor asks calculateBoosts().",
+      "auditQuestion": "Confirm each LP staking pool should have an independent boost denominator."
+    },
+    {
+      "strategy": "lp",
+      "implementationPath": "src/core/rewards/strategies/LpStrategy.ts",
+      "positionMetric": "full-range Uniswap V3 LP liquidity",
+      "implementedFormula": "min(kiteShare / (fullRangeLiquidity / allLiquidity) + 1, 2)",
+      "usesKiteStake": true,
+      "denominator": "all LP position liquidity, including non-full-range positions",
+      "timestampPolicy": "Recomputed when TimeWeightedDistributor asks calculateBoosts().",
+      "auditQuestion": "Confirm the boost denominator should include non-full-range liquidity even though rewards use only full-range liquidity."
+    },
+    {
+      "strategy": "minter",
+      "implementationPath": "src/core/rewards/strategies/MinterStrategy.ts",
+      "positionMetric": "SAFE debt",
+      "implementedFormula": "min(debtShare + 1, 2)",
+      "usesKiteStake": false,
+      "denominator": "sum of active debt for the collateral type",
+      "timestampPolicy": "Cached by timestamp and recalculated on strategy events.",
+      "auditQuestion": "Confirm whether minter boost should ignore stKITE. This differs from the repo docs' general KITE boost formula."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "equal-position-no-kite",
+      "title": "Equal positions with no KITE",
+      "description": "All users have position weight but no staked KITE. KITE-share strategies should fall back to 1x.",
+      "strategies": [
+        "haiAERO",
+        "haiVELO",
+        "lpStaking",
+        "lp"
+      ],
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0
+        }
+      ]
+    },
+    {
+      "id": "overstaked-small-position",
+      "title": "Small position with large KITE share",
+      "description": "A user with a small position and large KITE share should hit the 2x cap.",
+      "strategies": [
+        "haiAERO",
+        "haiVELO",
+        "lpStaking"
+      ],
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 10,
+          "kiteShare": 0.5
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 90,
+          "kiteShare": 0.5
+        }
+      ]
+    },
+    {
+      "id": "kite-with-zero-position",
+      "title": "KITE staked but no reward position",
+      "description": "A user with staked KITE but no position receives no reward because effective weight remains zero.",
+      "strategies": [
+        "haiAERO",
+        "haiVELO",
+        "lpStaking"
+      ],
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0.2
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0.6
+        },
+        {
+          "address": "0xcarol",
+          "positionWeight": 0,
+          "kiteShare": 0.2
+        }
+      ]
+    },
+    {
+      "id": "minter-kite-mismatch",
+      "title": "Minter current formula versus KITE-share formula",
+      "description": "Current minter boost follows debt share, so KITE allocation does not change minter boosts.",
+      "strategies": [
+        "minter"
+      ],
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 300,
+          "kiteShare": 0
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 1
+        }
+      ]
+    },
+    {
+      "id": "lp-denominator-mismatch",
+      "title": "LP full-range rewards with non-full-range liquidity in denominator",
+      "description": "Current LP boost divides full-range reward weight by all LP liquidity, including non-full-range liquidity.",
+      "strategies": [
+        "lp"
+      ],
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "allLpLiquidity": 100,
+          "kiteShare": 0.05
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "allLpLiquidity": 1000,
+          "kiteShare": 0.95
+        }
+      ]
+    }
+  ],
+  "scenarioResults": [
+    {
+      "scenarioId": "equal-position-no-kite",
+      "strategy": "haiAERO",
+      "totalImplementedEffectiveWeight": 200,
+      "totalDocsFormulaEffectiveWeight": 200,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        }
+      ]
+    },
+    {
+      "scenarioId": "equal-position-no-kite",
+      "strategy": "haiVELO",
+      "totalImplementedEffectiveWeight": 200,
+      "totalDocsFormulaEffectiveWeight": 200,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        }
+      ]
+    },
+    {
+      "scenarioId": "equal-position-no-kite",
+      "strategy": "lpStaking",
+      "totalImplementedEffectiveWeight": 200,
+      "totalDocsFormulaEffectiveWeight": 200,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        }
+      ]
+    },
+    {
+      "scenarioId": "equal-position-no-kite",
+      "strategy": "lp",
+      "totalImplementedEffectiveWeight": 200,
+      "totalDocsFormulaEffectiveWeight": 200,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.5,
+          "docsFormulaRewardShare": 0.5,
+          "implementedEffectiveWeight": 100,
+          "docsFormulaEffectiveWeight": 100
+        }
+      ]
+    },
+    {
+      "scenarioId": "overstaked-small-position",
+      "strategy": "haiAERO",
+      "totalImplementedEffectiveWeight": 160,
+      "totalDocsFormulaEffectiveWeight": 160,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 10,
+          "kiteShare": 0.5,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.125,
+          "docsFormulaRewardShare": 0.125,
+          "implementedEffectiveWeight": 20,
+          "docsFormulaEffectiveWeight": 20
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 90,
+          "kiteShare": 0.5,
+          "implementedBoost": 1.5555555555555556,
+          "docsFormulaBoost": 1.5555555555555556,
+          "implementedRewardShare": 0.875,
+          "docsFormulaRewardShare": 0.875,
+          "implementedEffectiveWeight": 140,
+          "docsFormulaEffectiveWeight": 140
+        }
+      ]
+    },
+    {
+      "scenarioId": "overstaked-small-position",
+      "strategy": "haiVELO",
+      "totalImplementedEffectiveWeight": 160,
+      "totalDocsFormulaEffectiveWeight": 160,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 10,
+          "kiteShare": 0.5,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.125,
+          "docsFormulaRewardShare": 0.125,
+          "implementedEffectiveWeight": 20,
+          "docsFormulaEffectiveWeight": 20
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 90,
+          "kiteShare": 0.5,
+          "implementedBoost": 1.5555555555555556,
+          "docsFormulaBoost": 1.5555555555555556,
+          "implementedRewardShare": 0.875,
+          "docsFormulaRewardShare": 0.875,
+          "implementedEffectiveWeight": 140,
+          "docsFormulaEffectiveWeight": 140
+        }
+      ]
+    },
+    {
+      "scenarioId": "overstaked-small-position",
+      "strategy": "lpStaking",
+      "totalImplementedEffectiveWeight": 160,
+      "totalDocsFormulaEffectiveWeight": 160,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 10,
+          "kiteShare": 0.5,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.125,
+          "docsFormulaRewardShare": 0.125,
+          "implementedEffectiveWeight": 20,
+          "docsFormulaEffectiveWeight": 20
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 90,
+          "kiteShare": 0.5,
+          "implementedBoost": 1.5555555555555556,
+          "docsFormulaBoost": 1.5555555555555556,
+          "implementedRewardShare": 0.875,
+          "docsFormulaRewardShare": 0.875,
+          "implementedEffectiveWeight": 140,
+          "docsFormulaEffectiveWeight": 140
+        }
+      ]
+    },
+    {
+      "scenarioId": "kite-with-zero-position",
+      "strategy": "haiAERO",
+      "totalImplementedEffectiveWeight": 340,
+      "totalDocsFormulaEffectiveWeight": 340,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0.2,
+          "implementedBoost": 1.4,
+          "docsFormulaBoost": 1.4,
+          "implementedRewardShare": 0.4117647058823529,
+          "docsFormulaRewardShare": 0.4117647058823529,
+          "implementedEffectiveWeight": 140,
+          "docsFormulaEffectiveWeight": 140
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0.6,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.5882352941176471,
+          "docsFormulaRewardShare": 0.5882352941176471,
+          "implementedEffectiveWeight": 200,
+          "docsFormulaEffectiveWeight": 200
+        },
+        {
+          "address": "0xcarol",
+          "positionWeight": 0,
+          "kiteShare": 0.2,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0,
+          "docsFormulaRewardShare": 0,
+          "implementedEffectiveWeight": 0,
+          "docsFormulaEffectiveWeight": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "kite-with-zero-position",
+      "strategy": "haiVELO",
+      "totalImplementedEffectiveWeight": 340,
+      "totalDocsFormulaEffectiveWeight": 340,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0.2,
+          "implementedBoost": 1.4,
+          "docsFormulaBoost": 1.4,
+          "implementedRewardShare": 0.4117647058823529,
+          "docsFormulaRewardShare": 0.4117647058823529,
+          "implementedEffectiveWeight": 140,
+          "docsFormulaEffectiveWeight": 140
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0.6,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.5882352941176471,
+          "docsFormulaRewardShare": 0.5882352941176471,
+          "implementedEffectiveWeight": 200,
+          "docsFormulaEffectiveWeight": 200
+        },
+        {
+          "address": "0xcarol",
+          "positionWeight": 0,
+          "kiteShare": 0.2,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0,
+          "docsFormulaRewardShare": 0,
+          "implementedEffectiveWeight": 0,
+          "docsFormulaEffectiveWeight": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "kite-with-zero-position",
+      "strategy": "lpStaking",
+      "totalImplementedEffectiveWeight": 340,
+      "totalDocsFormulaEffectiveWeight": 340,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0.2,
+          "implementedBoost": 1.4,
+          "docsFormulaBoost": 1.4,
+          "implementedRewardShare": 0.4117647058823529,
+          "docsFormulaRewardShare": 0.4117647058823529,
+          "implementedEffectiveWeight": 140,
+          "docsFormulaEffectiveWeight": 140
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0.6,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.5882352941176471,
+          "docsFormulaRewardShare": 0.5882352941176471,
+          "implementedEffectiveWeight": 200,
+          "docsFormulaEffectiveWeight": 200
+        },
+        {
+          "address": "0xcarol",
+          "positionWeight": 0,
+          "kiteShare": 0.2,
+          "implementedBoost": 1,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0,
+          "docsFormulaRewardShare": 0,
+          "implementedEffectiveWeight": 0,
+          "docsFormulaEffectiveWeight": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "minter-kite-mismatch",
+      "strategy": "minter",
+      "totalImplementedEffectiveWeight": 650,
+      "totalDocsFormulaEffectiveWeight": 500,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 300,
+          "kiteShare": 0,
+          "implementedBoost": 1.75,
+          "docsFormulaBoost": 1,
+          "implementedRewardShare": 0.8076923076923077,
+          "docsFormulaRewardShare": 0.6,
+          "implementedEffectiveWeight": 525,
+          "docsFormulaEffectiveWeight": 300
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 1,
+          "implementedBoost": 1.25,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.19230769230769232,
+          "docsFormulaRewardShare": 0.4,
+          "implementedEffectiveWeight": 125,
+          "docsFormulaEffectiveWeight": 200
+        }
+      ]
+    },
+    {
+      "scenarioId": "lp-denominator-mismatch",
+      "strategy": "lp",
+      "totalImplementedEffectiveWeight": 355,
+      "totalDocsFormulaEffectiveWeight": 310,
+      "users": [
+        {
+          "address": "0xalice",
+          "positionWeight": 100,
+          "kiteShare": 0.05,
+          "implementedBoost": 1.55,
+          "docsFormulaBoost": 1.1,
+          "implementedRewardShare": 0.43661971830985913,
+          "docsFormulaRewardShare": 0.35483870967741943,
+          "implementedEffectiveWeight": 155,
+          "docsFormulaEffectiveWeight": 110.00000000000001
+        },
+        {
+          "address": "0xbob",
+          "positionWeight": 100,
+          "kiteShare": 0.95,
+          "implementedBoost": 2,
+          "docsFormulaBoost": 2,
+          "implementedRewardShare": 0.5633802816901409,
+          "docsFormulaRewardShare": 0.6451612903225806,
+          "implementedEffectiveWeight": 200,
+          "docsFormulaEffectiveWeight": 200
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "Minter boost ignores stKITE",
+      "evidence": "MinterStrategy.calculateBoosts uses min(debtShare + 1, 2), while the architecture doc says the general boost formula uses user KITE share divided by user position share.",
+      "recommendation": "Confirm intended minter policy. If minter should use KITE staking, replace the debt-share boost and backtest historical minter KITE distributions."
+    },
+    {
+      "severity": "medium",
+      "title": "LP boost denominator includes non-full-range liquidity",
+      "evidence": "LpStrategy rewards full-range liquidity, but its boost denominator sums all LP liquidity before dividing the full-range user weight.",
+      "recommendation": "Confirm whether non-full-range liquidity should dilute the LP boost denominator. If not, denominator should match reward-eligible full-range weight."
+    },
+    {
+      "severity": "medium",
+      "title": "KITE stake changes are not strategy events",
+      "evidence": "TimeWeightedDistributor recalculates boosts at strategy event timestamps. stKITE stake and withdraw events are read by calculateBoosts, but they are not inserted into the strategy event stream.",
+      "recommendation": "Confirm whether boost changes should take effect immediately at stKITE event timestamps. If yes, add KITE staking events to the distribution timeline."
+    },
+    {
+      "severity": "high",
+      "title": "Boost denominator and credit boost can come from different times",
+      "evidence": "TimeWeightedDistributor advances rewardPerWeight using the prior total boosted weight, then recalculates boosts at the event timestamp before crediting users for the elapsed interval.",
+      "recommendation": "Confirm intended timing. If boosts can change between strategy events, credit elapsed rewards with the same boost set used in the denominator, then recalculate boosts for the next interval."
+    },
+    {
+      "severity": "medium",
+      "title": "Final interval uses the last strategy-event timestamp for boost lookup",
+      "evidence": "The final credit path calls calculateBoosts(users, timestamp), where timestamp is still the last processed strategy event timestamp.",
+      "recommendation": "Confirm whether the final interval should use endTimestamp for boost lookup, especially when KITE staking changes after the last strategy event."
+    }
+  ]
+}

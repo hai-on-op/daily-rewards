@@ -141,13 +141,170 @@ export const processHaiveloCollateral = (
 export const getRawHaiveloCollateralData = async (): Promise<
   HaiveloCollateralEvent[]
 > => {
-  // Build the query
+  const ids = config().HAIVELO_COLLATERAL_TYPE_IDS;
+  const idsList = ids.map((id: string) => `"${id}"`).join(", ");
+  const subgraphUrl = config().HAIVELO_SUBGRAPH_URL;
+
+  // 1. Regular modification events
   const query = buildHaiveloCollateralQuery();
-
-  // Fetch collateral data
   const rawCollateralData = await fetchHaiveloCollateral(query);
+  const modifications = rawCollateralData as HaiveloCollateralEvent[];
 
-  return rawCollateralData as HaiveloCollateralEvent[];
+  // 2. Confiscation & transfer events (gated by LIQUIDATION_EVENTS_ENABLED)
+  if (!config().LIQUIDATION_EVENTS_ENABLED) {
+    console.log(`[haiVELO] Fetched ${modifications.length} modifications (liquidation events disabled)`);
+    return modifications;
+  }
+
+  // Build safeHandler → owner mapping from modification events
+  const handlerToOwner = new Map<string, { id: string; address: string }>();
+  for (const m of modifications) {
+    const handler = m.safe.id.split("-")[0];
+    handlerToOwner.set(handler, m.safe.owner);
+  }
+
+  // Fetch confiscation events (liquidations)
+  const confiscationQuery = `{
+    confiscateSAFECollateralAndDebts(
+      where: { collateralType_: { id_in: [${idsList}] } },
+      orderBy: createdAt, first: 1000, skip: [[skip]]
+    ) {
+      id
+      deltaCollateral
+      deltaDebt
+      safeHandler
+      createdAt
+      createdAtBlock
+      collateralType { id }
+    }
+  }`;
+  const confiscations: any[] = await subgraphQueryPaginated(
+    confiscationQuery, "confiscateSAFECollateralAndDebts", subgraphUrl
+  );
+
+  // Fetch transfer events
+  const transferQuery = `{
+    transferSAFECollateralAndDebts(
+      where: { collateralType_: { id_in: [${idsList}] }, deltaCollateral_not: "0" },
+      orderBy: createdAt, first: 1000, skip: [[skip]]
+    ) {
+      id
+      deltaCollateral
+      deltaDebt
+      srcHandler
+      dstHandler
+      createdAt
+      createdAtBlock
+      collateralType { id }
+    }
+  }`;
+  const transfers: any[] = await subgraphQueryPaginated(
+    transferQuery, "transferSAFECollateralAndDebts", subgraphUrl
+  );
+
+  // Resolve unknown handlers
+  const unknownHandlers = new Set<string>();
+  for (const c of confiscations) {
+    if (!handlerToOwner.has(c.safeHandler)) unknownHandlers.add(c.safeHandler);
+  }
+  for (const t of transfers) {
+    if (!handlerToOwner.has(t.srcHandler)) unknownHandlers.add(t.srcHandler);
+    if (!handlerToOwner.has(t.dstHandler)) unknownHandlers.add(t.dstHandler);
+  }
+  if (unknownHandlers.size > 0) {
+    const handlerList = Array.from(unknownHandlers).map(h => `"${h}"`).join(", ");
+    const safeQuery = `{ safeHandlerOwners(where: { id_in: [${handlerList}] }) { id owner { id address } } }`;
+    try {
+      const safes: any[] = await subgraphQueryPaginated(
+        safeQuery, "safeHandlerOwners", subgraphUrl
+      );
+      for (const s of safes) {
+        handlerToOwner.set(s.id, s.owner);
+      }
+    } catch {
+      for (const handler of unknownHandlers) {
+        for (const cTypeId of ids) {
+          const safeId = `${handler}-${cTypeId}`;
+          try {
+            const safeQuery2 = `{ safe(id: "${safeId}") { owner { id address } } }`;
+            const result = await subgraphQueryPaginated(safeQuery2, "safe", subgraphUrl);
+            if (result && (result as any).owner) {
+              handlerToOwner.set(handler, (result as any).owner);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+    }
+  }
+
+  // Effective block/timestamp: liquidation events that happened BEFORE this block
+  // are stamped at this point so they take effect at a single moment.
+  // Events at or after this block keep their original timestamps.
+  const effectiveBlock = config().LIQUIDATION_EVENTS_EFFECTIVE_BLOCK;
+  const effectiveTimestamp = config().LIQUIDATION_EVENTS_EFFECTIVE_TIMESTAMP;
+
+  const shouldOverride = (originalBlock: string) =>
+    effectiveBlock && Number(originalBlock) < effectiveBlock;
+
+  // Convert confiscation events to HaiveloCollateralEvent format
+  for (const c of confiscations) {
+    const owner = handlerToOwner.get(c.safeHandler);
+    if (!owner || Number(c.deltaCollateral) === 0) continue;
+    const override = shouldOverride(c.createdAtBlock);
+    modifications.push({
+      id: c.id,
+      createdAt: override ? effectiveTimestamp!.toString() : c.createdAt,
+      deltaCollateral: c.deltaCollateral,
+      deltaDebt: c.deltaDebt || "0",
+      safe: {
+        id: `${c.safeHandler}-${c.collateralType.id}`,
+        owner,
+      },
+      collateralType: c.collateralType,
+      createdAtTransaction: c.id.split("-")[0],
+      createdAtBlock: override ? effectiveBlock!.toString() : c.createdAtBlock,
+    });
+  }
+
+  // Convert transfer events: negative for source, positive for destination
+  for (const t of transfers) {
+    const srcOwner = handlerToOwner.get(t.srcHandler);
+    const dstOwner = handlerToOwner.get(t.dstHandler);
+    const delta = Number(t.deltaCollateral);
+    if (delta === 0) continue;
+    const override = shouldOverride(t.createdAtBlock);
+
+    if (dstOwner) {
+      modifications.push({
+        id: t.id + "-dst",
+        createdAt: override ? effectiveTimestamp!.toString() : t.createdAt,
+        deltaCollateral: t.deltaCollateral,
+        deltaDebt: "0",
+        safe: { id: `${t.dstHandler}-${t.collateralType.id}`, owner: dstOwner },
+        collateralType: t.collateralType,
+        createdAtTransaction: t.id.split("-")[0],
+        createdAtBlock: override ? effectiveBlock!.toString() : t.createdAtBlock,
+      });
+    }
+    if (srcOwner) {
+      modifications.push({
+        id: t.id + "-src",
+        createdAt: override ? effectiveTimestamp!.toString() : t.createdAt,
+        deltaCollateral: (-delta).toString(),
+        deltaDebt: "0",
+        safe: { id: `${t.srcHandler}-${t.collateralType.id}`, owner: srcOwner },
+        collateralType: t.collateralType,
+        createdAtTransaction: t.id.split("-")[0],
+        createdAtBlock: override ? effectiveBlock!.toString() : t.createdAtBlock,
+      });
+    }
+  }
+
+  modifications.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
+
+  console.log(`[haiVELO] Fetched ${rawCollateralData.length} modifications, ${confiscations.length} confiscations, ${transfers.length} transfers${effectiveBlock ? ` (effective at block ${effectiveBlock})` : ''}`);
+
+  return modifications;
 };
 
 /**

@@ -101,28 +101,5 @@ export const getInitialLpPosition = async (
 
   console.log("rawPositions found:", rawPositions.length);
 
-  let userPositions = rawPositions.reduce((acc, p) => {
-    if (acc[p.owner]) {
-      acc[p.owner].positions.push({
-        lowerTick: parseInt(p.tickLower.tickIdx),
-        upperTick: parseInt(p.tickUpper.tickIdx),
-        liquidity: parseInt(p.liquidity),
-        tokenId: parseInt(p.id)
-      });
-    } else {
-      acc[p.owner] = {
-        positions: [
-          {
-            lowerTick: parseInt(p.tickLower.tickIdx),
-            upperTick: parseInt(p.tickUpper.tickIdx),
-            liquidity: parseInt(p.liquidity),
-            tokenId: parseInt(p.id)
-          }
-        ]
-      };
-    }
-    return acc;
-  }, {} as { [key: string]: { positions: LpPosition[] } });
-
-  return userPositions;
+  return processLpPositions(rawPositions);
 };

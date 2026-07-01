@@ -1,6 +1,10 @@
 import { ProcessingStep, ProcessingContext, FeatureFlags } from "../types";
 import { notifyTransaction, notifyMerkleUpdate } from "../../telegram-bot";
 import { getTokenAddressMap } from "../contractHelpers";
+import {
+  saveRootUpdateManifest,
+  updateManifestStatus,
+} from "../../../services/ops-state";
 
 /**
  * Step: Update merkle roots on the blockchain
@@ -64,6 +68,16 @@ export class UpdateOnChainStep implements ProcessingStep {
       const receipt = await tx.wait();
       console.log(`[${this.name}] Transaction confirmed in block: ${receipt?.blockNumber}`);
 
+      if (context.runManifest) {
+        context.runManifest.updateTxHash = tx.hash;
+        context.runManifest.updateBlock = receipt?.blockNumber;
+        context.runManifest.entryCounterAfter = Number(
+          String(await context.rewardDistributor.epochCounter())
+        );
+        updateManifestStatus(context.runManifest, "updated_on_chain");
+        saveRootUpdateManifest(context.runManifest);
+      }
+
       // Notify transaction success
       if (context.flags.sendNotifications) {
         await notifyTransaction({
@@ -102,4 +116,3 @@ export class UpdateOnChainStep implements ProcessingStep {
     return context;
   }
 }
-

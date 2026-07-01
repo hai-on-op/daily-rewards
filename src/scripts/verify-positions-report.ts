@@ -22,9 +22,13 @@ import fs from "fs";
 import path from "path";
 import { ethers } from "ethers";
 import { config } from "../config";
-import { subgraphQuery, subgraphQueryPaginated } from "../services/subgraph/utils";
+import { subgraphQueryPaginated } from "../services/subgraph/utils";
 import { combineResultsDetailed, RewardsMap, StrategyRewardEntry } from "../modules/result-combiner";
 import { getTokenAddressMap } from "../modules/orchestrator/contractHelpers";
+import {
+  getEffectiveClaimedAmounts,
+  subtractClaimedRewards,
+} from "../services/claim-accounting";
 import { getSafeOwnerMapping } from "../services/initial-data/getSafeOwnerMapping";
 import {
   getRawHaiveloCollateralData,
@@ -132,41 +136,10 @@ async function getEndBlocks(delay: number = 30) {
 
 // ── Claimed amounts (same logic as CalculateRewardsStep) ───────────────
 
-async function getClaimedAmounts(
-  token: string,
-  users: string[]
-): Promise<Map<string, string>> {
-  if (users.length === 0) return new Map();
-
-  const query = `
-    {
-      tokenClaims(where: {
-        token: "${token.toLowerCase()}"
-        user_in: ${JSON.stringify(users.map((u) => u?.toLowerCase()))}
-      }) {
-        user { id }
-        totalAmount
-      }
-    }
-  `;
-
-  try {
-    const response = await subgraphQuery(query, config().DISTRIBUTOR_SUBGRAPH_URL);
-    return new Map(
-      response.tokenClaims.map((claim: any) => [
-        claim.user.id.toLowerCase(),
-        claim.totalAmount,
-      ])
-    );
-  } catch (error) {
-    console.error(`Error fetching claimed amounts for token ${token}:`, error);
-    return new Map();
-  }
-}
-
 async function subtractClaims(
   rawRewards: RewardsMap
 ): Promise<{ [token: string]: { address: string; earned: string }[] }> {
+  const cfg = config();
   const tokenAddressMap = getTokenAddressMap();
   const finalResults: { [token: string]: { address: string; earned: string }[] } = {};
 
@@ -183,26 +156,23 @@ async function subtractClaims(
       earned: ethers.utils.parseEther(r.earned.toFixed(18)).toString(),
     }));
 
-    const claimedAmounts = await getClaimedAmounts(
+    const claimedAmounts = await getEffectiveClaimedAmounts(
       tokenAddress,
-      bnRewards.map((r) => r.address)
+      bnRewards.map((r) => r.address),
+      {
+        distributorSubgraphUrl: cfg.DISTRIBUTOR_SUBGRAPH_URL,
+        claimAdjustmentsFile: cfg.CLAIM_ADJUSTMENTS_FILE,
+        tokenAddressMap,
+      }
     );
 
-    finalResults[token] = bnRewards
-      .map((reward) => {
-        const claimed = claimedAmounts.get(reward.address.toLowerCase()) || "0";
-        const remaining = ethers.BigNumber.from(reward.earned).sub(
-          ethers.BigNumber.from(claimed)
-        );
-        const isDusty = remaining.lte(DUST_THRESHOLD);
-        return {
-          address: reward.address,
-          earned: isDusty ? "0" : remaining.toString(),
-        };
-      })
-      .filter((r) => r.earned !== "0");
+    finalResults[token] = subtractClaimedRewards(
+      bnRewards,
+      claimedAmounts,
+      DUST_THRESHOLD
+    );
 
-    console.log(`  ${token}: ${finalResults[token].length} users after claims subtracted (${claimedAmounts.size} claims found)`);
+    console.log(`  ${token}: ${finalResults[token].length} users after claims subtracted (${claimedAmounts.size} effective claims found)`);
   }
 
   return finalResults;

@@ -21,15 +21,18 @@ import {
   getInitialLpStakingState,
   getLpStakingEventsInRange,
 } from "../../../services/lp-staking-data/getInitialLpStakingState";
+import { calculateStakingAtTimestamp } from "../../../services/skite-data";
 
 const mockGetInitial = getInitialLpStakingState as jest.Mock;
 const mockGetEvents = getLpStakingEventsInRange as jest.Mock;
+const mockCalculateStakingAtTimestamp = calculateStakingAtTimestamp as jest.Mock;
 
 describe("LpStakingStrategy", () => {
   let strategy: LpStakingStrategy;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCalculateStakingAtTimestamp.mockReturnValue({ users: {} });
     strategy = new LpStakingStrategy("HAI_BOLD_CURVE", mockProvider);
   });
 
@@ -175,6 +178,28 @@ describe("LpStakingStrategy", () => {
 
       const boosts = await strategy.calculateBoosts(users, 1000);
       expect(boosts.size).toBe(0);
+    });
+
+    it("should calculate KITE-share boost against LP stake share", async () => {
+      mockCalculateStakingAtTimestamp.mockReturnValue({
+        users: {
+          "0xalice": { share: 0.5 },
+          "0xbob": { share: 0.5 },
+          "0xcarol": { share: 0.1 },
+        },
+      });
+
+      const users = new Map([
+        ["0xalice", { address: "0xalice", lpStaked: 10 }],
+        ["0xbob", { address: "0xbob", lpStaked: 90 }],
+        ["0xcarol", { address: "0xcarol", lpStaked: 0 }],
+      ]);
+
+      const boosts = await strategy.calculateBoosts(users, 1000);
+
+      expect(boosts.get("0xalice")).toBe(2);
+      expect(boosts.get("0xbob")).toBeCloseTo(1.5555555556, 10);
+      expect(boosts.get("0xcarol")).toBe(1);
     });
   });
 });

@@ -1,48 +1,12 @@
 import { ethers } from "ethers";
 import { ProcessingStep, ProcessingContext, FeatureFlags } from "../types";
 import { combineResults } from "../../result-combiner";
-import { subgraphQuery } from "../../../services/subgraph/utils";
 import { config } from "../../../config";
 import { getTokenAddressMap } from "../contractHelpers";
-
-/**
- * Get claimed amounts for users from the subgraph
- */
-async function getClaimedAmounts(
-  token: string,
-  users: string[]
-): Promise<Map<string, string>> {
-  const query = `
-    {
-      tokenClaims(where: {
-        token: "${token.toLowerCase()}"
-        user_in: ${JSON.stringify(users.map((u) => u?.toLowerCase()))}
-      }) {
-        user {
-          id
-        }
-        totalAmount
-      }
-    }
-  `;
-
-  try {
-    const response = await subgraphQuery(
-      query,
-      config().DISTRIBUTOR_SUBGRAPH_URL
-    );
-
-    return new Map(
-      response.tokenClaims.map((claim: any) => [
-        claim.user.id.toLowerCase(),
-        claim.totalAmount,
-      ])
-    );
-  } catch (error) {
-    console.error(`Error fetching claimed amounts for token ${token}:`, error);
-    return new Map();
-  }
-}
+import {
+  getEffectiveClaimedAmounts,
+  subtractClaimedRewards,
+} from "../../../services/claim-accounting";
 
 /**
  * Step: Calculate rewards from all sources
@@ -90,6 +54,7 @@ export class CalculateRewardsStep implements ProcessingStep {
     // Subtract claimed amounts
     const finalResults: typeof adjustedResults = {};
     const tokenAddressMap = getTokenAddressMap();
+    const cfg = config();
 
     for (const [token, rewards] of Object.entries(adjustedResults)) {
       console.log(`[${this.name}] Processing claims for token: ${token}`);
@@ -100,29 +65,20 @@ export class CalculateRewardsStep implements ProcessingStep {
         continue;
       }
 
-      const claimedAmounts = await getClaimedAmounts(
+      const claimedAmounts = await getEffectiveClaimedAmounts(
         tokenAddress,
-        rewards.map((r) => r.address)
+        rewards.map((r) => r.address),
+        {
+          distributorSubgraphUrl: cfg.DISTRIBUTOR_SUBGRAPH_URL,
+          claimAdjustmentsFile: cfg.CLAIM_ADJUSTMENTS_FILE,
+          tokenAddressMap,
+        }
       );
 
       // Subtract claimed amounts from earned amounts
-      finalResults[token] = rewards
-        .map((reward) => {
-          const claimed = claimedAmounts.get(reward.address.toLowerCase()) || "0";
-          const remaining = ethers.BigNumber.from(reward.earned).sub(
-            ethers.BigNumber.from(claimed)
-          );
-          const isDusty = remaining.lte(
-            ethers.BigNumber.from(ethers.BigNumber.from(10).pow(16))
-          );
-          return {
-            address: reward.address,
-            earned: isDusty ? "0" : remaining.toString(),
-          };
-        })
-        .filter((reward) => reward.earned !== "0");
+      finalResults[token] = subtractClaimedRewards(rewards, claimedAmounts);
 
-      console.log(`[${this.name}] Found ${claimedAmounts.size} previous claims for ${token}`);
+      console.log(`[${this.name}] Found ${claimedAmounts.size} effective previous claims for ${token}`);
     }
 
     context.finalRewards = finalResults;
@@ -131,4 +87,3 @@ export class CalculateRewardsStep implements ProcessingStep {
     return context;
   }
 }
-

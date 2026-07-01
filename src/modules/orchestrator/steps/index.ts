@@ -7,4 +7,4 @@ export { GenerateMerkleTreesStep } from "./GenerateMerkleTreesStep";
 export { UpdateOnChainStep } from "./UpdateOnChainStep";
 export { BackupStep } from "./BackupStep";
 export { CloudUploadStep } from "./CloudUploadStep";
-
+export { VerifyRootUpdateStep } from "./VerifyRootUpdateStep";

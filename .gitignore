@@ -1,5 +1,6 @@
 node_modules/
 .env
+.env.bak
 .DS_Store
 
 /transactions-cache
@@ -24,3 +25,11 @@ telegram-users.json
 .env.development
 
 *.log
+
+/reports
+
+/ops-state
+
+/remote-merkles
+
+**comparison.html
