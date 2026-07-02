@@ -32,6 +32,8 @@ const mockWriteFile = mockFs.promises.writeFile as jest.MockedFunction<typeof mo
 describe('Merkle Tree Storage Service', () => {
   let mockMerkleTries: any;
   let mockBackupDir: string;
+  let mockBackupPath: string;
+  let defaultBackupPath: string;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,6 +59,8 @@ describe('Merkle Tree Storage Service', () => {
     };
 
     mockBackupDir = 'test-backups';
+    mockBackupPath = `${process.cwd()}/${mockBackupDir}`;
+    defaultBackupPath = `${process.cwd()}/merkle-backups`;
   });
 
   describe('saveMerkleTreesAsFiles', () => {
@@ -65,12 +69,13 @@ describe('Merkle Tree Storage Service', () => {
 
       await saveMerkleTreesAsFiles({
         merkleTries: mockMerkleTries,
-        entryCounter
+        entryCounter,
+        backupDir: mockBackupDir
       });
 
       // Verify directory creation
-      expect(mockFs.existsSync).toHaveBeenCalledWith('test-backups');
-      expect(mockFs.mkdirSync).toHaveBeenCalledWith('test-backups', { recursive: true });
+      expect(mockFs.existsSync).toHaveBeenCalledWith(mockBackupPath);
+      expect(mockFs.mkdirSync).toHaveBeenCalledWith(mockBackupPath, { recursive: true });
 
       // Verify files were written
       expect(mockWriteFile).toHaveBeenCalledTimes(2);
@@ -108,10 +113,11 @@ describe('Merkle Tree Storage Service', () => {
 
       await saveMerkleTreesAsFiles({
         merkleTries: mockMerkleTries,
-        entryCounter: 1
+        entryCounter: 1,
+        backupDir: mockBackupDir
       });
 
-      expect(mockFs.existsSync).toHaveBeenCalledWith('test-backups');
+      expect(mockFs.existsSync).toHaveBeenCalledWith(mockBackupPath);
       expect(mockFs.mkdirSync).not.toHaveBeenCalled();
     });
 
@@ -134,7 +140,7 @@ describe('Merkle Tree Storage Service', () => {
         entryCounter: 1
       });
 
-      expect(mockFs.existsSync).toHaveBeenCalledWith('merkle-backups');
+      expect(mockFs.existsSync).toHaveBeenCalledWith(defaultBackupPath);
     });
 
     it('should handle empty merkle tries', async () => {
@@ -150,12 +156,12 @@ describe('Merkle Tree Storage Service', () => {
   describe('getBackupDirectory', () => {
     it('should return correct backup directory path', () => {
       const result = getBackupDirectory('custom-backups');
-      expect(result).toBe('custom-backups');
+      expect(result).toBe(`${process.cwd()}/custom-backups`);
     });
 
     it('should use default directory when not specified', () => {
       const result = getBackupDirectory();
-      expect(result).toBe('merkle-backups');
+      expect(result).toBe(defaultBackupPath);
     });
   });
 

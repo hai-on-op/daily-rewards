@@ -17,7 +17,7 @@ export class RewardCalculationRepositoryImpl implements RewardCalculationReposit
     return await calculateLpRewards(amount, params);
   }
 
-  async calculateMinterRewards(startBlock: number, endBlock: number): Promise<Record<string, Record<string, UserList>>> {
+  async calculateMinterRewards(startBlock: number, endBlock?: number): Promise<Record<string, Record<string, UserList>>> {
     return await calculateMinterRewards(startBlock, endBlock);
   }
 }

@@ -109,11 +109,21 @@ export function listBackupFiles(backupDir: string = 'merkle-backups'): string[] 
   try {
     return fs.readdirSync(fullBackupDir)
       .filter(filename => filename.endsWith('.json'))
-      .sort((a, b) => b.localeCompare(a)); // Sort newest first
+      .sort((a, b) => {
+        const timestampOrder = getBackupTimestamp(b).localeCompare(
+          getBackupTimestamp(a)
+        );
+        return timestampOrder || b.localeCompare(a);
+      });
   } catch (error) {
     console.error('Error listing backup files:', error);
     return [];
   }
+}
+
+function getBackupTimestamp(filename: string): string {
+  const match = filename.match(/entry\d+-(.+)\.json$/);
+  return match?.[1] ?? filename;
 }
 
 /**

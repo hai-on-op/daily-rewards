@@ -13,5 +13,5 @@ import { UserList } from '../../../types';
 export interface RewardCalculationRepository {
   calculateHaiveloRewards(amount: number, params: { startBlock: number; endBlock: number }): Promise<{ [address: string]: { earned: number } }>;
   calculateLpRewards(amount: number, params?: { startBlock: number; endBlock: number }): Promise<{ [address: string]: { earned: number } }>;
-  calculateMinterRewards(startBlock: number, endBlock: number): Promise<Record<string, Record<string, UserList>>>;
+  calculateMinterRewards(startBlock: number, endBlock?: number): Promise<Record<string, Record<string, UserList>>>;
 }
