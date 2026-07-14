@@ -1,6 +1,8 @@
 [Unit]
 Description=Daily Rewards Entry Task
 After=network.target
+StartLimitIntervalSec=600
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
@@ -18,8 +20,6 @@ TimeoutStartSec=7200
 # Retry configuration
 Restart=on-failure
 RestartSec=60
-StartLimitBurst=3
-StartLimitIntervalSec=600
 
 [Install]
 WantedBy=multi-user.target

@@ -1,6 +1,8 @@
 [Unit]
 Description=Daily Rewards Unpause Task
 After=network.target entry-task.service
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 Type=oneshot
@@ -19,8 +21,6 @@ TimeoutStartSec=300
 # Retry configuration
 Restart=on-failure
 RestartSec=30
-StartLimitBurst=5
-StartLimitIntervalSec=600
 
 [Install]
 WantedBy=multi-user.target

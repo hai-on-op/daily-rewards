@@ -3,6 +3,8 @@ const MOCK_CONFIG = {
   LP_GEB_SUBGRAPH_URL: "http://lp-geb-subgraph",
   MINTER_GEB_SUBGRAPH_URL: "http://minter-geb-subgraph",
   UNISWAP_SUBGRAPH_URL: "http://uniswap-subgraph",
+  UNISWAP_POSITIONS_SUBGRAPH_URL: "http://uniswap-positions-subgraph",
+  UNISWAP_SWAPS_SUBGRAPH_URL: "http://uniswap-swaps-subgraph",
   STKITE_SUBGRAPH_URL: "http://stkite-subgraph",
   HAIVELO_SUBGRAPH_URL: "http://haivelo-subgraph",
   LP_STAKING_SUBGRAPH_URL: "http://lpstaking-subgraph",
@@ -129,6 +131,8 @@ describe("EnvConfigLoader", () => {
       expect(urls.geb).toBe("http://geb-subgraph");
       expect(urls.lpGeb).toBe("http://lp-geb-subgraph");
       expect(urls.uniswap).toBe("http://uniswap-subgraph");
+      expect(urls.uniswapPositions).toBe("http://uniswap-positions-subgraph");
+      expect(urls.uniswapSwaps).toBe("http://uniswap-swaps-subgraph");
       expect(urls.haivelo).toBe("http://haivelo-subgraph");
       expect(urls.distributor).toBe("http://distributor-subgraph");
     });

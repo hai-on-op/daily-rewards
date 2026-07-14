@@ -31,6 +31,8 @@ export class EnvConfigLoader implements IConfigLoader {
       lpGeb: cfg.LP_GEB_SUBGRAPH_URL,
       minterGeb: cfg.MINTER_GEB_SUBGRAPH_URL,
       uniswap: cfg.UNISWAP_SUBGRAPH_URL,
+      uniswapPositions: cfg.UNISWAP_POSITIONS_SUBGRAPH_URL,
+      uniswapSwaps: cfg.UNISWAP_SWAPS_SUBGRAPH_URL,
       stkite: cfg.STKITE_SUBGRAPH_URL,
       haivelo: cfg.HAIVELO_SUBGRAPH_URL,
       lpStaking: cfg.LP_STAKING_SUBGRAPH_URL,

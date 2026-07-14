@@ -31,6 +31,8 @@ jest.mock("../../config", () => ({
     LP_GEB_SUBGRAPH_URL: "https://geb.subgraph",
     UNISWAP_POOL_ADDRESS: "0xpool",
     UNISWAP_SUBGRAPH_URL: "https://uni.subgraph",
+    UNISWAP_POSITIONS_SUBGRAPH_URL: "https://uni-positions.subgraph",
+    UNISWAP_SWAPS_SUBGRAPH_URL: "https://uni-swaps.subgraph",
     EXCLUSION_LIST_FILE: "exclusion.json",
   }),
 }));
@@ -257,6 +259,41 @@ describe("getPoolPositionUpdate", () => {
       logIndex: 1e6,
       timestamp: 1000,
     });
+    expect(subgraphQueryPaginated).toHaveBeenCalledWith(
+      expect.any(String),
+      "positionSnapshots",
+      "https://uni-positions.subgraph"
+    );
+  });
+
+  it("should process scalar ticks used by Revert-compatible snapshots", async () => {
+    (subgraphQueryPaginated as jest.Mock).mockResolvedValue([
+      {
+        owner: "0xowner1",
+        timestamp: "1000",
+        liquidity: "1000000",
+        position: {
+          id: "1",
+          tickLower: "-887220",
+          tickUpper: "887220",
+        },
+      },
+    ]);
+
+    await expect(getPoolPositionUpdate(100, 200)).resolves.toEqual([
+      {
+        type: RewardEventType.POOL_POSITION_UPDATE,
+        value: {
+          tokenId: 1,
+          upperTick: 887220,
+          lowerTick: -887220,
+          liquidity: 1000000,
+        },
+        address: "0xowner1",
+        logIndex: 1e6,
+        timestamp: 1000,
+      },
+    ]);
   });
 
   it("should handle empty response", async () => {
@@ -312,6 +349,11 @@ describe("getPoolSwap", () => {
       logIndex: 2,
       timestamp: 2000,
     });
+    expect(subgraphQueryPaginated).toHaveBeenCalledWith(
+      expect.any(String),
+      "swaps",
+      "https://uni-swaps.subgraph"
+    );
   });
 
   it("should handle empty response", async () => {

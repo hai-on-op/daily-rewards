@@ -4,6 +4,7 @@ import { LPRewardEvent, RewardEventType } from "../../types";
 import { getExclusionList } from "../../utils/getExclusionList";
 import { providers } from "ethers";
 import { lpProvider } from "../../utils/chain";
+import { getSubgraphTickIndex, SubgraphTick } from "../../utils/uniswapTicks";
 
 export const blockToTimestamp = async (block: number) => {
   return (await lpProvider.getBlock(block)).timestamp;
@@ -238,19 +239,15 @@ export const getPoolPositionUpdate = async (
     owner: string;
     timestamp: string;
     liquidity: string;
-    position: {
-      id: string;
-      tickLower: {
-        tickIdx: string;
+      position: {
+        id: string;
+        tickLower: SubgraphTick;
+        tickUpper: SubgraphTick;
       };
-      tickUpper: {
-        tickIdx: string;
-      };
-    };
   }[] = await subgraphQueryPaginated(
     query,
     "positionSnapshots",
-    config().UNISWAP_SUBGRAPH_URL
+    config().UNISWAP_POSITIONS_SUBGRAPH_URL
   );
   let events: LPRewardEvent[] = [];
 
@@ -259,8 +256,8 @@ export const getPoolPositionUpdate = async (
       type: RewardEventType.POOL_POSITION_UPDATE,
       value: {
         tokenId: Number(position.position.id),
-        upperTick: Number(position.position.tickUpper.tickIdx),
-        lowerTick: Number(position.position.tickLower.tickIdx),
+        upperTick: getSubgraphTickIndex(position.position.tickUpper),
+        lowerTick: getSubgraphTickIndex(position.position.tickLower),
         liquidity: Number(position.liquidity),
       },
       address: position.owner,
@@ -300,7 +297,7 @@ export const getPoolSwap = async (
   }[] = await subgraphQueryPaginated(
     query,
     "swaps",
-    config().UNISWAP_SUBGRAPH_URL
+    config().UNISWAP_SWAPS_SUBGRAPH_URL
   );
 
   const events = data.map((x) => ({

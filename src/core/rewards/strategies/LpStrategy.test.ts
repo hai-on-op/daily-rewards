@@ -10,6 +10,7 @@ jest.mock("../../../config", () => ({
     LP_COLLATERAL_TYPES: ["OP", "WETH"],
     UNISWAP_POOL_ADDRESS: "0xpool",
     UNISWAP_SUBGRAPH_URL: "http://uniswap",
+    UNISWAP_POSITIONS_SUBGRAPH_URL: "http://uniswap-positions",
     EXCLUSION_LIST_FILE: "/tmp/exclusion.csv",
   })),
 }));

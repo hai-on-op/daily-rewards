@@ -124,7 +124,7 @@ export const getInitialState = async (
     const positions = await getInitialLpPosition(
       startBlock,
       config().UNISWAP_POOL_ADDRESS,
-      config().UNISWAP_SUBGRAPH_URL
+      config().UNISWAP_POSITIONS_SUBGRAPH_URL
     );
 
     const debts = await getInitialSafesDebt(
@@ -177,7 +177,7 @@ export const getInitialState = async (
   const poolState = await getPoolState(
     startBlock,
     config().UNISWAP_POOL_ADDRESS,
-    config().UNISWAP_SUBGRAPH_URL
+    config().UNISWAP_POSITIONS_SUBGRAPH_URL
   );
   const redemptionPrice = await getRedemptionPriceFromBlock(
     startBlock,
