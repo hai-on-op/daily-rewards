@@ -51,6 +51,10 @@ run at the same time. The entry service writes root-update manifests to
 manifest and exits without sending a transaction unless roots, backups,
 Cloudflare upload status, pause state, and epoch counter all verify.
 
+Service retries are rate-limited in the unit's `[Unit]` section. Keep the
+`StartLimitIntervalSec` and `StartLimitBurst` settings there; systemd ignores
+`StartLimitIntervalSec` when it is placed under `[Service]`.
+
 PM2 should not schedule or run `entry-task` or `unpause-task`. PM2 can still be
 used for non-critical long-running services such as the report API.
 

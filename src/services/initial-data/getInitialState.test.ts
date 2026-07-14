@@ -56,6 +56,7 @@ describe("Initial State Module", () => {
       UNISWAP_POOL_ADDRESS: "0xpool",
       GEB_SUBGRAPH_URL: "https://geb.subgraph",
       UNISWAP_SUBGRAPH_URL: "https://uni.subgraph",
+      UNISWAP_POSITIONS_SUBGRAPH_URL: "https://uni-positions.subgraph",
       COLLATERAL_TYPES: ["ETH-A"],
       EXCLUSION_LIST_FILE: "exclusion.json",
     });

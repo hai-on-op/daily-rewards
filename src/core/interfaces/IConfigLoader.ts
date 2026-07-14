@@ -5,6 +5,8 @@ export interface SubgraphUrls {
   lpGeb: string;
   minterGeb: string;
   uniswap: string;
+  uniswapPositions: string;
+  uniswapSwaps: string;
   stkite: string;
   haivelo: string;
   lpStaking: string;

@@ -1,5 +1,6 @@
 import { UserPositions, RawPosition, ProcessedPosition } from "../../types";
 import { subgraphQueryPaginated } from "../subgraph/utils";
+import { getSubgraphTickIndex } from "../../utils/uniswapTicks";
 
 const fullRangeLowerTick = -887220;
 const fullRangeUpperTick = 887220;
@@ -65,8 +66,8 @@ export const fetchLpPositions = async (
 export const processLpPositions = (positions: RawPosition[]): UserPositions => {
   return positions.reduce((acc, p) => {
     const processedPosition: ProcessedPosition = {
-      lowerTick: parseInt(p.tickLower.tickIdx, 10),
-      upperTick: parseInt(p.tickUpper.tickIdx, 10),
+      lowerTick: getSubgraphTickIndex(p.tickLower),
+      upperTick: getSubgraphTickIndex(p.tickUpper),
       liquidity: parseInt(p.liquidity, 10),
       tokenId: parseInt(p.id, 10),
     };

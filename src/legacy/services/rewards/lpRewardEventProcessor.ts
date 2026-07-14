@@ -137,7 +137,7 @@ export const processRewardEvent = async (
     await getPoolState(
       startBlock,
       config().UNISWAP_POOL_ADDRESS,
-      config().UNISWAP_SUBGRAPH_URL
+      config().UNISWAP_POSITIONS_SUBGRAPH_URL
     )
   ).sqrtPrice;
   // Ongoing redemption price

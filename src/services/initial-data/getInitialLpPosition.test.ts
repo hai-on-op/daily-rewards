@@ -132,6 +132,27 @@ describe("processLpPositions", () => {
 
     expect(result).toEqual(expectedUserPositions);
   });
+
+  it("should process scalar ticks used by Revert-compatible subgraphs", () => {
+    const result = processLpPositions([
+      {
+        id: "509796",
+        owner: "0xOwner1",
+        liquidity: "1234",
+        tickLower: "-887220",
+        tickUpper: "887220",
+      },
+    ]);
+
+    expect(result["0xOwner1"].positions).toEqual([
+      {
+        lowerTick: -887220,
+        upperTick: 887220,
+        liquidity: 1234,
+        tokenId: 509796,
+      },
+    ]);
+  });
 });
 
 describe("getInitialLpPosition", () => {

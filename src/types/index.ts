@@ -2,12 +2,8 @@ export interface RawPosition {
   id: string;
   owner: string;
   liquidity: string;
-  tickLower: {
-    tickIdx: string;
-  };
-  tickUpper: {
-    tickIdx: string;
-  };
+  tickLower: string | { tickIdx: string };
+  tickUpper: string | { tickIdx: string };
 }
 
 export interface ProcessedPosition {

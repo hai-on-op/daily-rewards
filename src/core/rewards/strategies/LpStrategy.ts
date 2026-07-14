@@ -73,7 +73,7 @@ export class LpStrategy
     const poolState = await getPoolState(
       blockRange.startBlock,
       config().UNISWAP_POOL_ADDRESS,
-      config().UNISWAP_SUBGRAPH_URL
+      config().UNISWAP_POSITIONS_SUBGRAPH_URL
     );
     this.sqrtPrice = poolState.sqrtPrice;
 

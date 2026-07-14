@@ -283,7 +283,10 @@ async function getLpPositionsAtBlock(block: number): Promise<Map<string, number>
   try {
     const cfg = config();
     const query = buildLpPositionsQuery(block, cfg.UNISWAP_POOL_ADDRESS);
-    const rawPositions = await fetchLpPositions(query, cfg.UNISWAP_SUBGRAPH_URL);
+    const rawPositions = await fetchLpPositions(
+      query,
+      cfg.UNISWAP_POSITIONS_SUBGRAPH_URL
+    );
 
     const positions = new Map<string, number>();
     for (const pos of rawPositions) {

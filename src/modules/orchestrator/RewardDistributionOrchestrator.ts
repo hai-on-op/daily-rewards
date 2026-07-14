@@ -130,11 +130,13 @@ export class RewardDistributionOrchestrator {
     // Track step execution
     const executedSteps: string[] = [];
     const skippedSteps: string[] = [];
+    let activeStep: string | null = null;
 
     try {
       // Execute each step in the pipeline
       for (const step of this.pipeline) {
         if (step.isEnabled(this.flags)) {
+          activeStep = step.name;
           console.log(`\n>>> Executing step: ${step.name}`);
           const startTime = Date.now();
           
@@ -144,6 +146,7 @@ export class RewardDistributionOrchestrator {
           const duration = Date.now() - startTime;
           console.log(`<<< Step ${step.name} completed in ${duration}ms`);
           executedSteps.push(step.name);
+          activeStep = null;
         } else {
           console.log(`--- Skipping step: ${step.name} (disabled)`);
           skippedSteps.push(step.name);
@@ -204,7 +207,7 @@ export class RewardDistributionOrchestrator {
             failedAtEntryCounter: context.entryCounter,
             effectiveEntryCounter: context.effectiveEntryCounter,
             executedSteps,
-            failedAt: executedSteps[executedSteps.length - 1] || "initialization",
+            failedAt: activeStep || "initialization",
           },
         });
       }

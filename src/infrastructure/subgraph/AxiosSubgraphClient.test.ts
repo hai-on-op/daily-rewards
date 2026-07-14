@@ -36,7 +36,7 @@ describe("AxiosSubgraphClient", () => {
       try {
         const queryExpectation = expect(
           client.query("{ users { id } }", "http://subgraph")
-        ).rejects.toThrow("Error with subgraph query:");
+        ).rejects.toThrow("Subgraph request failed: Network failure");
 
         await jest.runAllTimersAsync();
         await queryExpectation;
@@ -53,22 +53,47 @@ describe("AxiosSubgraphClient", () => {
 
       await expect(
         client.query("{ users { id } }", "http://subgraph")
-      ).rejects.toThrow("No data");
+      ).rejects.toThrow("Subgraph response did not contain data");
     });
 
-    it("should throw when response data has no nested data", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { errors: ["bad query"] } });
+    it("should report non-retryable GraphQL errors without retrying", async () => {
+      mockedAxios.post.mockResolvedValue({
+        data: { errors: [{ message: "Type Query has no field users" }] },
+      });
 
+      await expect(
+        client.query("{ users { id } }", "http://subgraph")
+      ).rejects.toThrow(
+        "Subgraph GraphQL error: Type Query has no field users"
+      );
+
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    });
+
+    it("should retry transient GraphQL indexer errors", async () => {
+      jest.useFakeTimers();
+      mockedAxios.post.mockResolvedValue({
+        data: { errors: [{ message: "bad indexers: too far behind" }] },
+      });
       const consoleSpy = jest
         .spyOn(console, "log")
         .mockImplementation(() => {});
 
-      await expect(
-        client.query("{ users { id } }", "http://subgraph")
-      ).rejects.toThrow("No data");
+      try {
+        const queryExpectation = expect(
+          client.query("{ users { id } }", "http://subgraph")
+        ).rejects.toThrow(
+          "Subgraph GraphQL error: bad indexers: too far behind"
+        );
 
-      expect(consoleSpy).toHaveBeenCalledWith(["bad query"]);
-      consoleSpy.mockRestore();
+        await jest.runAllTimersAsync();
+        await queryExpectation;
+
+        expect(mockedAxios.post).toHaveBeenCalledTimes(6);
+      } finally {
+        consoleSpy.mockRestore();
+        jest.useRealTimers();
+      }
     });
 
     it("should log debug info when debug is enabled", async () => {
