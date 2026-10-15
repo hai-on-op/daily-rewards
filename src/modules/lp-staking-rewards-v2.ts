@@ -31,8 +31,12 @@ export const calculateLpStakingRewardsV2 = async (
 
   for (let w = 0; w < lpStakingSetupData.windows.length; w++) {
     const window = lpStakingSetupData.windows[w];
-    const effectiveEndBlock =
-      window.endBlock ?? toBlock ?? (await getLatestBlock());
+    // A closed window must still respect the requested calculation cutoff.
+    const effectiveEndBlock = Math.min(
+      window.endBlock ?? Infinity,
+      toBlock ?? (await getLatestBlock())
+    );
+    if (effectiveEndBlock <= window.startBlock) continue;
 
     const rewardTokens = Object.keys(window.config);
 

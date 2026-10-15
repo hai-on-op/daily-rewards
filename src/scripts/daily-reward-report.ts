@@ -434,15 +434,16 @@ async function runAllStrategiesWithSnapshots(): Promise<StrategyDailyEntry[]> {
   // ── Minter (multi-window, multi-collateral) ──
   const { minterProvider } = await import("../utils/chain");
   const minterSetup = cfg.rewards.minter;
-  let minterLatestBlock: number | undefined;
+  const minterEndBlock =
+    cfg.MINTER_END_BLOCK ?? (await minterProvider.getBlockNumber());
 
   for (let w = 0; w < minterSetup.windows.length; w++) {
     const window = minterSetup.windows[w];
-    if (!minterLatestBlock && !window.endBlock) {
-      minterLatestBlock = await minterProvider.getBlockNumber();
-    }
-    const effectiveEndBlock =
-      window.endBlock ?? cfg.MINTER_END_BLOCK ?? minterLatestBlock!;
+    const effectiveEndBlock = Math.min(
+      window.endBlock ?? Infinity,
+      minterEndBlock
+    );
+    if (effectiveEndBlock <= window.startBlock) continue;
     const rewardTokens = Object.keys(window.config);
 
     for (const rewardToken of rewardTokens) {
@@ -489,15 +490,16 @@ async function runAllStrategiesWithSnapshots(): Promise<StrategyDailyEntry[]> {
   // ── LP Staking (multi-window, multi-type) ──
   if (cfg.rewards.lpStaking.windows.length > 0) {
     const { lpStakingProvider } = await import("../utils/chain");
-    let lpStakingLatestBlock: number | undefined;
+    const lpStakingEndBlock =
+      cfg.LP_STAKING_END_BLOCK ?? (await lpStakingProvider.getBlockNumber());
 
     for (let w = 0; w < cfg.rewards.lpStaking.windows.length; w++) {
       const window = cfg.rewards.lpStaking.windows[w];
-      if (!lpStakingLatestBlock && !window.endBlock) {
-        lpStakingLatestBlock = await lpStakingProvider.getBlockNumber();
-      }
-      const effectiveEndBlock =
-        window.endBlock ?? cfg.LP_STAKING_END_BLOCK ?? lpStakingLatestBlock!;
+      const effectiveEndBlock = Math.min(
+        window.endBlock ?? Infinity,
+        lpStakingEndBlock
+      );
+      if (effectiveEndBlock <= window.startBlock) continue;
       const rewardTokens = Object.keys(window.config);
 
       for (const rewardToken of rewardTokens) {

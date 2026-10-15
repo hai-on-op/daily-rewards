@@ -1,0 +1,20 @@
+[
+  {
+    "startBlock": 144937170,
+    "endBlock": 146037861,
+    "config": { "KITE": { "HAI_BOLD_CURVE": 25 } }
+  },
+  {
+    "startBlock": 146037862,
+    "endBlock": 158082212,
+    "config": { "KITE": { "HAI_BOLD_CURVE": 25 } }
+  },
+  {
+    "startBlock": 146037862,
+    "config": { "KITE": { "HAI_VELO_VELO": 25 } }
+  },
+  {
+    "startBlock": 158082212,
+    "config": { "KITE": { "HAI_BOLD_CURVE": 50 } }
+  }
+]
