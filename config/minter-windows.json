@@ -1,0 +1,77 @@
+[
+  {
+    "startBlock": 137678333,
+    "endBlock": 140142515,
+    "config": {
+      "KITE": { "HAIVELO": 50, "ALETH": 50, "YV-VELO-ALETH-WETH": 25 }
+    }
+  },
+  {
+    "startBlock": 140142516,
+    "endBlock": 140398782,
+    "config": {
+      "KITE": { "HAIVELO": 50, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25 }
+    }
+  },
+  {
+    "startBlock": 140398783,
+    "endBlock": 141275611,
+    "config": {
+      "KITE": { "HAIVELO": 50, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25, "YV-VELO-MSETH-WETH": 25 }
+    }
+  },
+  {
+    "startBlock": 141275612,
+    "endBlock": 141611334,
+    "config": {
+      "KITE": { "HAIVELO": 10, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25, "YV-VELO-MSETH-WETH": 50, "HAIVELOV2": 40 }
+    }
+  },
+  {
+    "startBlock": 141611335,
+    "endBlock": 141852960,
+    "config": {
+      "KITE": { "HAIVELO": 5, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25, "YV-VELO-MSETH-WETH": 50, "HAIVELOV2": 45 }
+    }
+  },
+  {
+    "startBlock": 141852961,
+    "endBlock": 142164942,
+    "config": {
+      "KITE": { "HAIVELO": 0, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25, "YV-VELO-MSETH-WETH": 50, "HAIVELOV2": 50 }
+    }
+  },
+  {
+    "startBlock": 142164943,
+    "endBlock": 144894718,
+    "config": {
+      "KITE": { "HAIVELO": 0, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25, "YV-VELO-MSETH-WETH": 50, "HAIVELOV2": 50, "MOO-VELO-BOLD-LUSD": 25 }
+    }
+  },
+  {
+    "startBlock": 144894719,
+    "endBlock": 154658586,
+    "config": {
+      "KITE": { "HAIVELO": 0, "ALETH": 50, "YV-VELO-ALETH-WETH": 25, "MSETH": 25, "YV-VELO-MSETH-WETH": 25, "HAIVELOV2": 50, "MOO-VELO-BOLD-LUSD": 25 }
+    }
+  },
+  {
+    "startBlock": 154658587,
+    "endBlock": 158255012,
+    "config": {
+      "KITE": { "MSETH": 25, "YV-VELO-MSETH-WETH": 25, "MOO-VELO-BOLD-LUSD": 25 }
+    }
+  },
+  {
+    "startBlock": 154658587,
+    "config": {
+      "KITE": { "HAIVELO": 0, "ALETH": 0, "YV-VELO-ALETH-WETH": 0, "HAIVELOV2": 50, "HAIAERO": 50 }
+    }
+  },
+  {
+    "startBlock": 158255012,
+    "config": {
+      "KITE": { "MSETH": 0, "YV-VELO-MSETH-WETH": 10, "MOO-VELO-BOLD-LUSD": 10 }
+    }
+  }
+]

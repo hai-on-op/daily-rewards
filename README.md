@@ -2,6 +2,10 @@
 
 This guide provides comprehensive instructions for setting up and running the Daily Rewards distribution system. The system calculates and distributes rewards to users based on their LP positions, minting activity, and HAI-VELO participation.
 
+The published LP staking schedule is in [config/lp-staking-windows.json](config/lp-staking-windows.json). See [HAI/BOLD incentive implementation](docs/hai-bold-incentives.md) for the October 2026 governance change, activation boundary, and operator configuration.
+
+The published borrowing reward schedule is in [config/minter-windows.json](config/minter-windows.json). See [borrowing incentive rebalance](docs/borrowing-incentives-rebalance.md) for the October 16, 2026 reductions and preservation of accrued rewards.
+
 ## Table of Contents
 
 1. [System Overview](#system-overview)

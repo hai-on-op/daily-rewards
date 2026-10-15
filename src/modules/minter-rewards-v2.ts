@@ -61,8 +61,12 @@ export const calculateMinterRewardsV2 = async (
 
   for (let w = 0; w < minterSetupData.windows.length; w++) {
     const window = minterSetupData.windows[w];
-    const effectiveEndBlock =
-      window.endBlock ?? toBlock ?? (await getLatestBlock());
+    // Closed windows must respect the cutoff, including future governance changes.
+    const effectiveEndBlock = Math.min(
+      window.endBlock ?? Infinity,
+      toBlock ?? (await getLatestBlock())
+    );
+    if (effectiveEndBlock <= window.startBlock) continue;
 
     const rewardTokens = Object.keys(window.config);
 
