@@ -40,6 +40,13 @@ export class BackupStep implements ProcessingStep {
 
     const errors: Error[] = [];
 
+    // Persist the immutable replay ledger before publishing any corresponding roots.
+    if (context.aeroLedger) {
+      const ledgerPath = path.join(backupDir, `aero-revenue-ledger-entry${context.entryCounter}-${timestamp}.json`);
+      fs.writeFileSync(ledgerPath, JSON.stringify(context.aeroLedger, null, 2), { flag: 'wx' });
+    }
+
+
     for (const [token, tree] of Object.entries(context.merkleTrees)) {
       try {
         const filename = `merkle-tree-${token}-entry${context.entryCounter}-${dateString}-${timestamp}.json`;

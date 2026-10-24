@@ -66,6 +66,8 @@ export interface ProcessingContext {
   };
   /** Combined rewards from all sources */
   rewards: RewardsMap | null;
+  /** Exact, replayable funded Aero revenue ledger for this run. */
+  aeroLedger?: import("../../core/rewards/aero/types").AeroLedger;
   /** Adjusted rewards with BigNumber values */
   adjustedRewards: { [token: string]: { address: string; earned: string }[] } | null;
   /** Final rewards after subtracting claims */

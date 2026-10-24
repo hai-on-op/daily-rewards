@@ -1,4 +1,8 @@
 import { config } from '../config';
+import { loadAeroRun } from '../core/rewards/aero/files';
+import { mergeExactRewards } from '../core/rewards/aero/distribution';
+import { convertRewardsToBigNumber } from '../services/reward-processor';
+import { ExactRewards, AeroLedger } from '../core/rewards/aero/types';
 import {
   getTokenTransfersToContract,
   getHaiaeroTokenTransfersToContract,
@@ -466,15 +470,18 @@ async function calculateCurrentLpStakingRewards(): Promise<RewardObject> {
 }
 
 // export const combineResults = async (): Promise<RewardsMap> => {
-export const combineResults = async () => {
+export const combineResults = async (options: { excludeLegacyAeroProducts?: boolean } = {}) => {
+  if (process.env.AERO_REWARDS_CONFIG_FILE && !options.excludeLegacyAeroProducts) {
+    throw new Error('Aero ledger enabled: use combineResultsForDistribution for exact cumulative rewards');
+  }
   const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2; // 2 seconds block time
 
   const haiaeroEnabled = config().HAIAERO_REWARDS_ENABLED;
 
   // Fetch and process transfers for both haiVELO and haiAERO
   const [processedTransfers, haiaeroProcessedTransfers] = await Promise.all([
-    getProcessedTransfers(),
-    haiaeroEnabled ? getHaiaeroProcessedTransfers() : Promise.resolve([]),
+    options.excludeLegacyAeroProducts ? Promise.resolve([]) : getProcessedTransfers(),
+    !options.excludeLegacyAeroProducts && haiaeroEnabled ? getHaiaeroProcessedTransfers() : Promise.resolve([]),
   ]);
   console.log(
     `Processed ${processedTransfers.length} haiVELO transfers:`,
@@ -540,6 +547,7 @@ export const combineResults = async () => {
  * Used by the report generator for detailed breakdown visualization.
  */
 export const combineResultsDetailed = async (): Promise<DetailedCombineResult> => {
+  if (process.env.AERO_REWARDS_CONFIG_FILE) throw new Error("Aero revenue ledger enabled: legacy floating-point report cannot represent this run; use aero:dry-run output");
   const REWARD_DEPOSIT_ِEPOCH_BLOCK = (7 * 24 * 60 * 60) / 2;
 
   const haiaeroEnabled = config().HAIAERO_REWARDS_ENABLED;
@@ -739,3 +747,18 @@ export const combineResultsProd = async (): Promise<RewardsMap> => {
     ...dineroRewardsAggregated,
   };
  */
+
+/** Production calculation entry for exact funded Aero revenue, opt-in only. */
+export async function combineResultsForDistribution(): Promise<{ cumulative: ExactRewards; aeroLedger?: AeroLedger; tokenBindings?: Record<string, { chainId: number; address: string; decimals: number }>; collectorBindings?: Record<string, string> }> {
+  const filename = process.env.AERO_REWARDS_CONFIG_FILE;
+  if (!filename) return { cumulative: convertRewardsToBigNumber(await combineResults()) };
+  // Validate all pinned evidence before evaluating unrelated existing strategies.
+  const { input, ledger } = await loadAeroRun(filename);
+  const otherRewards = await combineResults({ excludeLegacyAeroProducts: true });
+  return {
+    cumulative: mergeExactRewards(convertRewardsToBigNumber(otherRewards), ledger.cumulative),
+    aeroLedger: ledger,
+    tokenBindings: input.policy.payoutTokens,
+    collectorBindings: Object.fromEntries(Object.entries(input.policy.collectors).map(([chain, collector]) => [chain, collector.recipient])),
+  };
+}
