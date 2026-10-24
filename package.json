@@ -28,7 +28,9 @@
     "verify-viewer": "cd verify-viewer && yarn dev",
     "report-viewer": "cd report-viewer && yarn dev",
     "golden:record": "ts-node src/scripts/golden-master.ts --record",
-    "golden:verify": "ts-node src/scripts/golden-master.ts --verify"
+    "golden:verify": "ts-node src/scripts/golden-master.ts --verify",
+    "aero:dry-run": "ts-node src/scripts/aero-revenue-dry-run.ts",
+    "aero:export": "ts-node src/scripts/aero-revenue-export.ts"
   },
   "dependencies": {
     "@covalenthq/client-sdk": "^2.2.1",

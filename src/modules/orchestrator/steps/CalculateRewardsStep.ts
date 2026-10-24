@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { ProcessingStep, ProcessingContext, FeatureFlags } from "../types";
-import { combineResults } from "../../result-combiner";
+import { combineResultsForDistribution } from "../../result-combiner";
 import { config } from "../../../config";
 import { getTokenAddressMap } from "../contractHelpers";
 import {
@@ -27,27 +27,10 @@ export class CalculateRewardsStep implements ProcessingStep {
       return context;
     }
 
-    // Combine results from all reward sources
-    const results = await combineResults();
-    context.rewards = results;
-
-    console.log(`[${this.name}] Combined results for tokens:`, Object.keys(results));
-
-    // Convert earned values to BigNumber with 18 decimals
-    const adjustedResults = Object.entries(results)
-      .map(([token, userRewards]) => {
-        return {
-          [token]: userRewards.map((reward) => {
-            return {
-              address: reward.address,
-              earned: ethers.utils
-                .parseEther(reward.earned.toFixed(18))
-                .toString(),
-            };
-          }),
-        };
-      })
-      .reduce((acc, curr) => ({ ...acc, ...curr }), {});
+    // Aero amounts enter as exact base-unit strings; existing strategies retain their behavior.
+    const calculation = await combineResultsForDistribution();
+    const adjustedResults = calculation.cumulative;
+    context.aeroLedger = calculation.aeroLedger;
 
     context.adjustedRewards = adjustedResults;
 
@@ -56,11 +39,21 @@ export class CalculateRewardsStep implements ProcessingStep {
     const tokenAddressMap = getTokenAddressMap();
     const cfg = config();
 
+    for (const [symbol, binding] of Object.entries(calculation.tokenBindings || {})) {
+      const configured = tokenAddressMap[symbol as keyof typeof tokenAddressMap];
+      const chainId = (await context.provider.getNetwork()).chainId;
+      if (!configured || configured.toLowerCase() !== binding.address.toLowerCase() || binding.chainId !== chainId ||
+          calculation.collectorBindings?.[String(chainId)]?.toLowerCase() !== context.rewardDistributor.address.toLowerCase()) {
+        throw new Error(`Aero payout token ${symbol} does not match this distributor chain/address/funding recipient`);
+      }
+    }
+
     for (const [token, rewards] of Object.entries(adjustedResults)) {
       console.log(`[${this.name}] Processing claims for token: ${token}`);
 
       const tokenAddress = tokenAddressMap[token.toUpperCase() as keyof typeof tokenAddressMap];
       if (!tokenAddress) {
+        if (calculation.aeroLedger) throw new Error(`[${this.name}] No address found for token: ${token}`);
         console.warn(`[${this.name}] No address found for token: ${token}`);
         continue;
       }
@@ -76,7 +69,7 @@ export class CalculateRewardsStep implements ProcessingStep {
       );
 
       // Subtract claimed amounts from earned amounts
-      finalResults[token] = subtractClaimedRewards(rewards, claimedAmounts);
+      finalResults[token] = subtractClaimedRewards(rewards, claimedAmounts, calculation.tokenBindings?.[token] ? ethers.BigNumber.from(0) : undefined);
 
       console.log(`[${this.name}] Found ${claimedAmounts.size} effective previous claims for ${token}`);
     }
