@@ -1,4 +1,6 @@
-import { Alchemy, AssetTransfersCategory, Network, Utils } from "alchemy-sdk";
+import { Alchemy, AssetTransfersCategory, Network } from "alchemy-sdk";
+import { providers } from "ethers";
+import { getRewardTransferLogs } from "./rpc-logs";
 import { config as appConfig } from "../../config"; // Import the config
 import { AlchemyTransferTracker } from "../../infrastructure/transfers/AlchemyTransferTracker";
 import { ITransferTracker } from "../../core/interfaces/ITransferTracker";
@@ -6,6 +8,7 @@ import { ITransferTracker } from "../../core/interfaces/ITransferTracker";
 // Load config values
 const {
   ALCHEMY_API_KEY,
+  RPC_URL,
   DEPOSIT_CONTRACT_ADDRESS,
   DEPOSIT_SENDER_ADDRESS,
   KITE_ADDRESS,
@@ -22,6 +25,7 @@ const alchemyConfig = {
 };
 
 const alchemy = new Alchemy(alchemyConfig);
+const depositProvider = new providers.StaticJsonRpcProvider(RPC_URL);
 
 // Token mapping for easier lookup
 const TOKEN_MAP = {
@@ -50,29 +54,11 @@ async function getTokenTransfersForSender(
 ): Promise<TokenTransfer[]> {
   const contractAddress = REWARD_DISTRIBUTOR_ADDRESS;
 
-  // ERC20 Transfer event signature
-  // Transfer(address indexed from, address indexed to, uint256 value)
-  const transferEventSignature = Utils.id("Transfer(address,address,uint256)");
-
   try {
-    // Get transfers for all tokens
     const allTransfers: TokenTransfer[] = [];
 
     for (const tokenAddress of tokenAddresses) {
-      // Create filter parameters for each token
-      const filter = {
-        address: tokenAddress,
-        topics: [
-          transferEventSignature,
-          Utils.hexZeroPad(senderAddress, 32), // from address (indexed)
-          Utils.hexZeroPad(contractAddress, 32), // to address (indexed)
-        ],
-        fromBlock: "earliest", // or specify a block number
-        toBlock: "latest",
-      };
-
-      // Get all logs matching the filter
-      const logs = await alchemy.core.getLogs(filter);
+      const logs = await getRewardTransferLogs(depositProvider, tokenAddress, senderAddress, contractAddress);
 
       // Process the logs for this token
       const transfers = logs.map((log) => {
@@ -108,8 +94,9 @@ async function getTokenTransfersForSender(
 
     return allTransfers;
   } catch (error) {
-    console.error("Error fetching logs:", error);
-    throw error;
+    // Provider errors may contain the authenticated endpoint URL.
+    const code = (error as { code?: unknown }).code;
+    throw new Error(`Reward deposit RPC failed (${typeof code === "string" && /^[A-Z_]+$/.test(code) ? code : "invalid scan or response"})`);
   }
 }
 
